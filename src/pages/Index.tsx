@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import PieChart from '@/components/PieChart';
 import PriorityForm from '@/components/PriorityForm';
 import HoverInfo from '@/components/HoverInfo';
 import { Section, Subsection, Task, ChartSlice } from '@/types/priorities';
-import { PieChart as PieChartIcon, Target, Calendar } from 'lucide-react';
+import { PieChart as PieChartIcon, Target, Calendar, Save } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const Index = () => {
+  const { toast } = useToast();
   const [sections, setSections] = useState<Section[]>([
     {
       id: '1',
@@ -133,18 +137,99 @@ const Index = () => {
     )
   );
 
+  const handleSaveToDatabase = async () => {
+    try {
+      // Check if user is authenticated
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to save your priorities",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Clear existing data for this user
+      await supabase.from('sections').delete().eq('user_id', user.id);
+
+      // Save sections, subsections, and tasks
+      for (const section of sections) {
+        // Insert section
+        const { data: sectionData, error: sectionError } = await supabase
+          .from('sections')
+          .insert({
+            user_id: user.id,
+            title: section.title,
+          })
+          .select()
+          .single();
+
+        if (sectionError) throw sectionError;
+
+        // Insert subsections for this section
+        for (const subsection of section.subsections) {
+          const { data: subsectionData, error: subsectionError } = await supabase
+            .from('subsections')
+            .insert({
+              section_id: sectionData.id,
+              title: subsection.title,
+            })
+            .select()
+            .single();
+
+          if (subsectionError) throw subsectionError;
+
+          // Insert tasks for this subsection
+          if (subsection.tasks.length > 0) {
+            const tasksToInsert = subsection.tasks.map(task => ({
+              subsection_id: subsectionData.id,
+              title: task.title,
+              due_date: task.dueDate || null,
+            }));
+
+            const { error: tasksError } = await supabase
+              .from('tasks')
+              .insert(tasksToInsert);
+
+            if (tasksError) throw tasksError;
+          }
+        }
+      }
+
+      toast({
+        title: "Success!",
+        description: "Your priorities have been saved to the database",
+      });
+    } catch (error) {
+      console.error('Error saving to database:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save priorities. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-bg">
       {/* Header */}
       <header className="bg-card/30 backdrop-blur-sm border-b border-border/50">
         <div className="container mx-auto px-6 py-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-gradient-primary rounded-lg">
-              <Target className="w-6 h-6 text-white" />
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-gradient-primary rounded-lg">
+                <Target className="w-6 h-6 text-white" />
+              </div>
+              <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+                Life Priorities Dashboard
+              </h1>
             </div>
-            <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-              Life Priorities Dashboard
-            </h1>
+            <Button onClick={handleSaveToDatabase} className="gap-2">
+              <Save className="w-4 h-4" />
+              Save Data
+            </Button>
           </div>
           <p className="text-muted-foreground">
             Visualize and manage your priorities across different areas of life
