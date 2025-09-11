@@ -1,0 +1,158 @@
+{
+  "sections": [
+    {
+      "id": "1",
+      "title": "MSADI",
+      "color": "#84cc16",
+      "subsections": [
+        {
+          "id": "1-1",
+          "title": "DATA 255",
+          "tasks": [
+            {
+              "id": "1-1-1",
+              "title": "Project Proposal",
+              "dueDate": "2025-09-11"
+            }
+          ]
+        },
+        {
+          "id": "1-2",
+          "title": "DATA 266",
+          "tasks": [
+            {
+              "id": "1-2-1",
+              "title": "HW 2",
+              "dueDate": "2025-09-15"
+            },
+            {
+              "id": "1-2-2",
+              "title": "Quiz 1",
+              "dueDate": "2025-09-15"
+            }
+          ]
+        },
+        {
+          "id": "1-3",
+          "title": "DATA 298A",
+          "tasks": [
+            {
+              "id": "lwgk17e6v",
+              "title": "JIRA",
+              "dueDate": "2025-09-13"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "title": "Job Apps",
+      "subsections": [
+        {
+          "id": "2-1",
+          "title": "Aai",
+          "tasks": [
+            {
+              "id": "2-1-1",
+              "title": "job app 1",
+              "dueDate": "2024-09-20"
+            },
+            {
+              "id": "2-1-2",
+              "title": "job app 2",
+              "dueDate": "2024-09-22"
+            },
+            {
+              "id": "2-1-3",
+              "title": "job app 3",
+              "dueDate": "2024-09-25"
+            }
+          ]
+        },
+        {
+          "id": "2-2",
+          "title": "Pradeep Kaka",
+          "tasks": [
+            {
+              "id": "2-2-1",
+              "title": "DA resume",
+              "dueDate": "2024-09-18"
+            },
+            {
+              "id": "2-2-2",
+              "title": "DE resume",
+              "dueDate": "2024-09-18"
+            },
+            {
+              "id": "2-2-3",
+              "title": "DS resume",
+              "dueDate": "2024-09-18"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "camqvtjyd",
+      "title": "Gym",
+      "subsections": [
+        {
+          "id": "8cxr530bm",
+          "title": "Hypertrophy",
+          "tasks": [
+            {
+              "id": "wxx778pi7",
+              "title": "Chest/Back",
+              "dueDate": "2025-12-20"
+            },
+            {
+              "id": "9ezu18whs",
+              "title": "Arms",
+              "dueDate": "2025-12-20"
+            },
+            {
+              "id": "mlmlpj4iq",
+              "title": "Legs",
+              "dueDate": "2025-12-20"
+            }
+          ]
+        },
+        {
+          "id": "dswquhylu",
+          "title": "Strength",
+          "tasks": [
+            {
+              "id": "l5l3aqciy",
+              "title": "Upper",
+              "dueDate": "2025-12-20"
+            },
+            {
+              "id": "2zbgn9vi9",
+              "title": "Lower",
+              "dueDate": "2025-12-20"
+            }
+          ]
+        },
+        {
+          "id": "dxzfjfr7v",
+          "title": "Cardio",
+          "tasks": [
+            {
+              "id": "55yh30zqt",
+              "title": "Walking",
+              "dueDate": "2025-12-20"
+            },
+            {
+              "id": "5klqawx00",
+              "title": "Stairs",
+              "dueDate": "2025-12-20"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "exportDate": "2025-09-11T05:40:55.528Z",
+  "version": "1.0"
+}

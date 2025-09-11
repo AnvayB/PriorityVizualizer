@@ -4,6 +4,7 @@ import { Section, Subsection, Task, ChartSlice } from '@/types/priorities';
 interface PieChartProps {
   sections: Section[];
   onHover?: (slice: ChartSlice | null) => void;
+  onSliceClick?: (slice: ChartSlice) => void;
 }
 
 const CHART_COLORS = [
@@ -17,7 +18,7 @@ const CHART_COLORS = [
   'hsl(var(--chart-8))',
 ];
 
-const PieChart: React.FC<PieChartProps> = ({ sections, onHover }) => {
+const PieChart: React.FC<PieChartProps> = ({ sections, onHover, onSliceClick }) => {
   const [hoveredSlice, setHoveredSlice] = useState<ChartSlice | null>(null);
 
   const chartData = useMemo(() => {
@@ -34,7 +35,7 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover }) => {
     const sectionAngle = 360 / sections.length;
 
     sections.forEach((section, sectionIndex) => {
-      const sectionColor = CHART_COLORS[sectionIndex % CHART_COLORS.length];
+      const sectionColor = section.color || CHART_COLORS[sectionIndex % CHART_COLORS.length];
       const sectionStartAngle = currentAngle;
       const sectionEndAngle = currentAngle + sectionAngle;
 
@@ -141,6 +142,10 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover }) => {
     onHover?.(null);
   };
 
+  const handleSliceClick = (slice: ChartSlice) => {
+    onSliceClick?.(slice);
+  };
+
   const getInnerRadius = (level: string) => {
     switch (level) {
       case 'section': return 0;
@@ -159,7 +164,8 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover }) => {
     const x = 250 + textRadius * Math.cos(midAngleRad);
     const y = 250 + textRadius * Math.sin(midAngleRad);
     
-    return { x, y, angle: midAngle };
+    const angle = midAngle > 90 && midAngle < 270 ? midAngle + 180 : midAngle;
+    return { x, y, angle };
   };
 
   const getSliceText = (slice: ChartSlice) => {
@@ -202,6 +208,7 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover }) => {
               }}
               onMouseEnter={() => handleMouseEnter(slice)}
               onMouseLeave={handleMouseLeave}
+              onClick={() => handleSliceClick(slice)}
             />
             {shouldShowText(slice) && (
               <text
