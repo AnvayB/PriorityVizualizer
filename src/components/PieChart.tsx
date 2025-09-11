@@ -22,76 +22,84 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover }) => {
 
   const chartData = useMemo(() => {
     const slices: ChartSlice[] = [];
-    const totalItems = sections.reduce((total, section) => {
-      const subsectionCount = section.subsections.length || 1;
-      const taskCount = section.subsections.reduce((sum, sub) => sum + (sub.tasks.length || 1), 0);
-      return total + subsectionCount + taskCount;
-    }, 0);
+    
+    if (sections.length === 0) return [];
 
     let currentAngle = 0;
     const baseRadius = 80;
     const subsectionRadius = 140;
     const taskRadius = 200;
+    
+    // Each section gets equal portion of 360 degrees
+    const sectionAngle = 360 / sections.length;
 
     sections.forEach((section, sectionIndex) => {
       const sectionColor = CHART_COLORS[sectionIndex % CHART_COLORS.length];
-      const subsectionCount = section.subsections.length || 1;
-      const totalSectionTasks = section.subsections.reduce((sum, sub) => sum + (sub.tasks.length || 1), 0);
-      const sectionAngle = (360 * (subsectionCount + totalSectionTasks)) / totalItems;
+      const sectionStartAngle = currentAngle;
+      const sectionEndAngle = currentAngle + sectionAngle;
 
       // Add section slice
       slices.push({
         section,
-        startAngle: currentAngle,
-        endAngle: currentAngle + sectionAngle,
+        startAngle: sectionStartAngle,
+        endAngle: sectionEndAngle,
         radius: baseRadius,
         level: 'section',
         color: sectionColor,
       });
 
-      // Add subsection slices
-      section.subsections.forEach((subsection, subIndex) => {
-        const taskCount = subsection.tasks.length || 1;
-        const subsectionAngle = (360 * (1 + taskCount)) / totalItems;
-        const subsectionColor = sectionColor.replace(')', ', 0.7)').replace('hsl(', 'hsla(');
+      // Calculate subsection angles within this section
+      const subsectionCount = Math.max(section.subsections.length, 1);
+      const subsectionAngleSize = sectionAngle / subsectionCount;
+      let subsectionCurrentAngle = sectionStartAngle;
 
-        slices.push({
-          section,
-          subsection,
-          startAngle: currentAngle,
-          endAngle: currentAngle + subsectionAngle,
-          radius: subsectionRadius,
-          level: 'subsection',
-          color: subsectionColor,
-        });
-
-        // Add task slices
-        subsection.tasks.forEach((task, taskIndex) => {
-          const taskAngle = (360 * 1) / totalItems;
-          const taskColor = subsectionColor.replace('0.7', '0.5');
+      if (section.subsections.length > 0) {
+        section.subsections.forEach((subsection, subIndex) => {
+          const subsectionStartAngle = subsectionCurrentAngle;
+          const subsectionEndAngle = subsectionCurrentAngle + subsectionAngleSize;
+          const subsectionColor = sectionColor.replace(')', ', 0.7)').replace('hsl(', 'hsla(');
 
           slices.push({
             section,
             subsection,
-            task,
-            startAngle: currentAngle,
-            endAngle: currentAngle + taskAngle,
-            radius: taskRadius,
-            level: 'task',
-            color: taskColor,
+            startAngle: subsectionStartAngle,
+            endAngle: subsectionEndAngle,
+            radius: subsectionRadius,
+            level: 'subsection',
+            color: subsectionColor,
           });
 
-          currentAngle += taskAngle;
+          // Calculate task angles within this subsection
+          const taskCount = Math.max(subsection.tasks.length, 1);
+          const taskAngleSize = subsectionAngleSize / taskCount;
+          let taskCurrentAngle = subsectionStartAngle;
+
+          if (subsection.tasks.length > 0) {
+            subsection.tasks.forEach((task, taskIndex) => {
+              const taskStartAngle = taskCurrentAngle;
+              const taskEndAngle = taskCurrentAngle + taskAngleSize;
+              const taskColor = subsectionColor.replace('0.7', '0.5');
+
+              slices.push({
+                section,
+                subsection,
+                task,
+                startAngle: taskStartAngle,
+                endAngle: taskEndAngle,
+                radius: taskRadius,
+                level: 'task',
+                color: taskColor,
+              });
+
+              taskCurrentAngle += taskAngleSize;
+            });
+          }
+
+          subsectionCurrentAngle += subsectionAngleSize;
         });
-
-        if (subsection.tasks.length === 0) {
-          currentAngle += subsectionAngle;
-        }
-      });
-
-      if (section.subsections.length === 0) {
-        currentAngle += sectionAngle;
       }
+
+      currentAngle += sectionAngle;
     });
 
     return slices;
@@ -142,28 +150,74 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover }) => {
     }
   };
 
+  const getTextPosition = (slice: ChartSlice) => {
+    const midAngle = (slice.startAngle + slice.endAngle) / 2;
+    const midAngleRad = (midAngle * Math.PI) / 180;
+    const innerRadius = getInnerRadius(slice.level);
+    const textRadius = (innerRadius + slice.radius) / 2;
+    
+    const x = 250 + textRadius * Math.cos(midAngleRad);
+    const y = 250 + textRadius * Math.sin(midAngleRad);
+    
+    return { x, y, angle: midAngle };
+  };
+
+  const getSliceText = (slice: ChartSlice) => {
+    switch (slice.level) {
+      case 'section':
+        return slice.section.title;
+      case 'subsection':
+        return slice.subsection?.title || '';
+      case 'task':
+        return slice.task?.title || '';
+      default:
+        return '';
+    }
+  };
+
+  const shouldShowText = (slice: ChartSlice) => {
+    // Only show text if the slice is large enough
+    const angleDiff = slice.endAngle - slice.startAngle;
+    return angleDiff > 15; // Show text only if slice is larger than 15 degrees
+  };
+
   return (
     <div className="flex justify-center items-center">
       <svg width="500" height="500" className="drop-shadow-soft">
         {chartData.map((slice, index) => (
-          <path
-            key={index}
-            d={createPath(
-              slice.startAngle,
-              slice.endAngle,
-              getInnerRadius(slice.level),
-              slice.radius
+          <g key={index}>
+            <path
+              d={createPath(
+                slice.startAngle,
+                slice.endAngle,
+                getInnerRadius(slice.level),
+                slice.radius
+              )}
+              fill={slice.color}
+              stroke="white"
+              strokeWidth="2"
+              className="transition-all duration-300 cursor-pointer hover:brightness-110"
+              style={{
+                filter: hoveredSlice === slice ? 'brightness(1.2) drop-shadow(0 0 10px rgba(0,0,0,0.3))' : undefined,
+              }}
+              onMouseEnter={() => handleMouseEnter(slice)}
+              onMouseLeave={handleMouseLeave}
+            />
+            {shouldShowText(slice) && (
+              <text
+                x={getTextPosition(slice).x}
+                y={getTextPosition(slice).y}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                className="fill-foreground text-xs font-medium pointer-events-none"
+                style={{
+                  fontSize: slice.level === 'section' ? '14px' : slice.level === 'subsection' ? '12px' : '10px',
+                }}
+              >
+                {getSliceText(slice)}
+              </text>
             )}
-            fill={slice.color}
-            stroke="white"
-            strokeWidth="2"
-            className="transition-all duration-300 cursor-pointer hover:brightness-110"
-            style={{
-              filter: hoveredSlice === slice ? 'brightness(1.2) drop-shadow(0 0 10px rgba(0,0,0,0.3))' : undefined,
-            }}
-            onMouseEnter={() => handleMouseEnter(slice)}
-            onMouseLeave={handleMouseLeave}
-          />
+          </g>
         ))}
       </svg>
     </div>
