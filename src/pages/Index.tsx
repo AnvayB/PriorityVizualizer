@@ -107,126 +107,266 @@ const Index = () => {
     return Math.random().toString(36).substr(2, 9);
   };
 
-  const handleAddSection = (title: string) => {
-    const newSection: Section = {
-      id: generateId(),
-      title,
-      subsections: []
-    };
-    setSections(prev => [...prev, newSection]);
-  };
+  const handleAddSection = async (title: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-  const handleAddSubsection = (sectionId: string, title: string) => {
-    setSections(prev => prev.map(section => {
-      if (section.id === sectionId) {
-        const newSubsection: Subsection = {
-          id: generateId(),
+      const { data, error } = await supabase
+        .from('sections')
+        .insert({
+          user_id: user.id,
           title,
-          tasks: []
-        };
-        return {
-          ...section,
-          subsections: [...section.subsections, newSubsection]
-        };
-      }
-      return section;
-    }));
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const newSection: Section = {
+        id: data.id,
+        title: data.title,
+        subsections: []
+      };
+      setSections(prev => [...prev, newSection]);
+    } catch (error) {
+      console.error('Error adding section:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add section. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleAddTask = (sectionId: string, subsectionId: string, title: string, dueDate: string) => {
-    setSections(prev => prev.map(section => {
-      if (section.id === sectionId) {
+  const handleAddSubsection = async (sectionId: string, title: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('subsections')
+        .insert({
+          section_id: sectionId,
+          title,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setSections(prev => prev.map(section => {
+        if (section.id === sectionId) {
+          const newSubsection: Subsection = {
+            id: data.id,
+            title: data.title,
+            tasks: []
+          };
+          return {
+            ...section,
+            subsections: [...section.subsections, newSubsection]
+          };
+        }
+        return section;
+      }));
+    } catch (error) {
+      console.error('Error adding subsection:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add subsection. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAddTask = async (sectionId: string, subsectionId: string, title: string, dueDate: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('tasks')
+        .insert({
+          subsection_id: subsectionId,
+          title,
+          due_date: dueDate || null,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setSections(prev => prev.map(section => {
+        if (section.id === sectionId) {
+          return {
+            ...section,
+            subsections: section.subsections.map(subsection => {
+              if (subsection.id === subsectionId) {
+                const newTask: Task = {
+                  id: data.id,
+                  title: data.title,
+                  dueDate: data.due_date || ''
+                };
+                return {
+                  ...subsection,
+                  tasks: [...subsection.tasks, newTask]
+                };
+              }
+              return subsection;
+            })
+          };
+        }
+        return section;
+      }));
+    } catch (error) {
+      console.error('Error adding task:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add task. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEdit = async (type: 'section' | 'subsection' | 'task', id: string, newTitle: string, newDueDate?: string) => {
+    try {
+      // Update database
+      if (type === 'section') {
+        const { error } = await supabase
+          .from('sections')
+          .update({ title: newTitle })
+          .eq('id', id);
+        if (error) throw error;
+      } else if (type === 'subsection') {
+        const { error } = await supabase
+          .from('subsections')
+          .update({ title: newTitle })
+          .eq('id', id);
+        if (error) throw error;
+      } else if (type === 'task') {
+        const { error } = await supabase
+          .from('tasks')
+          .update({ 
+            title: newTitle,
+            due_date: newDueDate || null
+          })
+          .eq('id', id);
+        if (error) throw error;
+      }
+
+      // Update local state
+      setSections(prev => prev.map(section => {
+        if (type === 'section' && section.id === id) {
+          return { ...section, title: newTitle };
+        }
+        
         return {
           ...section,
           subsections: section.subsections.map(subsection => {
-            if (subsection.id === subsectionId) {
-              const newTask: Task = {
-                id: generateId(),
-                title,
-                dueDate
-              };
-              return {
-                ...subsection,
-                tasks: [...subsection.tasks, newTask]
-              };
+            if (type === 'subsection' && subsection.id === id) {
+              return { ...subsection, title: newTitle };
             }
-            return subsection;
-          })
-        };
-      }
-      return section;
-    }));
-  };
-
-  const handleEdit = (type: 'section' | 'subsection' | 'task', id: string, newTitle: string, newDueDate?: string) => {
-    setSections(prev => prev.map(section => {
-      if (type === 'section' && section.id === id) {
-        return { ...section, title: newTitle };
-      }
-      
-      return {
-        ...section,
-        subsections: section.subsections.map(subsection => {
-          if (type === 'subsection' && subsection.id === id) {
-            return { ...subsection, title: newTitle };
-          }
-          
-          return {
-            ...subsection,
-            tasks: subsection.tasks.map(task => {
-              if (type === 'task' && task.id === id) {
-                return { ...task, title: newTitle, dueDate: newDueDate || task.dueDate };
-              }
-              return task;
-            })
-          };
-        })
-      };
-    }));
-  };
-
-  const handleDelete = (type: 'section' | 'subsection' | 'task', sectionId: string, subsectionId?: string, taskId?: string) => {
-    setSections(prev => {
-      if (type === 'section') {
-        return prev.filter(section => section.id !== sectionId);
-      }
-      
-      return prev.map(section => {
-        if (section.id === sectionId) {
-          if (type === 'subsection' && subsectionId) {
+            
             return {
-              ...section,
-              subsections: section.subsections.filter(sub => sub.id !== subsectionId)
-            };
-          }
-          
-          if (type === 'task' && subsectionId && taskId) {
-            return {
-              ...section,
-              subsections: section.subsections.map(sub => {
-                if (sub.id === subsectionId) {
-                  return {
-                    ...sub,
-                    tasks: sub.tasks.filter(task => task.id !== taskId)
-                  };
+              ...subsection,
+              tasks: subsection.tasks.map(task => {
+                if (type === 'task' && task.id === id) {
+                  return { ...task, title: newTitle, dueDate: newDueDate || task.dueDate };
                 }
-                return sub;
+                return task;
               })
             };
-          }
-        }
-        return section;
+          })
+        };
+      }));
+    } catch (error) {
+      console.error('Error updating:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update. Please try again.",
+        variant: "destructive",
       });
-    });
+    }
   };
 
-  const handleColorChange = (sectionId: string, color: string) => {
-    setSections(prev => prev.map(section => {
-      if (section.id === sectionId) {
-        return { ...section, color };
+  const handleDelete = async (type: 'section' | 'subsection' | 'task', sectionId: string, subsectionId?: string, taskId?: string) => {
+    try {
+      // Delete from database
+      if (type === 'section') {
+        const { error } = await supabase
+          .from('sections')
+          .delete()
+          .eq('id', sectionId);
+        if (error) throw error;
+      } else if (type === 'subsection' && subsectionId) {
+        const { error } = await supabase
+          .from('subsections')
+          .delete()
+          .eq('id', subsectionId);
+        if (error) throw error;
+      } else if (type === 'task' && taskId) {
+        const { error } = await supabase
+          .from('tasks')
+          .delete()
+          .eq('id', taskId);
+        if (error) throw error;
       }
-      return section;
-    }));
+
+      // Update local state
+      setSections(prev => {
+        if (type === 'section') {
+          return prev.filter(section => section.id !== sectionId);
+        }
+        
+        return prev.map(section => {
+          if (section.id === sectionId) {
+            if (type === 'subsection' && subsectionId) {
+              return {
+                ...section,
+                subsections: section.subsections.filter(sub => sub.id !== subsectionId)
+              };
+            }
+            
+            if (type === 'task' && subsectionId && taskId) {
+              return {
+                ...section,
+                subsections: section.subsections.map(sub => {
+                  if (sub.id === subsectionId) {
+                    return {
+                      ...sub,
+                      tasks: sub.tasks.filter(task => task.id !== taskId)
+                    };
+                  }
+                  return sub;
+                })
+              };
+            }
+          }
+          return section;
+        });
+      });
+    } catch (error) {
+      console.error('Error deleting:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleColorChange = async (sectionId: string, color: string) => {
+    try {
+      // Note: Since color column doesn't exist in database yet, we'll just update local state
+      // This would need a migration to add color column to sections table
+      setSections(prev => prev.map(section => {
+        if (section.id === sectionId) {
+          return { ...section, color };
+        }
+        return section;
+      }));
+    } catch (error) {
+      console.error('Error updating color:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update color. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const totalTasks = sections.reduce((total, section) => 
