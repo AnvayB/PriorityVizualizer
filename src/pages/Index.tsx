@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -6,7 +6,7 @@ import PieChart from '@/components/PieChart';
 import PriorityForm from '@/components/PriorityForm';
 import HoverInfo from '@/components/HoverInfo';
 import { Section, Subsection, Task, ChartSlice } from '@/types/priorities';
-import { PieChart as PieChartIcon, Target, Calendar, Save, Upload, ChevronDown } from 'lucide-react';
+import { PieChart as PieChartIcon, Target, Calendar, Save, Upload, ChevronDown, LogOut, User } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import defaultData from '@/data/defaultData.json';
@@ -14,9 +14,19 @@ import defaultData from '@/data/defaultData.json';
 const Index = () => {
   const { toast } = useToast();
   const [sections, setSections] = useState<Section[]>(defaultData.sections);
+  const [user, setUser] = useState(null);
 
   const [hoveredSlice, setHoveredSlice] = useState<ChartSlice | null>(null);
   const [pinnedSlice, setPinnedSlice] = useState<ChartSlice | null>(null);
+
+  // Auth state management
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    getUser();
+  }, []);
 
   const generateId = () => {
     return Math.random().toString(36).substr(2, 9);
@@ -336,6 +346,22 @@ const Index = () => {
     input.click();
   };
 
+  const handleSignOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to sign out. Please try again.",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Signed out",
+        description: "You've been successfully signed out.",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-bg">
       {/* Header */}
@@ -350,7 +376,17 @@ const Index = () => {
                 Life Priorities Dashboard
               </h1>
             </div>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
+              {user && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mr-4">
+                  <User className="w-4 h-4" />
+                  {user.email}
+                </div>
+              )}
+              <Button onClick={handleSignOut} variant="outline" size="sm" className="gap-2">
+                <LogOut className="w-4 h-4" />
+                Sign Out
+              </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button className="gap-2">
