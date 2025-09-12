@@ -232,7 +232,7 @@ const Index = () => {
       }
 
       toast({
-        title: "Success!",
+        title: "Saved to Supabase!",
         description: "Your priorities have been saved to the database",
       });
     } catch (error) {
@@ -281,9 +281,8 @@ const Index = () => {
     URL.revokeObjectURL(url);
     
     toast({
-      title: "Replacement File Downloaded!",
-      description: "Delete the current src/data/defaultData.json file and replace it with the downloaded file. Then refresh your browser.",
-      duration: 8000,
+      title: "Saved to Computer!",
+      description: "JSON file downloaded successfully to your computer.",
     });
   };
 
@@ -396,11 +395,11 @@ const Index = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
-                  <DropdownMenuItem onClick={() => { handleSaveToDatabase(); handleReplaceCurrentData(); }}>
-                    Replace Current Data
+                  <DropdownMenuItem onClick={handleSaveToDatabase}>
+                    to Supabase
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => { handleSaveToDatabase(); handleSaveAsNewFile(); }}>
-                    Save as New File
+                  <DropdownMenuItem onClick={handleReplaceCurrentData}>
+                    to Computer
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
