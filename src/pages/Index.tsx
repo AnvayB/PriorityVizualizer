@@ -19,11 +19,86 @@ const Index = () => {
   const [hoveredSlice, setHoveredSlice] = useState<ChartSlice | null>(null);
   const [pinnedSlice, setPinnedSlice] = useState<ChartSlice | null>(null);
 
-  // Auth state management
+  // Load data from Supabase
+  const loadFromSupabase = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        return;
+      }
+
+      // Fetch sections
+      const { data: sectionsData, error: sectionsError } = await supabase
+        .from('sections')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (sectionsError) throw sectionsError;
+
+      if (!sectionsData || sectionsData.length === 0) {
+        // No data in Supabase, keep default data
+        return;
+      }
+
+      // Fetch subsections
+      const { data: subsectionsData, error: subsectionsError } = await supabase
+        .from('subsections')
+        .select('*');
+
+      if (subsectionsError) throw subsectionsError;
+
+      // Fetch tasks
+      const { data: tasksData, error: tasksError } = await supabase
+        .from('tasks')
+        .select('*');
+
+      if (tasksError) throw tasksError;
+
+      // Transform data to match frontend structure
+      const transformedSections = sectionsData.map(section => ({
+        id: section.id,
+        title: section.title,
+        subsections: (subsectionsData || [])
+          .filter(sub => sub.section_id === section.id)
+          .map(subsection => ({
+            id: subsection.id,
+            title: subsection.title,
+            tasks: (tasksData || [])
+              .filter(task => task.subsection_id === subsection.id)
+              .map(task => ({
+                id: task.id,
+                title: task.title,
+                dueDate: task.due_date || ''
+              }))
+          }))
+      }));
+
+      setSections(transformedSections);
+      
+      toast({
+        title: "Data loaded from Supabase",
+        description: "Your priorities have been loaded successfully",
+      });
+    } catch (error) {
+      console.error('Error loading from Supabase:', error);
+      toast({
+        title: "Error loading data",
+        description: "Failed to load data from Supabase. Using default data.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Auth state management and data loading
   useEffect(() => {
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
+      
+      if (user) {
+        await loadFromSupabase();
+      }
     };
     getUser();
   }, []);
@@ -403,10 +478,23 @@ const Index = () => {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <Button onClick={handleLoadFromFile} variant="outline" className="gap-2">
-                <Upload className="w-4 h-4" />
-                Load
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="gap-2">
+                    <Upload className="w-4 h-4" />
+                    Load
+                    <ChevronDown className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onClick={loadFromSupabase}>
+                    from Supabase
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleLoadFromFile}>
+                    from Computer
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
           <p className="text-muted-foreground">
