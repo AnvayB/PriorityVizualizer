@@ -1,73 +1,190 @@
-# Welcome to your Lovable project
+# PriorityManager
 
-## Project info
+A modern, interactive priority management application that helps you visualize and organize your tasks across different areas of life using an intuitive pie chart interface.
 
-**URL**: https://lovable.dev/projects/00bbf968-68f2-4a2e-a15e-ad8e930920fa
+## 🌟 Features
 
-## How can I edit this code?
+### 📊 **Interactive Pie Chart Visualization**
+- Multi-level hierarchical pie chart showing Sections → Subsections → Tasks
+- Real-time visual feedback with hover effects and color-coded segments
+- Pin slices to keep important information visible
+- Dynamic sizing based on task counts and priority levels
 
-There are several ways of editing your application.
+### 🗂️ **Hierarchical Task Organization**
+- **Sections**: High-level categories (e.g., MSADI, Job Applications, Gym)
+- **Subsections**: Specific areas within sections (e.g., DATA 255, DATA 266)
+- **Tasks**: Individual actionable items with due dates
 
-**Use Lovable**
+### 💾 **Dual Storage Options**
+- **Save to Supabase**: Cloud-based storage with user authentication
+- **Save to Computer**: Export data as timestamped JSON files
+- **Load from Supabase**: Retrieve your saved priorities from the cloud
+- **Load from Computer**: Import data from JSON files
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/00bbf968-68f2-4a2e-a15e-ad8e930920fa) and start prompting.
+### 🎨 **Modern UI/UX**
+- Beautiful gradient backgrounds and glass-morphism effects
+- Responsive design that works on all devices
+- Dark/light theme support
+- Smooth animations and transitions
+- Toast notifications for user feedback
 
-Changes made via Lovable will be committed automatically to this repo.
+### 📅 **Task Management**
+- Due date tracking with calendar integration
+- Upcoming tasks dashboard (next 3 days)
+- Task completion status tracking
+- Real-time statistics (total tasks, upcoming deadlines)
 
-**Use your preferred IDE**
+### 🔧 **Advanced Features**
+- Real-time CRUD operations (Create, Read, Update, Delete)
+- Color customization for sections
+- Data export/import functionality
+- User authentication with Supabase
+- Row Level Security (RLS) for data protection
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## 🛠️ Tech Stack
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- **Frontend**: React 18 + TypeScript
+- **Build Tool**: Vite
+- **Styling**: Tailwind CSS + shadcn/ui components
+- **Backend**: Supabase (PostgreSQL + Auth)
+- **Charts**: Custom SVG-based pie chart implementation
+- **Icons**: Lucide React
+- **Forms**: React Hook Form + Zod validation
+- **State Management**: React hooks
+- **Routing**: React Router DOM
 
-Follow these steps:
+## 🚀 Getting Started
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### Prerequisites
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+- Node.js 18+ and npm
+- Git
+- Supabase account (for cloud features)
 
-# Step 3: Install the necessary dependencies.
-npm i
+### Installation
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+1. **Clone the repository**
+   ```bash
+   git clone <YOUR_GIT_URL>
+   cd PriorityManager
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Set up Supabase** (Optional - for cloud features)
+   - Create a new Supabase project
+   - Run the database migrations from `supabase/migrations/`
+   - Update the Supabase URL and API key in `src/integrations/supabase/client.ts`
+
+4. **Start the development server**
+   ```bash
+   npm run dev
+   ```
+
+5. **Open your browser**
+   Navigate to `http://localhost:5173`
+
+## 📁 Project Structure
+
+```
+PriorityManager/
+├── src/
+│   ├── components/          # Reusable UI components
+│   │   ├── ui/             # shadcn/ui components
+│   │   ├── PieChart.tsx    # Interactive pie chart component
+│   │   ├── PriorityForm.tsx # Forms for adding priorities
+│   │   └── HoverInfo.tsx   # Hover information display
+│   ├── data/               # Default data and types
+│   ├── hooks/              # Custom React hooks
+│   ├── integrations/       # External service integrations
+│   │   └── supabase/       # Supabase client and types
+│   ├── lib/                # Utility functions
+│   ├── pages/              # Application pages
+│   ├── types/              # TypeScript type definitions
+│   └── main.tsx            # Application entry point
+├── supabase/
+│   ├── migrations/         # Database schema migrations
+│   └── config.toml         # Supabase configuration
+├── public/                 # Static assets
+└── package.json
 ```
 
-**Edit a file directly in GitHub**
+## 💡 Usage Guide
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Adding Priorities
 
-**Use GitHub Codespaces**
+1. **Add a Section**: Use the "Add Priorities" form, select "Section" tab
+2. **Add a Subsection**: Select "Subsection" tab, choose a section, add title
+3. **Add a Task**: Select "Task" tab, choose section and subsection, add title and due date
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Managing Data
 
-## What technologies are used for this project?
+- **Save to Cloud**: Click "Save Data" → "to Supabase" (requires authentication)
+- **Save Locally**: Click "Save Data" → "to Computer" (downloads JSON file)
+- **Load from Cloud**: Click "Load Data" → "from Supabase"
+- **Load from File**: Click "Load Data" → "from Computer"
 
-This project is built with:
+### Customization
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- **Change Colors**: Click on any section in the chart to change its color
+- **Edit Items**: Double-click on sections, subsections, or tasks to edit
+- **Delete Items**: Use the delete buttons in the interface
 
-## How can I deploy this project?
+## 🗄️ Database Schema
 
-Simply open [Lovable](https://lovable.dev/projects/00bbf968-68f2-4a2e-a15e-ad8e930920fa) and click on Share -> Publish.
+The application uses a hierarchical database structure:
 
-## Can I connect a custom domain to my Lovable project?
+```sql
+sections (id, user_id, title, color, created_at, updated_at)
+├── subsections (id, section_id, title, created_at, updated_at)
+    └── tasks (id, subsection_id, title, due_date, completed, created_at, updated_at)
+```
 
-Yes, you can!
+## 🔒 Authentication & Security
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+- User authentication via Supabase Auth
+- Row Level Security (RLS) ensures users only see their own data
+- Secure API endpoints with proper authorization
+- Client-side and server-side data validation
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+## 🎯 Use Cases
+
+- **Academic Planning**: Organize courses, assignments, and deadlines
+- **Job Search Management**: Track applications, interviews, and networking
+- **Personal Projects**: Manage hobby projects and personal goals
+- **Work Task Management**: Organize professional responsibilities
+- **Fitness Planning**: Track workout routines and health goals
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- Built with [Lovable](https://lovable.dev) - AI-powered development platform
+- UI components from [shadcn/ui](https://ui.shadcn.com/)
+- Icons from [Lucide](https://lucide.dev/)
+- Database and Auth by [Supabase](https://supabase.com/)
+
+## 📞 Support
+
+If you encounter any issues or have questions:
+
+1. Check the [Issues](../../issues) page
+2. Create a new issue with detailed information
+3. Provide steps to reproduce any bugs
+
+---
+
+**Happy Priority Managing! 🎯**
