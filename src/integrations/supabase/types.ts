@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       sections: {
         Row: {
+          color: string | null
           created_at: string
           id: string
           title: string
@@ -23,6 +24,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          color?: string | null
           created_at?: string
           id?: string
           title: string
@@ -30,6 +32,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          color?: string | null
           created_at?: string
           id?: string
           title?: string

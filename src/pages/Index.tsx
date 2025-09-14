@@ -9,11 +9,11 @@ import { Section, Subsection, Task, ChartSlice } from '@/types/priorities';
 import { PieChart as PieChartIcon, Target, Calendar, Save, Upload, ChevronDown, LogOut, User } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import defaultData from '@/data/defaultData.json';
+
 
 const Index = () => {
   const { toast } = useToast();
-  const [sections, setSections] = useState<Section[]>(defaultData.sections);
+  const [sections, setSections] = useState<Section[]>([]);
   const [user, setUser] = useState(null);
 
   const [hoveredSlice, setHoveredSlice] = useState<ChartSlice | null>(null);
@@ -37,7 +37,7 @@ const Index = () => {
       if (sectionsError) throw sectionsError;
 
       if (!sectionsData || sectionsData.length === 0) {
-        // No data in Supabase, keep default data
+        setSections([]);
         return;
       }
 
@@ -59,6 +59,7 @@ const Index = () => {
       const transformedSections = sectionsData.map(section => ({
         id: section.id,
         title: section.title,
+        color: (section as any).color || undefined,
         subsections: (subsectionsData || [])
           .filter(sub => sub.section_id === section.id)
           .map(subsection => ({
@@ -84,7 +85,7 @@ const Index = () => {
       console.error('Error loading from Supabase:', error);
       toast({
         title: "Error loading data",
-        description: "Failed to load data from Supabase. Using default data.",
+        description: "Failed to load data from Supabase.",
         variant: "destructive",
       });
     }
@@ -351,8 +352,12 @@ const Index = () => {
 
   const handleColorChange = async (sectionId: string, color: string) => {
     try {
-      // Note: Since color column doesn't exist in database yet, we'll just update local state
-      // This would need a migration to add color column to sections table
+      const { error } = await supabase
+        .from('sections')
+        .update({ color } as any)
+        .eq('id', sectionId);
+      if (error) throw error;
+
       setSections(prev => prev.map(section => {
         if (section.id === sectionId) {
           return { ...section, color };
@@ -410,7 +415,8 @@ const Index = () => {
           .insert({
             user_id: user.id,
             title: section.title,
-          })
+            color: section.color || null,
+          } as any)
           .select()
           .single();
 
@@ -491,7 +497,7 @@ const Index = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'defaultData.json';
+    a.download = 'priorities.json';
     a.click();
     URL.revokeObjectURL(url);
     
@@ -514,8 +520,8 @@ const Index = () => {
     URL.revokeObjectURL(url);
     
     toast({
-      title: "Success!",
-      description: "New priorities file saved. Add it to your /src/data/ folder if you want to keep it in the project.",
+      title: "Saved to Computer!",
+      description: "JSON file downloaded successfully to your computer.",
     });
   };
 
