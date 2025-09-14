@@ -188,8 +188,12 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover, onSliceClick }) 
   };
 
   return (
-    <div className="flex justify-center items-center">
-      <svg width="500" height="500" className="drop-shadow-soft">
+    <div className="flex justify-center items-center w-full">
+      <svg 
+        viewBox="0 0 500 500" 
+        className="drop-shadow-soft w-full h-auto max-w-md md:max-w-lg"
+        style={{ aspectRatio: '1/1' }}
+      >
         {chartData.map((slice, index) => (
           <g key={index}>
             <path

@@ -586,35 +586,36 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-bg">
       {/* Header */}
       <header className="bg-card/30 backdrop-blur-sm border-b border-border/50">
-        <div className="container mx-auto px-6 py-8">
-          <div className="flex items-center justify-between mb-2">
+        <div className="container mx-auto px-4 md:px-6 py-4 md:py-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-gradient-primary rounded-lg">
-                <Target className="w-6 h-6 text-white" />
+                <Target className="w-5 h-5 md:w-6 md:h-6 text-white" />
               </div>
-              <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+              <h1 className="text-xl md:text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
                 Life Priorities Dashboard
               </h1>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
               {user && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground mr-4">
+                <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
                   <User className="w-4 h-4" />
-                  {user.email}
+                  <span className="truncate max-w-32 md:max-w-none">{user.email}</span>
                 </div>
               )}
-              <Button onClick={handleSignOut} variant="outline" size="sm" className="gap-2">
-                <LogOut className="w-4 h-4" />
-                Sign Out
-              </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button className="gap-2">
-                    <Save className="w-4 h-4" />
-                    Save Data
-                    <ChevronDown className="w-4 h-4" />
-                  </Button>
-                </DropdownMenuTrigger>
+              <div className="flex gap-2">
+                <Button onClick={handleSignOut} variant="outline" size="sm" className="gap-1 md:gap-2">
+                  <LogOut className="w-4 h-4" />
+                  <span className="hidden md:inline">Sign Out</span>
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button className="gap-1 md:gap-2 text-sm">
+                      <Save className="w-4 h-4" />
+                      <span className="hidden sm:inline">Save</span>
+                      <ChevronDown className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
                 <DropdownMenuContent>
                   <DropdownMenuItem onClick={handleSaveToDatabase}>
                     to Supabase
@@ -624,14 +625,14 @@ const Index = () => {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="gap-2">
-                    <Upload className="w-4 h-4" />
-                    Load
-                    <ChevronDown className="w-4 h-4" />
-                  </Button>
-                </DropdownMenuTrigger>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="gap-1 md:gap-2 text-sm">
+                      <Upload className="w-4 h-4" />
+                      <span className="hidden sm:inline">Load</span>
+                      <ChevronDown className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
                 <DropdownMenuContent>
                   <DropdownMenuItem onClick={loadFromSupabase}>
                     from Supabase
@@ -640,7 +641,8 @@ const Index = () => {
                     from Computer
                   </DropdownMenuItem>
                 </DropdownMenuContent>
-              </DropdownMenu>
+                </DropdownMenu>
+              </div>
             </div>
           </div>
           <p className="text-muted-foreground">
@@ -650,8 +652,8 @@ const Index = () => {
       </header>
 
       {/* Stats Bar */}
-      <div className="container mx-auto px-6 py-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div className="container mx-auto px-4 md:px-6 py-4 md:py-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4 md:mb-8">
           <Card className="bg-card/50 backdrop-blur-sm border-border/50">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
@@ -696,14 +698,14 @@ const Index = () => {
         </div>
 
         {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-8">
           {/* Pie Chart */}
-          <div className="lg:col-span-2">
+          <div className="xl:col-span-2">
             <Card className="bg-card/50 backdrop-blur-sm border-border/50 h-fit">
               <CardHeader>
                 <CardTitle className="text-xl text-primary">Priority Visualization</CardTitle>
               </CardHeader>
-              <CardContent className="p-6">
+              <CardContent className="p-3 md:p-6">
                 {sections.length > 0 ? (
                   <PieChart 
                     sections={sections} 
@@ -728,7 +730,7 @@ const Index = () => {
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-8">
+          <div className="space-y-4 md:space-y-8">
             {/* Hover Info */}
             <HoverInfo 
               slice={pinnedSlice || hoveredSlice} 
