@@ -26,10 +26,20 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover, onSliceClick }) 
     
     if (sections.length === 0) return [];
 
+    // Calculate dynamic scaling based on text content
+    const maxTitleLength = Math.max(
+      ...sections.map(s => s.title.length),
+      ...sections.flatMap(s => s.subsections.map(sub => sub.title.length)),
+      ...sections.flatMap(s => s.subsections.flatMap(sub => sub.tasks.map(task => task.title.length)))
+    );
+    
+    // Scale factor based on content - minimum 1.0, increases with longer titles
+    const scaleFactor = Math.max(1.0, 1 + (maxTitleLength - 10) * 0.05);
+    
     let currentAngle = 0;
-    const baseRadius = 80;
-    const subsectionRadius = 140;
-    const taskRadius = 200;
+    const baseRadius = 80 * scaleFactor;
+    const subsectionRadius = 140 * scaleFactor;
+    const taskRadius = 200 * scaleFactor;
     
     // Each section gets equal portion of 360 degrees
     const sectionAngle = 360 / sections.length;
@@ -106,19 +116,30 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover, onSliceClick }) 
     return slices;
   }, [sections]);
 
-  const createPath = (startAngle: number, endAngle: number, innerRadius: number, outerRadius: number) => {
+  // Calculate dynamic dimensions based on content
+  const maxTitleLength = sections.length > 0 ? Math.max(
+    ...sections.map(s => s.title.length),
+    ...sections.flatMap(s => s.subsections.map(sub => sub.title.length)),
+    ...sections.flatMap(s => s.subsections.flatMap(sub => sub.tasks.map(task => task.title.length)))
+  ) : 10;
+  
+  const scaleFactor = Math.max(1.0, 1 + (maxTitleLength - 10) * 0.05);
+  const chartSize = 500 * scaleFactor;
+  const centerPoint = chartSize / 2;
+
+  const createPath = (startAngle: number, endAngle: number, innerRadius: number, outerRadius: number, centerX: number, centerY: number) => {
     const startAngleRad = (startAngle * Math.PI) / 180;
     const endAngleRad = (endAngle * Math.PI) / 180;
     
-    const x1 = 250 + innerRadius * Math.cos(startAngleRad);
-    const y1 = 250 + innerRadius * Math.sin(startAngleRad);
-    const x2 = 250 + outerRadius * Math.cos(startAngleRad);
-    const y2 = 250 + outerRadius * Math.sin(startAngleRad);
+    const x1 = centerX + innerRadius * Math.cos(startAngleRad);
+    const y1 = centerY + innerRadius * Math.sin(startAngleRad);
+    const x2 = centerX + outerRadius * Math.cos(startAngleRad);
+    const y2 = centerY + outerRadius * Math.sin(startAngleRad);
     
-    const x3 = 250 + outerRadius * Math.cos(endAngleRad);
-    const y3 = 250 + outerRadius * Math.sin(endAngleRad);
-    const x4 = 250 + innerRadius * Math.cos(endAngleRad);
-    const y4 = 250 + innerRadius * Math.sin(endAngleRad);
+    const x3 = centerX + outerRadius * Math.cos(endAngleRad);
+    const y3 = centerY + outerRadius * Math.sin(endAngleRad);
+    const x4 = centerX + innerRadius * Math.cos(endAngleRad);
+    const y4 = centerY + innerRadius * Math.sin(endAngleRad);
     
     const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
     
@@ -146,23 +167,23 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover, onSliceClick }) 
     onSliceClick?.(slice);
   };
 
-  const getInnerRadius = (level: string) => {
+  const getInnerRadius = (level: string, scaleFactor: number) => {
     switch (level) {
       case 'section': return 0;
-      case 'subsection': return 90;
-      case 'task': return 150;
+      case 'subsection': return 90 * scaleFactor;
+      case 'task': return 150 * scaleFactor;
       default: return 0;
     }
   };
 
-  const getTextPosition = (slice: ChartSlice) => {
+  const getTextPosition = (slice: ChartSlice, centerX: number, centerY: number, scaleFactor: number) => {
     const midAngle = (slice.startAngle + slice.endAngle) / 2;
     const midAngleRad = (midAngle * Math.PI) / 180;
-    const innerRadius = getInnerRadius(slice.level);
+    const innerRadius = getInnerRadius(slice.level, scaleFactor);
     const textRadius = (innerRadius + slice.radius) / 2;
     
-    const x = 250 + textRadius * Math.cos(midAngleRad);
-    const y = 250 + textRadius * Math.sin(midAngleRad);
+    const x = centerX + textRadius * Math.cos(midAngleRad);
+    const y = centerY + textRadius * Math.sin(midAngleRad);
     
     const angle = midAngle > 90 && midAngle < 270 ? midAngle + 180 : midAngle;
     return { x, y, angle };
@@ -190,7 +211,7 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover, onSliceClick }) 
   return (
     <div className="flex justify-center items-center w-full">
       <svg 
-        viewBox="0 0 500 500" 
+        viewBox={`0 0 ${chartSize} ${chartSize}`}
         className="drop-shadow-soft w-full h-auto max-w-md md:max-w-lg"
         style={{ aspectRatio: '1/1' }}
       >
@@ -200,8 +221,10 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover, onSliceClick }) 
               d={createPath(
                 slice.startAngle,
                 slice.endAngle,
-                getInnerRadius(slice.level),
-                slice.radius
+                getInnerRadius(slice.level, scaleFactor),
+                slice.radius,
+                centerPoint,
+                centerPoint
               )}
               fill={slice.color}
               stroke="white"
@@ -216,8 +239,8 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover, onSliceClick }) 
             />
             {shouldShowText(slice) && (
               <text
-                x={getTextPosition(slice).x}
-                y={getTextPosition(slice).y}
+                x={getTextPosition(slice, centerPoint, centerPoint, scaleFactor).x}
+                y={getTextPosition(slice, centerPoint, centerPoint, scaleFactor).y}
                 textAnchor="middle"
                 dominantBaseline="middle"
                 className="fill-foreground text-xs font-medium pointer-events-none"
