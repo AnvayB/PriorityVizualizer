@@ -60,17 +60,20 @@ const Index = () => {
         id: section.id,
         title: section.title,
         color: (section as any).color || undefined,
+        high_priority: section.high_priority || false,
         subsections: (subsectionsData || [])
           .filter(sub => sub.section_id === section.id)
           .map(subsection => ({
             id: subsection.id,
             title: subsection.title,
+            high_priority: subsection.high_priority || false,
             tasks: (tasksData || [])
               .filter(task => task.subsection_id === subsection.id)
               .map(task => ({
                 id: task.id,
                 title: task.title,
-                dueDate: task.due_date || ''
+                dueDate: task.due_date || '',
+                high_priority: task.high_priority || false
               }))
           }))
       }));
@@ -374,6 +377,69 @@ const Index = () => {
     }
   };
 
+  const handlePriorityChange = async (type: 'section' | 'subsection' | 'task', id: string, highPriority: boolean) => {
+    try {
+      // Update database
+      if (type === 'section') {
+        const { error } = await supabase
+          .from('sections')
+          .update({ high_priority: highPriority })
+          .eq('id', id);
+        if (error) throw error;
+      } else if (type === 'subsection') {
+        const { error } = await supabase
+          .from('subsections')
+          .update({ high_priority: highPriority })
+          .eq('id', id);
+        if (error) throw error;
+      } else if (type === 'task') {
+        const { error } = await supabase
+          .from('tasks')
+          .update({ high_priority: highPriority })
+          .eq('id', id);
+        if (error) throw error;
+      }
+
+      // Update local state
+      setSections(prev => prev.map(section => {
+        if (type === 'section' && section.id === id) {
+          return { ...section, high_priority: highPriority };
+        }
+        
+        return {
+          ...section,
+          subsections: section.subsections.map(subsection => {
+            if (type === 'subsection' && subsection.id === id) {
+              return { ...subsection, high_priority: highPriority };
+            }
+            
+            return {
+              ...subsection,
+              tasks: subsection.tasks.map(task => {
+                if (type === 'task' && task.id === id) {
+                  return { ...task, high_priority: highPriority };
+                }
+                return task;
+              })
+            };
+          })
+        };
+      }));
+
+      toast({
+        title: "Priority updated",
+        description: `${type} priority has been ${highPriority ? 'enabled' : 'disabled'}`,
+      });
+    } catch (error) {
+      console.error('Error updating priority:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update priority. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const totalTasks = sections.reduce((total, section) => 
     total + section.subsections.reduce((subTotal, subsection) => 
       subTotal + subsection.tasks.length, 0), 0);
@@ -416,6 +482,7 @@ const Index = () => {
             user_id: user.id,
             title: section.title,
             color: section.color || null,
+            high_priority: section.high_priority || false,
           } as any)
           .select()
           .single();
@@ -429,6 +496,7 @@ const Index = () => {
             .insert({
               section_id: sectionData.id,
               title: subsection.title,
+              high_priority: subsection.high_priority || false,
             })
             .select()
             .single();
@@ -441,6 +509,7 @@ const Index = () => {
               subsection_id: subsectionData.id,
               title: task.title,
               due_date: task.dueDate || null,
+              high_priority: task.high_priority || false,
             }));
 
             const { error: tasksError } = await supabase
@@ -737,6 +806,7 @@ const Index = () => {
               onEdit={handleEdit}
               onDelete={handleDelete}
               onColorChange={handleColorChange}
+              onPriorityChange={handlePriorityChange}
               onClose={() => setPinnedSlice(null)}
               isPinned={!!pinnedSlice}
             />

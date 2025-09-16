@@ -2,6 +2,7 @@ export interface Task {
   id: string;
   title: string;
   dueDate: string;
+  high_priority?: boolean;
 }
 
 export interface Subsection {
@@ -9,6 +10,7 @@ export interface Subsection {
   title: string;
   tasks: Task[];
   color?: string;
+  high_priority?: boolean;
 }
 
 export interface Section {
@@ -16,6 +18,7 @@ export interface Section {
   title: string;
   subsections: Subsection[];
   color?: string;
+  high_priority?: boolean;
 }
 
 export interface PriorityData {

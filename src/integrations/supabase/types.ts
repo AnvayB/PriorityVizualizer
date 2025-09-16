@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           color: string | null
           created_at: string
+          high_priority: boolean
           id: string
           title: string
           updated_at: string
@@ -26,6 +27,7 @@ export type Database = {
         Insert: {
           color?: string | null
           created_at?: string
+          high_priority?: boolean
           id?: string
           title: string
           updated_at?: string
@@ -34,6 +36,7 @@ export type Database = {
         Update: {
           color?: string | null
           created_at?: string
+          high_priority?: boolean
           id?: string
           title?: string
           updated_at?: string
@@ -44,6 +47,7 @@ export type Database = {
       subsections: {
         Row: {
           created_at: string
+          high_priority: boolean
           id: string
           section_id: string
           title: string
@@ -51,6 +55,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          high_priority?: boolean
           id?: string
           section_id: string
           title: string
@@ -58,6 +63,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          high_priority?: boolean
           id?: string
           section_id?: string
           title?: string
@@ -78,6 +84,7 @@ export type Database = {
           completed: boolean
           created_at: string
           due_date: string | null
+          high_priority: boolean
           id: string
           subsection_id: string
           title: string
@@ -87,6 +94,7 @@ export type Database = {
           completed?: boolean
           created_at?: string
           due_date?: string | null
+          high_priority?: boolean
           id?: string
           subsection_id: string
           title: string
@@ -96,6 +104,7 @@ export type Database = {
           completed?: boolean
           created_at?: string
           due_date?: string | null
+          high_priority?: boolean
           id?: string
           subsection_id?: string
           title?: string

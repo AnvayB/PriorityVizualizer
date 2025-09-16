@@ -3,21 +3,23 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { ChartSlice } from '@/types/priorities';
-import { Calendar, CheckCircle, Clock, Edit, Trash2, Palette, X } from 'lucide-react';
+import { Calendar, CheckCircle, Clock, Edit, Trash2, Palette, X, AlertTriangle } from 'lucide-react';
 
 interface HoverInfoProps {
   slice: ChartSlice | null;
   onEdit?: (type: 'section' | 'subsection' | 'task', id: string, newTitle: string, newDueDate?: string) => void;
   onDelete?: (type: 'section' | 'subsection' | 'task', sectionId: string, subsectionId?: string, taskId?: string) => void;
   onColorChange?: (sectionId: string, color: string) => void;
+  onPriorityChange?: (type: 'section' | 'subsection' | 'task', id: string, highPriority: boolean) => void;
   onClose?: () => void;
   isPinned?: boolean;
 }
 
-const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorChange, onClose, isPinned }) => {
+const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorChange, onPriorityChange, onClose, isPinned }) => {
   const [editTitle, setEditTitle] = useState('');
   const [editDueDate, setEditDueDate] = useState('');
   const [selectedColor, setSelectedColor] = useState('#3b82f6');
@@ -83,6 +85,29 @@ const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorC
     if (!slice || !onColorChange) return;
     onColorChange(slice.section.id, color);
     setIsColorOpen(false);
+  };
+
+  const handlePriorityChange = (checked: boolean) => {
+    if (!slice || !onPriorityChange) return;
+    
+    let id = '';
+    if (slice.level === 'section') {
+      id = slice.section.id;
+    } else if (slice.level === 'subsection' && slice.subsection) {
+      id = slice.subsection.id;
+    } else if (slice.level === 'task' && slice.task) {
+      id = slice.task.id;
+    }
+    
+    onPriorityChange(slice.level, id, checked);
+  };
+
+  const getCurrentPriority = () => {
+    if (!slice) return false;
+    if (slice.level === 'section') return slice.section.high_priority || false;
+    if (slice.level === 'subsection') return slice.subsection?.high_priority || false;
+    if (slice.level === 'task') return slice.task?.high_priority || false;
+    return false;
   };
   if (!slice) {
     return (
@@ -328,6 +353,28 @@ const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorC
             </div>
           </div>
         )}
+        
+        <div className="space-y-3 pt-4 border-t border-border/50">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="high-priority"
+              checked={getCurrentPriority()}
+              onCheckedChange={handlePriorityChange}
+            />
+            <label
+              htmlFor="high-priority"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2"
+            >
+              <AlertTriangle className="w-4 h-4 text-red-500" />
+              High Priority
+            </label>
+          </div>
+          {getCurrentPriority() && (
+            <p className="text-xs text-muted-foreground ml-6">
+              This {slice.level} will display with a red border in the chart
+            </p>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

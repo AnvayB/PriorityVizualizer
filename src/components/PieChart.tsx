@@ -208,6 +208,13 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover, onSliceClick }) 
     return angleDiff > 15; // Show text only if slice is larger than 15 degrees
   };
 
+  const getIsHighPriority = (slice: ChartSlice) => {
+    if (slice.level === 'section') return slice.section.high_priority || false;
+    if (slice.level === 'subsection') return slice.subsection?.high_priority || false;
+    if (slice.level === 'task') return slice.task?.high_priority || false;
+    return false;
+  };
+
   return (
     <div className="flex justify-center items-center w-full">
       <svg 
@@ -237,6 +244,22 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover, onSliceClick }) 
               onMouseLeave={handleMouseLeave}
               onClick={() => handleSliceClick(slice)}
             />
+            {getIsHighPriority(slice) && (
+              <path
+                d={createPath(
+                  slice.startAngle,
+                  slice.endAngle,
+                  getInnerRadius(slice.level, scaleFactor),
+                  slice.radius,
+                  centerPoint,
+                  centerPoint
+                )}
+                fill="none"
+                stroke="#ef4444"
+                strokeWidth="4"
+                className="pointer-events-none"
+              />
+            )}
             {shouldShowText(slice) && (
               <text
                 x={getTextPosition(slice, centerPoint, centerPoint, scaleFactor).x}
