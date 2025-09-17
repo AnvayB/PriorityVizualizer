@@ -7,7 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { ChartSlice } from '@/types/priorities';
-import { Calendar, CheckCircle, Clock, Edit, Trash2, Palette, X, AlertTriangle } from 'lucide-react';
+import { Calendar, CheckCircle, Clock, Edit, Trash2, Palette, X, AlertTriangle, Check } from 'lucide-react';
 
 interface HoverInfoProps {
   slice: ChartSlice | null;
@@ -15,11 +15,12 @@ interface HoverInfoProps {
   onDelete?: (type: 'section' | 'subsection' | 'task', sectionId: string, subsectionId?: string, taskId?: string) => void;
   onColorChange?: (sectionId: string, color: string) => void;
   onPriorityChange?: (type: 'section' | 'subsection' | 'task', id: string, highPriority: boolean) => void;
+  onComplete?: (type: 'section' | 'subsection' | 'task', id: string) => void;
   onClose?: () => void;
   isPinned?: boolean;
 }
 
-const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorChange, onPriorityChange, onClose, isPinned }) => {
+const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorChange, onPriorityChange, onComplete, onClose, isPinned }) => {
   const [editTitle, setEditTitle] = useState('');
   const [editDueDate, setEditDueDate] = useState('');
   const [selectedColor, setSelectedColor] = useState('#3b82f6');
@@ -100,6 +101,21 @@ const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorC
     }
     
     onPriorityChange(slice.level, id, checked);
+  };
+
+  const handleComplete = () => {
+    if (!slice || !onComplete) return;
+    
+    let id = '';
+    if (slice.level === 'section') {
+      id = slice.section.id;
+    } else if (slice.level === 'subsection' && slice.subsection) {
+      id = slice.subsection.id;
+    } else if (slice.level === 'task' && slice.task) {
+      id = slice.task.id;
+    }
+    
+    onComplete(slice.level, id);
   };
 
   const getCurrentPriority = () => {
@@ -237,6 +253,11 @@ const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorC
               </DialogContent>
             </Dialog>
           )}
+
+          <Button variant="outline" size="sm" onClick={handleComplete}>
+            <Check className="w-3 h-3 mr-1" />
+            Complete
+          </Button>
 
           <AlertDialog>
             <AlertDialogTrigger asChild>

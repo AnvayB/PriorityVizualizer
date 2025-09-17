@@ -5,6 +5,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import PieChart from '@/components/PieChart';
 import PriorityForm from '@/components/PriorityForm';
 import HoverInfo from '@/components/HoverInfo';
+import CompletionCounter from '@/components/CompletionCounter';
 import { Section, Subsection, Task, ChartSlice } from '@/types/priorities';
 import { PieChart as PieChartIcon, Target, Calendar, Save, Upload, ChevronDown, LogOut, User } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -18,6 +19,7 @@ const Index = () => {
 
   const [hoveredSlice, setHoveredSlice] = useState<ChartSlice | null>(null);
   const [pinnedSlice, setPinnedSlice] = useState<ChartSlice | null>(null);
+  const [completionCount, setCompletionCount] = useState(0);
 
   // Load data from Supabase
   const loadFromSupabase = async () => {
@@ -93,6 +95,25 @@ const Index = () => {
       });
     }
   };
+
+  // Load completion count from localStorage
+  useEffect(() => {
+    const today = new Date().toDateString();
+    const storedData = localStorage.getItem('dailyCompletions');
+    
+    if (storedData) {
+      const { date, count } = JSON.parse(storedData);
+      if (date === today) {
+        setCompletionCount(count);
+      } else {
+        // New day, reset counter
+        setCompletionCount(0);
+        localStorage.setItem('dailyCompletions', JSON.stringify({ date: today, count: 0 }));
+      }
+    } else {
+      localStorage.setItem('dailyCompletions', JSON.stringify({ date: today, count: 0 }));
+    }
+  }, []);
 
   // Auth state management and data loading
   useEffect(() => {
@@ -456,6 +477,21 @@ const Index = () => {
     }
   };
 
+  const handleComplete = (type: 'section' | 'subsection' | 'task', id: string) => {
+    // Increment completion counter
+    const newCount = completionCount + 1;
+    setCompletionCount(newCount);
+    
+    // Update localStorage
+    const today = new Date().toDateString();
+    localStorage.setItem('dailyCompletions', JSON.stringify({ date: today, count: newCount }));
+    
+    toast({
+      title: "Completed!",
+      description: `Marked ${type} as complete. Great job!`,
+    });
+  };
+
   const totalTasks = sections.reduce((total, section) => 
     total + section.subsections.reduce((subTotal, subsection) => 
       subTotal + subsection.tasks.length, 0), 0);
@@ -736,9 +772,9 @@ const Index = () => {
         </div>
       </header>
 
-      {/* Stats Bar */}
+        {/* Stats Bar */}
       <div className="container mx-auto px-4 md:px-6 py-4 md:py-6">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4 md:mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-4 md:mb-8">
           <Card className="bg-card/50 backdrop-blur-sm border-border/50">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
@@ -780,6 +816,8 @@ const Index = () => {
               </div>
             </CardContent>
           </Card>
+
+          <CompletionCounter count={completionCount} />
         </div>
 
         {/* Main Content */}
@@ -823,6 +861,7 @@ const Index = () => {
               onDelete={handleDelete}
               onColorChange={handleColorChange}
               onPriorityChange={handlePriorityChange}
+              onComplete={handleComplete}
               onClose={() => setPinnedSlice(null)}
               isPinned={!!pinnedSlice}
             />
