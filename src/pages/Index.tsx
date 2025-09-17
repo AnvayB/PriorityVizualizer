@@ -477,18 +477,64 @@ const Index = () => {
     }
   };
 
-  const handleComplete = (type: 'section' | 'subsection' | 'task', id: string) => {
-    // Increment completion counter
-    const newCount = completionCount + 1;
+  const handleComplete = async (type: 'section' | 'subsection' | 'task', id: string) => {
+    let tasksCompletedCount = 0;
+    
+    // Calculate how many tasks are being completed
+    if (type === 'task') {
+      tasksCompletedCount = 1;
+    } else if (type === 'subsection') {
+      const subsection = sections
+        .flatMap(s => s.subsections)
+        .find(sub => sub.id === id);
+      tasksCompletedCount = subsection?.tasks.length || 0;
+    } else if (type === 'section') {
+      const section = sections.find(s => s.id === id);
+      tasksCompletedCount = section?.subsections.reduce((total, sub) => total + sub.tasks.length, 0) || 0;
+    }
+    
+    // Update completion counter
+    const newCount = completionCount + tasksCompletedCount;
     setCompletionCount(newCount);
     
     // Update localStorage
     const today = new Date().toDateString();
     localStorage.setItem('dailyCompletions', JSON.stringify({ date: today, count: newCount }));
     
+    // Remove completed item(s) using handleDelete
+    if (type === 'task') {
+      // Find the task to get its parent info
+      let sectionId = '';
+      let subsectionId = '';
+      
+      sections.forEach(section => {
+        section.subsections.forEach(subsection => {
+          if (subsection.tasks.some(task => task.id === id)) {
+            sectionId = section.id;
+            subsectionId = subsection.id;
+          }
+        });
+      });
+      
+      if (sectionId && subsectionId) {
+        await handleDelete('task', sectionId, subsectionId, id);
+      }
+    } else if (type === 'subsection') {
+      // Find the subsection's parent section
+      const parentSection = sections.find(section => 
+        section.subsections.some(sub => sub.id === id)
+      );
+      
+      if (parentSection) {
+        await handleDelete('subsection', parentSection.id, id);
+      }
+    } else if (type === 'section') {
+      await handleDelete('section', id);
+    }
+    
     toast({
       title: "Completed!",
-      description: `Marked ${type} as complete. Great job!`,
+      description: `Completed ${tasksCompletedCount} task${tasksCompletedCount !== 1 ? 's' : ''}. Great job!`,
     });
   };
 
