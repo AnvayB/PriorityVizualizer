@@ -387,11 +387,19 @@ const Index = () => {
           .eq('id', id);
         if (error) throw error;
       } else if (type === 'subsection') {
-        const { error } = await supabase
+        // Update the subsection priority
+        const { error: subsectionError } = await supabase
           .from('subsections')
           .update({ high_priority: highPriority })
           .eq('id', id);
-        if (error) throw error;
+        if (subsectionError) throw subsectionError;
+
+        // Cascade to all tasks in this subsection
+        const { error: tasksError } = await supabase
+          .from('tasks')
+          .update({ high_priority: highPriority })
+          .eq('subsection_id', id);
+        if (tasksError) throw tasksError;
       } else if (type === 'task') {
         const { error } = await supabase
           .from('tasks')
@@ -410,7 +418,15 @@ const Index = () => {
           ...section,
           subsections: section.subsections.map(subsection => {
             if (type === 'subsection' && subsection.id === id) {
-              return { ...subsection, high_priority: highPriority };
+              // When updating subsection priority, cascade to all its tasks
+              return { 
+                ...subsection, 
+                high_priority: highPriority,
+                tasks: subsection.tasks.map(task => ({
+                  ...task,
+                  high_priority: highPriority
+                }))
+              };
             }
             
             return {
