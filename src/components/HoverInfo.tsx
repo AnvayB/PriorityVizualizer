@@ -261,9 +261,8 @@ const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorC
 
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="outline" size="sm">
-                <Trash2 className="w-3 h-3 mr-1" />
-                Delete
+              <Button variant="outline" size="sm" className="px-2" title="Delete">
+                <Trash2 className="w-4 h-4" />
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>

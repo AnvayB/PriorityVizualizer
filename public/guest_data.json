@@ -1,0 +1,316 @@
+{
+    "sections": [
+        {
+            "id": "f7f9d2c3-6c6e-4a0a-9b24-4d5a8c1f0a01",
+            "title": "Work / School",
+            "color": "#60a5fa",
+            "subsections": [
+                {
+                    "id": "a1b2c3d4-1111-4444-8888-000000000001",
+                    "title": "Planning",
+                    "tasks": [
+                        {
+                            "id": "c1d2e3f4-0001-0002-0003-000000000001",
+                            "title": "Weekly planning session",
+                            "dueDate": "2025-09-19"
+                        },
+                        {
+                            "id": "c1d2e3f4-0001-0002-0003-000000000002",
+                            "title": "Inbox zero sweep",
+                            "dueDate": "2025-09-21"
+                        }
+                    ]
+                },
+                {
+                    "id": "a1b2c3d4-1111-4444-8888-000000000002",
+                    "title": "Deep Work",
+                    "tasks": [
+                        {
+                            "id": "c1d2e3f4-0001-0002-0003-000000000003",
+                            "title": "Focus block — priority project",
+                            "dueDate": "2025-09-20"
+                        },
+                        {
+                            "id": "c1d2e3f4-0001-0002-0003-000000000004",
+                            "title": "Draft weekly status update",
+                            "dueDate": "2025-09-23"
+                        }
+                    ]
+                },
+                {
+                    "id": "a1b2c3d4-1111-4444-8888-000000000003",
+                    "title": "Meetings / Classes",
+                    "tasks": [
+                        {
+                            "id": "c1d2e3f4-0001-0002-0003-000000000005",
+                            "title": "Team sync",
+                            "dueDate": "2025-09-19"
+                        },
+                        {
+                            "id": "c1d2e3f4-0001-0002-0003-000000000006",
+                            "title": "1:1 check-in",
+                            "dueDate": "2025-09-22"
+                        },
+                        {
+                            "id": "c1d2e3f4-0001-0002-0003-000000000007",
+                            "title": "Study group",
+                            "dueDate": "2025-09-24"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "7b8c9d0e-3f57-4a1c-8d46-8b8c7d6e0a03",
+            "title": "Home & Chores",
+            "color": "#f59e0b",
+            "subsections": [
+                {
+                    "id": "c3d4e5f6-3333-6666-aaaa-000000000001",
+                    "title": "Cleaning",
+                    "tasks": [
+                        {
+                            "id": "e3f4g5h6-0001-0002-0003-000000000001",
+                            "title": "Laundry",
+                            "dueDate": "2025-09-20"
+                        },
+                        {
+                            "id": "e3f4g5h6-0001-0002-0003-000000000002",
+                            "title": "Vacuum & dust",
+                            "dueDate": "2025-09-21"
+                        }
+                    ]
+                },
+                {
+                    "id": "c3d4e5f6-3333-6666-aaaa-000000000002",
+                    "title": "Errands",
+                    "tasks": [
+                        {
+                            "id": "e3f4g5h6-0001-0002-0003-000000000003",
+                            "title": "Grocery run",
+                            "dueDate": "2025-09-19"
+                        },
+                        {
+                            "id": "e3f4g5h6-0001-0002-0003-000000000004",
+                            "title": "Pharmacy pickup",
+                            "dueDate": "2025-09-20"
+                        }
+                    ]
+                },
+                {
+                    "id": "c3d4e5f6-3333-6666-aaaa-000000000003",
+                    "title": "Maintenance",
+                    "tasks": [
+                        {
+                            "id": "e3f4g5h6-0001-0002-0003-000000000005",
+                            "title": "Change HVAC filter",
+                            "dueDate": "2025-09-30"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "1e2f3a41-6c8a-4d4f-a079-1e1f0a9f0a06",
+            "title": "Personal Growth",
+            "color": "#8b5cf6",
+            "subsections": [
+                {
+                    "id": "f6g7h8i9-6666-9999-dddd-000000000001",
+                    "title": "Learning",
+                    "tasks": [
+                        {
+                            "id": "h6i7j8k9-0001-0002-0003-000000000001",
+                            "title": "Read 20 pages (any book)",
+                            "dueDate": "2025-09-19"
+                        },
+                        {
+                            "id": "h6i7j8k9-0001-0002-0003-000000000002",
+                            "title": "Online course module",
+                            "dueDate": "2025-09-23"
+                        }
+                    ]
+                },
+                {
+                    "id": "f6g7h8i9-6666-9999-dddd-000000000002",
+                    "title": "Reflection",
+                    "tasks": [
+                        {
+                            "id": "h6i7j8k9-0001-0002-0003-000000000003",
+                            "title": "Journal for 10 minutes",
+                            "dueDate": "2025-09-20"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "0f1a2b32-7d9b-4e50-b18a-2f2f1b0f0a07",
+            "title": "Social & Fun",
+            "color": "#ef4444",
+            "subsections": [
+                {
+                    "id": "g7h8i9j0-7777-aaaa-eeee-000000000001",
+                    "title": "Connections",
+                    "tasks": [
+                        {
+                            "id": "i7j8k9l0-0001-0002-0003-000000000001",
+                            "title": "Plan weekend hangout",
+                            "dueDate": "2025-09-21"
+                        }
+                    ]
+                },
+                {
+                    "id": "g7h8i9j0-7777-aaaa-eeee-000000000002",
+                    "title": "Hobbies",
+                    "tasks": [
+                        {
+                            "id": "i7j8k9l0-0001-0002-0003-000000000002",
+                            "title": "Practice instrument / creative hobby",
+                            "dueDate": "2025-09-22"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "bd4cd5e6-9fbd-4a72-b3ac-4b4f3d2f0a09",
+            "title": "Meal Planning",
+            "color": "#f97316",
+            "subsections": [
+                {
+                    "id": "i9j0k1l2-9999-cccc-1111-000000000001",
+                    "title": "Prep",
+                    "tasks": [
+                        {
+                            "id": "k9l0m1n2-0001-0002-0003-000000000001",
+                            "title": "Plan 3 dinners",
+                            "dueDate": "2025-09-19"
+                        },
+                        {
+                            "id": "k9l0m1n2-0001-0002-0003-000000000002",
+                            "title": "Grocery list",
+                            "dueDate": "2025-09-19"
+                        }
+                    ]
+                },
+                {
+                    "id": "i9j0k1l2-9999-cccc-1111-000000000002",
+                    "title": "Cooking",
+                    "tasks": [
+                        {
+                            "id": "k9l0m1n2-0001-0002-0003-000000000003",
+                            "title": "Batch cook grains & veggies",
+                            "dueDate": "2025-09-21"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "ef7f0819-c1e0-4da5-b6df-7e7f604f0a12",
+            "title": "Digital Life",
+            "color": "#64748b",
+            "subsections": [
+                {
+                    "id": "l2m3n4o5-cccc-ffff-4444-000000000001",
+                    "title": "Maintenance",
+                    "tasks": [
+                        {
+                            "id": "n2o3p4q5-0001-0002-0003-000000000001",
+                            "title": "Backup photos / files",
+                            "dueDate": "2025-09-22"
+                        },
+                        {
+                            "id": "n2o3p4q5-0001-0002-0003-000000000002",
+                            "title": "Update passwords (1 item)",
+                            "dueDate": "2025-09-24"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "012a23bb-e402-4fc7-b801-9090715f0a14",
+            "title": "Self-Care",
+            "color": "#fb7185",
+            "subsections": [
+                {
+                    "id": "n4o5p6q7-eeee-2222-6666-000000000001",
+                    "title": "Wellbeing",
+                    "tasks": [
+                        {
+                            "id": "p4q5r6s7-0001-0002-0003-000000000001",
+                            "title": "Meditation (10 min)",
+                            "dueDate": "2025-09-19"
+                        },
+                        {
+                            "id": "p4q5r6s7-0001-0002-0003-000000000002",
+                            "title": "Early lights-out",
+                            "dueDate": "2025-09-20"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "123b34cc-f513-4fd8-b912-a1a1826f0a15",
+            "title": "Pets / Plants",
+            "color": "#84cc16",
+            "subsections": [
+                {
+                    "id": "o5p6q7r8-ffff-3333-7777-000000000001",
+                    "title": "Care",
+                    "tasks": [
+                        {
+                            "id": "q5r6s7t8-0001-0002-0003-000000000001",
+                            "title": "Walks / playtime",
+                            "dueDate": "2025-09-19"
+                        },
+                        {
+                            "id": "q5r6s7t8-0001-0002-0003-000000000002",
+                            "title": "Water plants",
+                            "dueDate": "2025-09-20"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "345d56ee-1725-400a-bb34-c3c3a48f0a17",
+            "title": "Job Search",
+            "color": "#22d3ee",
+            "subsections": [
+                {
+                    "id": "q7r8s9t0-2222-5555-9999-000000000020",
+                    "title": "Applications",
+                    "tasks": [
+                        {
+                            "id": "s7t8u9v0-0001-0002-0003-000000000001",
+                            "title": "Send 3 tailored resumes",
+                            "dueDate": "2025-09-20"
+                        },
+                        {
+                            "id": "s7t8u9v0-0001-0002-0003-000000000002",
+                            "title": "Follow up on last week’s apps",
+                            "dueDate": "2025-09-22"
+                        }
+                    ]
+                },
+                {
+                    "id": "q7r8s9t0-2222-5555-9999-000000000021",
+                    "title": "Networking",
+                    "tasks": [
+                        {
+                            "id": "s7t8u9v0-0001-0002-0003-000000000003",
+                            "title": "Reach out to 2 contacts",
+                            "dueDate": "2025-09-21"
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "exportDate": "2025-09-18T12:30:00.000Z",
+    "version": "1.0"
+}

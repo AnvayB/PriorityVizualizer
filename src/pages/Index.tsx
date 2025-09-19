@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -22,7 +22,7 @@ const Index = () => {
   const [completionCount, setCompletionCount] = useState(0);
 
   // Load data from Supabase
-  const loadFromSupabase = async () => {
+  const loadFromSupabase = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
@@ -61,7 +61,7 @@ const Index = () => {
       const transformedSections = sectionsData.map(section => ({
         id: section.id,
         title: section.title,
-        color: (section as any).color || undefined,
+        color: section.color || undefined,
         high_priority: section.high_priority || false,
         subsections: (subsectionsData || [])
           .filter(sub => sub.section_id === section.id)
@@ -94,7 +94,7 @@ const Index = () => {
         variant: "destructive",
       });
     }
-  };
+  }, [toast]);
 
   // Load completion count from localStorage
   useEffect(() => {
@@ -126,7 +126,7 @@ const Index = () => {
       }
     };
     getUser();
-  }, []);
+  }, [loadFromSupabase]);
 
   const generateId = () => {
     return Math.random().toString(36).substr(2, 9);
@@ -378,7 +378,7 @@ const Index = () => {
     try {
       const { error } = await supabase
         .from('sections')
-        .update({ color } as any)
+          .update({ color })
         .eq('id', sectionId);
       if (error) throw error;
 
@@ -581,7 +581,7 @@ const Index = () => {
             title: section.title,
             color: section.color || null,
             high_priority: section.high_priority || false,
-          } as any)
+          })
           .select()
           .single();
 
@@ -733,6 +733,53 @@ const Index = () => {
     input.click();
   };
 
+  // Check if current user is guest user
+  const isGuestUser = () => {
+    return user?.email === 'guest@example.com';
+  };
+
+  // Load guest data from JSON file
+  const handleLoadGuestData = async () => {
+    if (!isGuestUser()) {
+      toast({
+        title: "Access Denied",
+        description: "Guest data is only available for guest users.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Import the guest data file
+      const response = await fetch('/guest_data.json');
+      if (!response.ok) {
+        throw new Error('Failed to load guest data file');
+      }
+      
+      const data = await response.json();
+      const sectionsData = data.sections || data;
+      
+      if (Array.isArray(sectionsData)) {
+        setSections(sectionsData);
+        setPinnedSlice(null); // Clear any pinned slice
+        
+        toast({
+          title: "Guest Data Loaded!",
+          description: "Sample priorities have been loaded for exploration and editing.",
+        });
+      } else {
+        throw new Error("Invalid guest data format");
+      }
+    } catch (error) {
+      console.error('Error loading guest data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load guest data. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
@@ -807,6 +854,11 @@ const Index = () => {
                   <DropdownMenuItem onClick={handleLoadFromFile}>
                     from Computer
                   </DropdownMenuItem>
+                  {isGuestUser() && (
+                    <DropdownMenuItem onClick={handleLoadGuestData}>
+                      Guest Data
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuContent>
                 </DropdownMenu>
               </div>

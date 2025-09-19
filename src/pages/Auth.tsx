@@ -91,6 +91,31 @@ const Auth = () => {
     }
   };
 
+  const handleGuestLogin = async () => {
+    setLoading(true);
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email: 'guest@example.com',
+      password: 'guestuser',
+    });
+
+    setLoading(false);
+
+    if (error) {
+      toast({
+        title: "Guest login failed",
+        description: "Guest account may not be set up. Please create a regular account.",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Welcome Guest!",
+        description: "You can now explore the guest data feature.",
+      });
+      navigate('/');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-bg flex items-center justify-center p-6">
       <div className="w-full max-w-md">
@@ -205,6 +230,25 @@ const Auth = () => {
                 </form>
               </TabsContent>
             </Tabs>
+            
+            <div className="mt-6 pt-6 border-t border-border/50">
+              <div className="text-center space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  Want to try the demo?
+                </p>
+                <Button 
+                  onClick={handleGuestLogin} 
+                  variant="outline" 
+                  className="w-full"
+                  disabled={loading}
+                >
+                  {loading ? "Signing in..." : "Continue as Guest"}
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  Guest users can access sample data for testing
+                </p>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
