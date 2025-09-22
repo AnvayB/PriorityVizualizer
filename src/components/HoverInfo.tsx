@@ -391,7 +391,7 @@ const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorC
           </div>
           {getCurrentPriority() && (
             <p className="text-xs text-muted-foreground ml-6">
-              This {slice.level} will display with a red border in the chart
+              This {slice.level} will display with a black border in the chart
             </p>
           )}
         </div>

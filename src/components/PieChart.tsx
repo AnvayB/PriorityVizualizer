@@ -255,8 +255,8 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover, onSliceClick }) 
                   centerPoint
                 )}
                 fill="none"
-                stroke="#ef4444"
-                strokeWidth="4"
+                stroke="#000000"
+                strokeWidth="6"
                 className="pointer-events-none"
               />
             )}
