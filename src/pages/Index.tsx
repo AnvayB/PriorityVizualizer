@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import PieChart from '@/components/PieChart';
 import PriorityForm from '@/components/PriorityForm';
 import HoverInfo from '@/components/HoverInfo';
 import CompletionCounter from '@/components/CompletionCounter';
 import { Section, Subsection, Task, ChartSlice } from '@/types/priorities';
-import { PieChart as PieChartIcon, Target, Calendar, Save, Upload, ChevronDown, LogOut, User } from 'lucide-react';
+import { PieChart as PieChartIcon, Target, Calendar, Save, Upload, ChevronDown, LogOut, User, Clock, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -20,6 +22,7 @@ const Index = () => {
   const [hoveredSlice, setHoveredSlice] = useState<ChartSlice | null>(null);
   const [pinnedSlice, setPinnedSlice] = useState<ChartSlice | null>(null);
   const [completionCount, setCompletionCount] = useState(0);
+  const [isDueSoonModalOpen, setIsDueSoonModalOpen] = useState(false);
 
   // Load data from Supabase
   const loadFromSupabase = useCallback(async () => {
@@ -550,9 +553,40 @@ const Index = () => {
         const threeDaysFromNow = new Date();
         threeDaysFromNow.setDate(today.getDate() + 3);
         return dueDate >= today && dueDate <= threeDaysFromNow;
-      })
+      }).map(task => ({
+        ...task,
+        sectionTitle: section.title,
+        subsectionTitle: subsection.title,
+        sectionId: section.id,
+        subsectionId: subsection.id
+      }))
     )
   );
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  };
+
+  const isOverdue = (dateString: string) => {
+    const dueDate = new Date(dateString);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return dueDate < today;
+  };
+
+  const getDaysUntilDue = (dateString: string) => {
+    const dueDate = new Date(dateString);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const diffTime = dueDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
 
   const handleSaveToDatabase = async () => {
     try {
@@ -901,19 +935,97 @@ const Index = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-card/50 backdrop-blur-sm border-border/50">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-warning/20 rounded-lg">
+          <Dialog open={isDueSoonModalOpen} onOpenChange={setIsDueSoonModalOpen}>
+            <DialogTrigger asChild>
+              <Card className="bg-card/50 backdrop-blur-sm border-2 border-warning/30 cursor-pointer hover:bg-card/70 hover:border-warning/50 hover:shadow-lg hover:shadow-warning/10 transition-all duration-200 group">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-warning/20 rounded-lg group-hover:bg-warning/30 transition-colors">
+                      <Calendar className="w-5 h-5 text-warning group-hover:scale-110 transition-transform" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-foreground">{upcomingTasks.length}</p>
+                      <p className="text-sm text-muted-foreground group-hover:text-warning/80 transition-colors">Due Soon</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </DialogTrigger>
+            <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
                   <Calendar className="w-5 h-5 text-warning" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-foreground">{upcomingTasks.length}</p>
-                  <p className="text-sm text-muted-foreground">Due Soon</p>
-                </div>
+                  Due Soon ({upcomingTasks.length})
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                {upcomingTasks.length === 0 ? (
+                  <div className="text-center py-8">
+                    <div className="p-4 bg-muted/50 rounded-full w-fit mx-auto mb-4">
+                      <Calendar className="w-12 h-12 text-muted-foreground" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-foreground mb-2">No Upcoming Tasks</h3>
+                    <p className="text-muted-foreground">All caught up! No tasks due in the next 3 days.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <p className="text-sm text-muted-foreground">
+                      You have {upcomingTasks.length} task{upcomingTasks.length !== 1 ? 's' : ''} due within the next 3 days.
+                    </p>
+                    <div className="space-y-3">
+                      {upcomingTasks
+                        .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+                        .map((task) => {
+                          const daysUntil = getDaysUntilDue(task.dueDate);
+                          const overdue = isOverdue(task.dueDate);
+                          
+                          return (
+                            <div key={`${task.sectionId}-${task.subsectionId}-${task.id}`} className="flex items-start gap-3 p-4 bg-muted/30 rounded-lg border-l-4" style={{borderLeftColor: overdue ? '#ef4444' : daysUntil <= 1 ? '#f59e0b' : '#3b82f6'}}>
+                              <div className="p-2 bg-background rounded-lg">
+                                {overdue ? (
+                                  <AlertTriangle className="w-4 h-4 text-destructive" />
+                                ) : (
+                                  <Clock className="w-4 h-4 text-warning" />
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="flex-1 min-w-0">
+                                    <h4 className="font-medium text-foreground truncate">{task.title}</h4>
+                                    <p className="text-sm text-muted-foreground">
+                                      {task.sectionTitle} → {task.subsectionTitle}
+                                    </p>
+                                  </div>
+                                  <div className="flex flex-col items-end gap-1">
+                                    <Badge 
+                                      variant={overdue ? 'destructive' : daysUntil <= 1 ? 'secondary' : 'outline'}
+                                      className="text-xs whitespace-nowrap"
+                                    >
+                                      {overdue ? 'Overdue' : daysUntil === 0 ? 'Today' : daysUntil === 1 ? 'Tomorrow' : `${daysUntil} days`}
+                                    </Badge>
+                                    {task.high_priority && (
+                                      <Badge variant="destructive" className="text-xs">
+                                        High Priority
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-1 mt-2">
+                                  <Calendar className="w-3 h-3 text-muted-foreground" />
+                                  <span className="text-xs text-muted-foreground">
+                                    Due: {formatDate(task.dueDate)}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </div>
+                )}
               </div>
-            </CardContent>
-          </Card>
+            </DialogContent>
+          </Dialog>
 
           <CompletionCounter count={completionCount} />
         </div>
