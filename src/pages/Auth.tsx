@@ -128,7 +128,7 @@ const Auth = () => {
             </div>
             <div>
               <CardTitle className="text-2xl bg-gradient-primary bg-clip-text text-transparent">
-                Life Priorities Dashboard
+                Priority Vizualizer
               </CardTitle>
               <p className="text-muted-foreground mt-2">
                 Sign in to save and manage your priorities

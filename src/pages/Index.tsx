@@ -841,7 +841,7 @@ const Index = () => {
                 <Target className="w-5 h-5 md:w-6 md:h-6 text-white" />
               </div>
               <h1 className="text-xl md:text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                Life Priorities Dashboard
+                Priority Vizualizer
               </h1>
             </div>
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
@@ -1036,7 +1036,7 @@ const Index = () => {
           <div className="xl:col-span-2">
             <Card className="bg-card/50 backdrop-blur-sm border-border/50 h-fit">
               <CardHeader>
-                <CardTitle className="text-xl text-primary">Priority Visualization</CardTitle>
+                <CardTitle className="text-xl text-primary">Priority Display</CardTitle>
               </CardHeader>
               <CardContent className="p-3 md:p-6">
                 {sections.length > 0 ? (
