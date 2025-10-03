@@ -1,5 +1,7 @@
 # PriorityManager
 
+[![Netlify Status](https://api.netlify.com/api/v1/badges/f82ec177-3285-41d2-a908-16504cb41a30/deploy-status)](https://app.netlify.com/projects/priorityviz/deploys)
+
 A modern, interactive priority management application that helps you visualize and organize your tasks across different areas of life using an intuitive pie chart interface.
 
 ## 🌟 Features
