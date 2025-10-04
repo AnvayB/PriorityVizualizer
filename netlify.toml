@@ -6,7 +6,13 @@
   NODE_VERSION = "18"
   NPM_VERSION = "10"
 
-# Redirect all requests to index.html for SPA routing
+# Explicitly serve favicon without redirects
+[[redirects]]
+  from = "/favicon.ico"
+  to = "/favicon.ico"
+  status = 200
+
+# Redirect all other requests to index.html for SPA routing
 [[redirects]]
   from = "/*"
   to = "/index.html"
@@ -39,3 +45,10 @@
   for = "*.css"
   [headers.values]
     Content-Type = "text/css"
+
+# Fix MIME types for favicon
+[[headers]]
+  for = "/favicon.ico"
+  [headers.values]
+    Content-Type = "image/x-icon"
+    Cache-Control = "public, max-age=86400"
