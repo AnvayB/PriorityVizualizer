@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      completed_tasks: {
+        Row: {
+          completed_at: string
+          created_at: string
+          id: string
+          section_title: string
+          subsection_title: string | null
+          task_title: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          created_at?: string
+          id?: string
+          section_title: string
+          subsection_title?: string | null
+          task_title: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          created_at?: string
+          id?: string
+          section_title?: string
+          subsection_title?: string | null
+          task_title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      completion_stats: {
+        Row: {
+          created_at: string
+          daily_count: number
+          date: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          daily_count?: number
+          date: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          daily_count?: number
+          date?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       sections: {
         Row: {
           color: string | null
@@ -119,6 +176,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_settings: {
+        Row: {
+          created_at: string
+          deadline_date: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          deadline_date?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          deadline_date?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {

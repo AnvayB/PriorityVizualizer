@@ -8,6 +8,7 @@ import PieChart from '@/components/PieChart';
 import PriorityForm from '@/components/PriorityForm';
 import HoverInfo from '@/components/HoverInfo';
 import CompletionCounter from '@/components/CompletionCounter';
+import DeadlineEditor from '@/components/DeadlineEditor';
 import { Section, Subsection, Task, ChartSlice } from '@/types/priorities';
 import { PieChart as PieChartIcon, Target, Calendar, Save, Upload, ChevronDown, LogOut, User, Clock, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,7 +22,7 @@ const Index = () => {
 
   const [hoveredSlice, setHoveredSlice] = useState<ChartSlice | null>(null);
   const [pinnedSlice, setPinnedSlice] = useState<ChartSlice | null>(null);
-  const [completionCount, setCompletionCount] = useState(0);
+  const [completionRefresh, setCompletionRefresh] = useState(0);
   const [isDueSoonModalOpen, setIsDueSoonModalOpen] = useState(false);
 
   // Load data from Supabase
@@ -99,24 +100,6 @@ const Index = () => {
     }
   }, [toast]);
 
-  // Load completion count from localStorage
-  useEffect(() => {
-    const today = new Date().toDateString();
-    const storedData = localStorage.getItem('dailyCompletions');
-    
-    if (storedData) {
-      const { date, count } = JSON.parse(storedData);
-      if (date === today) {
-        setCompletionCount(count);
-      } else {
-        // New day, reset counter
-        setCompletionCount(0);
-        localStorage.setItem('dailyCompletions', JSON.stringify({ date: today, count: 0 }));
-      }
-    } else {
-      localStorage.setItem('dailyCompletions', JSON.stringify({ date: today, count: 0 }));
-    }
-  }, []);
 
   // Auth state management and data loading
   useEffect(() => {
@@ -481,64 +464,158 @@ const Index = () => {
   };
 
   const handleComplete = async (type: 'section' | 'subsection' | 'task', id: string) => {
-    let tasksCompletedCount = 0;
-    
-    // Calculate how many tasks are being completed
-    if (type === 'task') {
-      tasksCompletedCount = 1;
-    } else if (type === 'subsection') {
-      const subsection = sections
-        .flatMap(s => s.subsections)
-        .find(sub => sub.id === id);
-      tasksCompletedCount = subsection?.tasks.length || 0;
-    } else if (type === 'section') {
-      const section = sections.find(s => s.id === id);
-      tasksCompletedCount = section?.subsections.reduce((total, sub) => total + sub.tasks.length, 0) || 0;
-    }
-    
-    // Update completion counter
-    const newCount = completionCount + tasksCompletedCount;
-    setCompletionCount(newCount);
-    
-    // Update localStorage
-    const today = new Date().toDateString();
-    localStorage.setItem('dailyCompletions', JSON.stringify({ date: today, count: newCount }));
-    
-    // Remove completed item(s) using handleDelete
-    if (type === 'task') {
-      // Find the task to get its parent info
-      let sectionId = '';
-      let subsectionId = '';
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      let tasksCompletedCount = 0;
+      const completedTaskDetails: Array<{ task_title: string; section_title: string; subsection_title: string | null }> = [];
       
-      sections.forEach(section => {
-        section.subsections.forEach(subsection => {
-          if (subsection.tasks.some(task => task.id === id)) {
-            sectionId = section.id;
-            subsectionId = subsection.id;
-          }
+      // Calculate how many tasks are being completed and collect task details
+      if (type === 'task') {
+        tasksCompletedCount = 1;
+        // Find the task details
+        sections.forEach(section => {
+          section.subsections.forEach(subsection => {
+            const task = subsection.tasks.find(t => t.id === id);
+            if (task) {
+              completedTaskDetails.push({
+                task_title: task.title,
+                section_title: section.title,
+                subsection_title: subsection.title
+              });
+            }
+          });
         });
+      } else if (type === 'subsection') {
+        const subsection = sections
+          .flatMap(s => s.subsections)
+          .find(sub => sub.id === id);
+        tasksCompletedCount = subsection?.tasks.length || 0;
+        
+        // Find section title for this subsection
+        const section = sections.find(s => s.subsections.some(sub => sub.id === id));
+        if (subsection && section) {
+          subsection.tasks.forEach(task => {
+            completedTaskDetails.push({
+              task_title: task.title,
+              section_title: section.title,
+              subsection_title: subsection.title
+            });
+          });
+        }
+      } else if (type === 'section') {
+        const section = sections.find(s => s.id === id);
+        tasksCompletedCount = section?.subsections.reduce((total, sub) => total + sub.tasks.length, 0) || 0;
+        
+        if (section) {
+          section.subsections.forEach(subsection => {
+            subsection.tasks.forEach(task => {
+              completedTaskDetails.push({
+                task_title: task.title,
+                section_title: section.title,
+                subsection_title: subsection.title
+              });
+            });
+          });
+        }
+      }
+      
+      // Update completion_stats in Supabase
+      const today = new Date().toISOString().split('T')[0];
+      
+      const { data: existingStat, error: fetchError } = await supabase
+        .from('completion_stats')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('date', today)
+        .maybeSingle();
+
+      if (fetchError) throw fetchError;
+
+      if (existingStat) {
+        // Update existing record
+        const { error: updateError } = await supabase
+          .from('completion_stats')
+          .update({ daily_count: existingStat.daily_count + tasksCompletedCount })
+          .eq('id', existingStat.id);
+        
+        if (updateError) throw updateError;
+      } else {
+        // Create new record
+        const { error: insertError } = await supabase
+          .from('completion_stats')
+          .insert({
+            user_id: user.id,
+            date: today,
+            daily_count: tasksCompletedCount
+          });
+        
+        if (insertError) throw insertError;
+      }
+
+      // Insert completed task details
+      if (completedTaskDetails.length > 0) {
+        const { error: tasksError } = await supabase
+          .from('completed_tasks')
+          .insert(
+            completedTaskDetails.map(detail => ({
+              user_id: user.id,
+              task_title: detail.task_title,
+              section_title: detail.section_title,
+              subsection_title: detail.subsection_title
+            }))
+          );
+        
+        if (tasksError) throw tasksError;
+      }
+
+      // Trigger refresh of completion counter
+      setCompletionRefresh(prev => prev + 1);
+      
+      // Remove completed item(s) using handleDelete
+      if (type === 'task') {
+        // Find the task to get its parent info
+        let sectionId = '';
+        let subsectionId = '';
+        
+        sections.forEach(section => {
+          section.subsections.forEach(subsection => {
+            if (subsection.tasks.some(task => task.id === id)) {
+              sectionId = section.id;
+              subsectionId = subsection.id;
+            }
+          });
+        });
+        
+        if (sectionId && subsectionId) {
+          await handleDelete('task', sectionId, subsectionId, id);
+        }
+      } else if (type === 'subsection') {
+        // Find the subsection's parent section
+        const parentSection = sections.find(section => 
+          section.subsections.some(sub => sub.id === id)
+        );
+        
+        if (parentSection) {
+          await handleDelete('subsection', parentSection.id, id);
+        }
+      } else if (type === 'section') {
+        await handleDelete('section', id);
+      }
+      
+      toast({
+        title: "Completed!",
+        description: `Completed ${tasksCompletedCount} task${tasksCompletedCount !== 1 ? 's' : ''}. Great job!`,
       });
-      
-      if (sectionId && subsectionId) {
-        await handleDelete('task', sectionId, subsectionId, id);
-      }
-    } else if (type === 'subsection') {
-      // Find the subsection's parent section
-      const parentSection = sections.find(section => 
-        section.subsections.some(sub => sub.id === id)
-      );
-      
-      if (parentSection) {
-        await handleDelete('subsection', parentSection.id, id);
-      }
-    } else if (type === 'section') {
-      await handleDelete('section', id);
+    } catch (error) {
+      console.error('Error completing task:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save completion. Please try again.",
+        variant: "destructive",
+      });
     }
-    
-    toast({
-      title: "Completed!",
-      description: `Completed ${tasksCompletedCount} task${tasksCompletedCount !== 1 ? 's' : ''}. Great job!`,
-    });
   };
 
   const totalTasks = sections.reduce((total, section) => 
@@ -550,9 +627,9 @@ const Index = () => {
       subsection.tasks.filter(task => {
         const dueDate = new Date(task.dueDate);
         const today = new Date();
-        const threeDaysFromNow = new Date();
-        threeDaysFromNow.setDate(today.getDate() + 3);
-        return dueDate >= today && dueDate <= threeDaysFromNow;
+        const fiveDaysFromNow = new Date();
+        fiveDaysFromNow.setDate(today.getDate() + 5);
+        return dueDate >= today && dueDate <= fiveDaysFromNow;
       }).map(task => ({
         ...task,
         sectionTitle: section.title,
@@ -898,9 +975,12 @@ const Index = () => {
               </div>
             </div>
           </div>
-          <p className="text-muted-foreground">
-            Visualize and manage your priorities across different areas of life
-          </p>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <p className="text-muted-foreground">
+              Visualize and manage your priorities across different areas of life
+            </p>
+            {user && <DeadlineEditor userId={user.id} />}
+          </div>
         </div>
       </header>
 
@@ -965,12 +1045,12 @@ const Index = () => {
                       <Calendar className="w-12 h-12 text-muted-foreground" />
                     </div>
                     <h3 className="text-lg font-semibold text-foreground mb-2">No Upcoming Tasks</h3>
-                    <p className="text-muted-foreground">All caught up! No tasks due in the next 3 days.</p>
+                    <p className="text-muted-foreground">All caught up! No tasks due in the next 5 days.</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
                     <p className="text-sm text-muted-foreground">
-                      You have {upcomingTasks.length} task{upcomingTasks.length !== 1 ? 's' : ''} due within the next 3 days.
+                      You have {upcomingTasks.length} task{upcomingTasks.length !== 1 ? 's' : ''} due within the next 5 days.
                     </p>
                     <div className="space-y-3">
                       {upcomingTasks
@@ -1027,7 +1107,7 @@ const Index = () => {
             </DialogContent>
           </Dialog>
 
-          <CompletionCounter count={completionCount} />
+          {user && <CompletionCounter userId={user.id} refreshTrigger={completionRefresh} />}
         </div>
 
         {/* Main Content */}
