@@ -30,8 +30,8 @@ const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorC
   const [isTasksOpen, setIsTasksOpen] = useState(false);
 
   const colors = [
-    '#3b82f6', '#ef4444', '#10b981', '#f59e0b', 
-    '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'
+    '#1338BE', '#ef4444', '#10b981', '#f59e0b', 
+    '#0ea5e9', '#ec4899', '#06b6d4', '#84cc16'
   ];
 
   // Reset tasks dropdown when slice changes

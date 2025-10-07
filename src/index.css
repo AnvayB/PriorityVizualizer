@@ -17,10 +17,10 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 260 15% 8%;
 
-    --primary: 262 80% 50%;
+    --primary: 227 82% 41%;
     --primary-foreground: 0 0% 100%;
-    --primary-light: 262 80% 70%;
-    --primary-lighter: 262 80% 85%;
+    --primary-light: 227 82% 60%;
+    --primary-lighter: 227 82% 85%;
 
     --secondary: 260 15% 95%;
     --secondary-foreground: 260 15% 8%;
@@ -28,35 +28,35 @@ All colors MUST be HSL.
     --muted: 260 15% 96%;
     --muted-foreground: 260 10% 45%;
 
-    --accent: 262 60% 92%;
-    --accent-foreground: 262 80% 30%;
+    --accent: 227 80% 92%;
+    --accent-foreground: 227 82% 35%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 260 15% 90%;
     --input: 260 15% 95%;
-    --ring: 262 80% 50%;
+    --ring: 227 82% 41%;
 
     --success: 142 76% 36%;
     --warning: 38 92% 50%;
     --info: 199 89% 48%;
 
     /* Pie Chart Colors */
-    --chart-1: 262 80% 50%;
+    --chart-1: 227 82% 41%;
     --chart-2: 340 75% 55%;
     --chart-3: 198 93% 60%;
     --chart-4: 142 76% 36%;
     --chart-5: 38 92% 50%;
-    --chart-6: 287 85% 60%;
+    --chart-6: 210 85% 45%;
     --chart-7: 21 90% 48%;
-    --chart-8: 270 95% 65%;
+    --chart-8: 187 85% 53%;
 
     --radius: 0.75rem;
 
     /* Gradients */
     --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-light)));
-    --gradient-bg: linear-gradient(135deg, hsl(250 100% 99%), hsl(260 100% 97%));
+    --gradient-bg: linear-gradient(135deg, hsl(220 100% 99%), hsl(227 100% 97%));
     
     /* Shadows */
     --shadow-soft: 0 2px 10px -2px hsl(var(--primary) / 0.1);
