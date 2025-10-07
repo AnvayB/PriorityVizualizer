@@ -24,6 +24,12 @@ const Index = () => {
   const [pinnedSlice, setPinnedSlice] = useState<ChartSlice | null>(null);
   const [completionRefresh, setCompletionRefresh] = useState(0);
   const [isDueSoonModalOpen, setIsDueSoonModalOpen] = useState(false);
+  
+  // Form prefill state
+  const [formPrefilledSectionId, setFormPrefilledSectionId] = useState('');
+  const [formPrefilledSubsectionId, setFormPrefilledSubsectionId] = useState('');
+  const [formActiveTab, setFormActiveTab] = useState<'section' | 'subsection' | 'task'>('section');
+  const [isFormHighlighted, setIsFormHighlighted] = useState(false);
 
   // Load data from Supabase
   const loadFromSupabase = useCallback(async () => {
@@ -907,6 +913,41 @@ const Index = () => {
     }
   };
 
+  const handleSliceClickForForm = (slice: ChartSlice) => {
+    // Set the pinned slice for the HoverInfo component
+    setPinnedSlice(slice);
+    
+    // Determine form behavior based on slice level
+    if (slice.level === 'section') {
+      // Click on Section → Open Subsection tab with Parent Section pre-filled
+      setFormPrefilledSectionId(slice.section.id);
+      setFormPrefilledSubsectionId('');
+      setFormActiveTab('subsection');
+      setIsFormHighlighted(true);
+    } else if (slice.level === 'subsection') {
+      // Click on Subsection → Open Task tab with Parent Section + Subsection pre-filled
+      setFormPrefilledSectionId(slice.section.id);
+      setFormPrefilledSubsectionId(slice.subsection?.id || '');
+      setFormActiveTab('task');
+      setIsFormHighlighted(true);
+    }
+    // For task level, do nothing (no form interaction)
+    
+    // Remove highlight after 2 seconds
+    if (slice.level !== 'task') {
+      setTimeout(() => {
+        setIsFormHighlighted(false);
+      }, 2000);
+    }
+  };
+
+  const handleWhiteSpaceClick = () => {
+    if (pinnedSlice) {
+      setPinnedSlice(null);
+      setIsFormHighlighted(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-bg">
       {/* Header */}
@@ -1118,12 +1159,12 @@ const Index = () => {
               <CardHeader>
                 <CardTitle className="text-xl text-primary">Priority Display</CardTitle>
               </CardHeader>
-              <CardContent className="p-3 md:p-6">
+              <CardContent className="p-3 md:p-6" onClick={handleWhiteSpaceClick}>
                 {sections.length > 0 ? (
                   <PieChart 
                     sections={sections} 
                     onHover={setHoveredSlice}
-                    onSliceClick={setPinnedSlice}
+                    onSliceClick={handleSliceClickForForm}
                   />
                 ) : (
                   <div className="flex items-center justify-center h-96 text-center">
@@ -1162,6 +1203,10 @@ const Index = () => {
               onAddSection={handleAddSection}
               onAddSubsection={handleAddSubsection}
               onAddTask={handleAddTask}
+              prefilledSectionId={formPrefilledSectionId}
+              prefilledSubsectionId={formPrefilledSubsectionId}
+              activeTab={formActiveTab}
+              isHighlighted={isFormHighlighted}
             />
           </div>
         </div>

@@ -163,7 +163,8 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover, onSliceClick }) 
     onHover?.(null);
   };
 
-  const handleSliceClick = (slice: ChartSlice) => {
+  const handleSliceClick = (e: React.MouseEvent, slice: ChartSlice) => {
+    e.stopPropagation();
     onSliceClick?.(slice);
   };
 
@@ -242,7 +243,7 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover, onSliceClick }) 
               }}
               onMouseEnter={() => handleMouseEnter(slice)}
               onMouseLeave={handleMouseLeave}
-              onClick={() => handleSliceClick(slice)}
+              onClick={(e) => handleSliceClick(e, slice)}
             />
             {getIsHighPriority(slice) && (
               <path

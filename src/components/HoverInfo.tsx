@@ -6,8 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChartSlice } from '@/types/priorities';
-import { Calendar, CheckCircle, Clock, Edit, Trash2, Palette, X, AlertTriangle, Check } from 'lucide-react';
+import { Calendar, CheckCircle, Clock, Edit, Trash2, Palette, X, AlertTriangle, Check, ChevronDown } from 'lucide-react';
 
 interface HoverInfoProps {
   slice: ChartSlice | null;
@@ -26,11 +27,17 @@ const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorC
   const [selectedColor, setSelectedColor] = useState('#3b82f6');
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isColorOpen, setIsColorOpen] = useState(false);
+  const [isTasksOpen, setIsTasksOpen] = useState(false);
 
   const colors = [
     '#3b82f6', '#ef4444', '#10b981', '#f59e0b', 
     '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'
   ];
+
+  // Reset tasks dropdown when slice changes
+  React.useEffect(() => {
+    setIsTasksOpen(false);
+  }, [slice]);
 
   const handleEdit = () => {
     if (!slice || !onEdit) return;
@@ -302,25 +309,38 @@ const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorC
               {slice.subsection.tasks.length} task{slice.subsection.tasks.length !== 1 ? 's' : ''}
             </p>
             {slice.subsection.tasks.length > 0 && (
-              <div className="space-y-1">
-                <p className="text-xs font-medium text-muted-foreground">Tasks:</p>
-                {slice.subsection.tasks.map((task) => {
-                  const daysUntil = getDaysUntilDue(task.dueDate);
-                  const overdue = isOverdue(task.dueDate);
-                  
-                  return (
-                    <div key={task.id} className="flex items-center justify-between text-xs p-2 bg-muted/50 rounded-md">
-                      <span className="truncate flex-1">{task.title}</span>
-                      <Badge 
-                        variant={overdue ? 'destructive' : daysUntil <= 3 ? 'secondary' : 'outline'}
-                        className="ml-2 text-xs"
-                      >
-                        {overdue ? 'Overdue' : daysUntil === 0 ? 'Today' : daysUntil === 1 ? 'Tomorrow' : `${daysUntil}d`}
-                      </Badge>
-                    </div>
-                  );
-                })}
-              </div>
+              <Collapsible open={isTasksOpen} onOpenChange={setIsTasksOpen}>
+                <CollapsibleTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full justify-between mt-2"
+                  >
+                    <span className="text-xs">View Tasks</span>
+                    <ChevronDown 
+                      className={`w-4 h-4 transition-transform ${isTasksOpen ? 'rotate-180' : ''}`}
+                    />
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-1 mt-2">
+                  {slice.subsection.tasks.map((task) => {
+                    const daysUntil = getDaysUntilDue(task.dueDate);
+                    const overdue = isOverdue(task.dueDate);
+                    
+                    return (
+                      <div key={task.id} className="flex items-center justify-between text-xs p-2 bg-muted/50 rounded-md">
+                        <span className="truncate flex-1">{task.title}</span>
+                        <Badge 
+                          variant={overdue ? 'destructive' : daysUntil <= 3 ? 'secondary' : 'outline'}
+                          className="ml-2 text-xs"
+                        >
+                          {overdue ? 'Overdue' : daysUntil === 0 ? 'Today' : daysUntil === 1 ? 'Tomorrow' : `${daysUntil}d`}
+                        </Badge>
+                      </div>
+                    );
+                  })}
+                </CollapsibleContent>
+              </Collapsible>
             )}
           </div>
         )}

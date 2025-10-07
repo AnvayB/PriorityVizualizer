@@ -1,5 +1,19 @@
 # PriorityManager
 
+<!-- Additions:
+* Add a full deadline (end of the year) at the top (maybe next to the title or below the subtitle) by when users should have the goal of completing all the tasks (complete the circle)
+* Add a counter tab that saves total number of tasks completed (in addition to total complete today) - maybe this means the daily tasks complete should get saved to an item in Supabase that sums the daily with the total and shows that on the website.
+* The tasks completed today still don't show the actual tasks
+* Improve the Due soon tab to show things due within the next few days (5 days)
+* Add a feature where if a slice is clicked on, open the Add Priorities component with the relevant information filled out. 
+    - For example, if I click 'FitSense', the Add Priorities component should open the Task tab with Parent Section filled in as 'Projects' and Parent Subsection filled in as 'FitSense' so I can start adding the Task directly
+    - Similarly, if I click 'Respond', the Add Properties component should open the Subsection tab with Parent Section filled in as 'Respond' so I can start adding the Subsection directly.
+* Improve pie chart resizing to fit writing inside the slices
+* change purple to another color (what color inspires productivity - blue?)
+* maybe add RLS back for Supabase tables (since all the content is shared in the section, subsection, tasks)
+
+ -->
+
 [![Netlify Status](https://api.netlify.com/api/v1/badges/f82ec177-3285-41d2-a908-16504cb41a30/deploy-status)](https://app.netlify.com/projects/priorityviz/deploys)
 
 A modern, interactive priority management application that helps you visualize and organize your tasks across different areas of life using an intuitive pie chart interface.

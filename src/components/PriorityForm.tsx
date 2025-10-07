@@ -13,6 +13,10 @@ interface PriorityFormProps {
   onAddSection: (title: string) => void;
   onAddSubsection: (sectionId: string, title: string) => void;
   onAddTask: (sectionId: string, subsectionId: string, title: string, dueDate: string) => void;
+  prefilledSectionId?: string;
+  prefilledSubsectionId?: string;
+  activeTab?: 'section' | 'subsection' | 'task';
+  isHighlighted?: boolean;
 }
 
 const PriorityForm: React.FC<PriorityFormProps> = ({
@@ -20,13 +24,18 @@ const PriorityForm: React.FC<PriorityFormProps> = ({
   onAddSection,
   onAddSubsection,
   onAddTask,
+  prefilledSectionId = '',
+  prefilledSubsectionId = '',
+  activeTab = 'section',
+  isHighlighted = false,
 }) => {
   const [sectionTitle, setSectionTitle] = useState('');
   const [subsectionTitle, setSubsectionTitle] = useState('');
-  const [selectedSectionId, setSelectedSectionId] = useState('');
+  const [selectedSectionId, setSelectedSectionId] = useState(prefilledSectionId);
   const [taskTitle, setTaskTitle] = useState('');
   const [taskDueDate, setTaskDueDate] = useState('');
-  const [selectedSubsectionId, setSelectedSubsectionId] = useState('');
+  const [selectedSubsectionId, setSelectedSubsectionId] = useState(prefilledSubsectionId);
+  const [currentTab, setCurrentTab] = useState(activeTab);
 
   const handleAddSection = (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,8 +64,15 @@ const PriorityForm: React.FC<PriorityFormProps> = ({
 
   const selectedSection = sections.find(s => s.id === selectedSectionId);
 
+  // Update local state when prefilled values change
+  React.useEffect(() => {
+    setSelectedSectionId(prefilledSectionId);
+    setSelectedSubsectionId(prefilledSubsectionId);
+    setCurrentTab(activeTab);
+  }, [prefilledSectionId, prefilledSubsectionId, activeTab]);
+
   return (
-    <Card className="w-full max-w-md bg-card/50 backdrop-blur-sm border-border/50">
+    <Card className={`w-full max-w-md bg-card/50 backdrop-blur-sm border-border/50 ${isHighlighted ? 'ring-2 ring-primary/20' : ''}`}>
       <CardHeader>
         <CardTitle className="text-primary flex items-center gap-2">
           <Plus className="w-5 h-5" />
@@ -64,7 +80,7 @@ const PriorityForm: React.FC<PriorityFormProps> = ({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="section" className="space-y-4">
+        <Tabs value={currentTab} onValueChange={(value) => setCurrentTab(value as 'section' | 'subsection' | 'task')} className="space-y-4">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="section">Section</TabsTrigger>
             <TabsTrigger value="subsection">Subsection</TabsTrigger>
