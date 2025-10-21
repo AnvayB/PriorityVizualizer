@@ -172,7 +172,13 @@ const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorC
   };
 
   return (
-    <Card className={`w-full max-w-md bg-card/50 backdrop-blur-sm border-border/50 animate-scale-in ${isPinned ? 'ring-2 ring-primary/20' : ''}`}>
+    <Card 
+      className={`w-full max-w-md bg-card/50 backdrop-blur-sm border-2 animate-scale-in ${isPinned ? 'ring-2 ring-primary/20' : ''}`}
+      style={{ 
+        borderColor: isPinned ? slice.color : 'hsl(var(--border))', 
+        borderRadius: 'var(--radius)' 
+      }}
+    >
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg text-primary">
