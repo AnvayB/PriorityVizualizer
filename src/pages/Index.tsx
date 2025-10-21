@@ -952,7 +952,14 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-bg">
       {/* Header */}
-      <header className="bg-card/30 backdrop-blur-sm border-b border-border/50">
+      <header className="relative bg-card/30 backdrop-blur-sm border-b border-border/50">
+        {/* Top bar gradient overlay */}
+        <div 
+          className="absolute inset-0 pointer-events-none -z-10"
+          style={{
+            background: 'var(--gradient-top-bar)'
+          }}
+        />
         <div className="container mx-auto px-4 md:px-6 py-4 md:py-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
             <div className="flex items-center gap-3">
@@ -998,9 +1005,9 @@ const Index = () => {
 
         {/* Stats Bar */}
       <div className="container mx-auto px-4 md:px-6 py-4 md:py-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-4 md:mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-6 md:mb-10">
           <Card className="bg-card/50 backdrop-blur-sm border-border/50">
-            <CardContent className="p-4">
+            <CardContent className="p-5">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-chart-1/20 rounded-lg">
                   <PieChartIcon className="w-5 h-5 text-chart-1" />
@@ -1014,7 +1021,7 @@ const Index = () => {
           </Card>
 
           <Card className="bg-card/50 backdrop-blur-sm border-border/50">
-            <CardContent className="p-4">
+            <CardContent className="p-5">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-chart-2/20 rounded-lg">
                   <Target className="w-5 h-5 text-chart-2" />
@@ -1030,7 +1037,7 @@ const Index = () => {
           <Dialog open={isDueSoonModalOpen} onOpenChange={setIsDueSoonModalOpen}>
             <DialogTrigger asChild>
               <Card className="bg-card/50 backdrop-blur-sm border-2 border-warning/30 cursor-pointer hover:bg-card/70 hover:border-warning/50 hover:shadow-lg hover:shadow-warning/10 transition-all duration-200 group">
-                <CardContent className="p-4">
+                <CardContent className="p-5">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-warning/20 rounded-lg group-hover:bg-warning/30 transition-colors">
                       <Calendar className="w-5 h-5 text-warning group-hover:scale-110 transition-transform" />
@@ -1123,7 +1130,7 @@ const Index = () => {
         </div>
 
         {/* Main Content */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-8">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 md:gap-10">
           {/* Pie Chart */}
           <div className="xl:col-span-2">
             <Card className="bg-card/50 backdrop-blur-sm border-border/50 h-fit">
@@ -1155,7 +1162,7 @@ const Index = () => {
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-4 md:space-y-8">
+          <div className="space-y-6 md:space-y-10">
             {/* Hover Info */}
             <HoverInfo 
               slice={pinnedSlice || hoveredSlice} 

@@ -52,11 +52,18 @@ All colors MUST be HSL.
     --chart-7: 21 90% 48%;
     --chart-8: 187 85% 53%;
 
-    --radius: 0.75rem;
+    --radius: 0.75rem; /* 12px consistent corner radius */
+    
+    /* Subtle shadows for depth */
+    --shadow-subtle: 0 2px 8px rgba(0, 0, 0, 0.1);
+    --shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.15);
+    --shadow-deep: 0 8px 24px rgba(0, 0, 0, 0.2);
+    --inner-glow: inset 0 1px 3px rgba(0, 0, 0, 0.6);
 
     /* Gradients */
     --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-light)));
     --gradient-bg: linear-gradient(135deg, hsl(220 100% 99%), hsl(227 100% 97%));
+    --gradient-top-bar: linear-gradient(to bottom, rgba(245, 247, 252, 0.6), transparent 80%);
     
     /* Shadows */
     --shadow-soft: 0 2px 10px -2px hsl(var(--primary) / 0.1);
@@ -87,15 +94,16 @@ All colors MUST be HSL.
   .dark {
     /* True neutral dark background: #0D0F12 */
     --background: 220 16% 6%;
-    --foreground: 0 0% 95%;
+    /* Primary text color: #E6E6E6 instead of pure white */
+    --foreground: 0 0% 90%;
 
     /* Subtly lighter tone for cards: #16191F */
     --card: 220 16% 10%;
-    --card-foreground: 0 0% 95%;
+    --card-foreground: 0 0% 90%;
 
     /* Slightly brighter variant for panels: #1C2028 */
     --popover: 220 16% 15%;
-    --popover-foreground: 0 0% 95%;
+    --popover-foreground: 0 0% 90%;
 
     /* Cyan blue primary colors for dark mode: #24B8DC */
     --primary: 192 74% 50%;
@@ -104,14 +112,15 @@ All colors MUST be HSL.
     --primary-lighter: 192 74% 80%;
 
     --secondary: 0 0% 20%;
-    --secondary-foreground: 0 0% 95%;
+    --secondary-foreground: 0 0% 90%;
 
     --muted: 0 0% 18%;
-    --muted-foreground: 0 0% 65%;
+    /* Secondary text color: #DADADA with 0.65 opacity */
+    --muted-foreground: 0 0% 85% / 0.65;
 
     /* Accent elements - slightly desaturated cyan: #3BB4FF */
     --accent: 204 100% 62%;
-    --accent-foreground: 0 0% 95%;
+    --accent-foreground: 0 0% 90%;
     
     /* Accent hover/focus variants with brightness instead of opacity */
     --accent-hover: 204 100% 72%;
@@ -130,13 +139,20 @@ All colors MUST be HSL.
 
     /* Dark mode gradients */
     --gradient-bg: linear-gradient(135deg, hsl(0 0% 12%), hsl(0 0% 15%));
+    --gradient-top-bar: linear-gradient(to bottom, rgba(17, 19, 24, 0.6), transparent 80%);
+    
+    /* Dark mode shadows - deeper and more pronounced */
+    --shadow-subtle: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.4);
+    --shadow-deep: 0 8px 24px rgba(0, 0, 0, 0.5);
+    --inner-glow: inset 0 1px 3px rgba(255, 255, 255, 0.1);
     
     --sidebar-background: 0 0% 10%;
-    --sidebar-foreground: 0 0% 95%;
+    --sidebar-foreground: 0 0% 90%;
     --sidebar-primary: 192 74% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 0 0% 18%;
-    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-accent-foreground: 0 0% 90%;
     --sidebar-border: 0 0% 25%;
     --sidebar-ring: 192 74% 50%;
   }
@@ -173,4 +189,42 @@ All colors MUST be HSL.
     color: hsl(var(--accent-active));
     transition: color 0.2s ease;
   }
+}
+
+/* Dark mode font weight hierarchy and text opacity utilities */
+@layer utilities {
+  /* Font weight hierarchy */
+  .dark .font-heading {
+    font-weight: 600; /* Semi-bold for headings */
+  }
+  
+  .dark .font-label {
+    font-weight: 500; /* Medium for labels */
+  }
+  
+  .dark .font-body {
+    font-weight: 400; /* Regular for body text */
+  }
+  
+  /* Text opacity hierarchy */
+  .dark .text-primary {
+    color: hsl(0 0% 90%); /* #E6E6E6 */
+    opacity: 1;
+  }
+  
+  .dark .text-paragraph {
+    color: hsl(0 0% 90%); /* #E6E6E6 */
+    opacity: 0.85;
+  }
+  
+  .dark .text-secondary {
+    color: hsl(0 0% 85%); /* #DADADA */
+    opacity: 0.65;
+  }
+  
+  /* Shadow utilities */
+  .shadow-subtle { box-shadow: var(--shadow-subtle); }
+  .shadow-medium { box-shadow: var(--shadow-medium); }
+  .shadow-deep { box-shadow: var(--shadow-deep); }
+  .inner-glow { box-shadow: var(--inner-glow); }
 }

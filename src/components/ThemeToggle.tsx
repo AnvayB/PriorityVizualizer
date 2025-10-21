@@ -1,48 +1,61 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Sun, Moon, Monitor } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Sun, Moon, Monitor, Check } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 
 const ThemeToggle: React.FC = () => {
-  const { theme, toggleTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
 
   const getIcon = () => {
     switch (theme) {
       case 'light':
+        return <Sun className="h-4 w-4" />;
+      case 'dark':
         return <Moon className="h-4 w-4" />;
-      case 'dark':
+      case 'system':
         return <Monitor className="h-4 w-4" />;
-      case 'system':
-        return <Sun className="h-4 w-4" />;
       default:
         return <Sun className="h-4 w-4" />;
-    }
-  };
-
-  const getTooltip = () => {
-    switch (theme) {
-      case 'light':
-        return 'Switch to dark mode';
-      case 'dark':
-        return 'Switch to system theme';
-      case 'system':
-        return 'Switch to light mode';
-      default:
-        return 'Toggle theme';
     }
   };
 
   return (
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={toggleTheme}
-      className="h-9 w-9 p-0"
-      title={getTooltip()}
-    >
-      {getIcon()}
-      <span className="sr-only">{getTooltip()}</span>
-    </Button>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-9 w-9 p-0"
+          title="Change theme"
+        >
+          {getIcon()}
+          <span className="sr-only">Change theme</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={() => setTheme('light')}>
+          <Sun className="mr-2 h-4 w-4" />
+          <span>Light</span>
+          {theme === 'light' && <Check className="ml-auto h-4 w-4" />}
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme('dark')}>
+          <Moon className="mr-2 h-4 w-4" />
+          <span>Dark</span>
+          {theme === 'dark' && <Check className="ml-auto h-4 w-4" />}
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme('system')}>
+          <Monitor className="mr-2 h-4 w-4" />
+          <span>System</span>
+          {theme === 'system' && <Check className="ml-auto h-4 w-4" />}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };
 

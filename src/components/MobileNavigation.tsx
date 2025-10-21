@@ -39,25 +39,6 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
   return (
     <TooltipProvider>
       <div className="flex gap-2 w-full sm:w-auto">
-        {/* Sign Out Button */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button 
-              onClick={onSignOut} 
-              variant="outline" 
-              size="sm" 
-              className="gap-1 md:gap-2 flex-1 sm:flex-none"
-            >
-              <LogOut className="w-4 h-4" />
-              <span className="text-xs sm:hidden">Logout</span>
-              <span className="hidden sm:inline">Sign Out</span>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Sign out of your account</p>
-          </TooltipContent>
-        </Tooltip>
-
         {/* Save Dropdown */}
         <Tooltip>
           <TooltipTrigger asChild>
@@ -134,6 +115,25 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
           </TooltipTrigger>
           <TooltipContent>
             <p>Load your priorities</p>
+          </TooltipContent>
+        </Tooltip>
+
+        {/* Sign Out Button */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button 
+              onClick={onSignOut} 
+              variant="outline" 
+              size="sm" 
+              className="gap-1 md:gap-2 flex-1 sm:flex-none"
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="text-xs sm:hidden">Logout</span>
+              <span className="hidden sm:inline">Sign Out</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Sign out of your account</p>
           </TooltipContent>
         </Tooltip>
 

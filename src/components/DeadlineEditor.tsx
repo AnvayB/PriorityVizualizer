@@ -162,7 +162,7 @@ const DeadlineEditor: React.FC<DeadlineEditorProps> = ({ userId }) => {
         <div className="hidden sm:block w-full">
           <div className="relative">
             {/* Progress bar background */}
-            <div className="w-full h-2 bg-muted rounded-full overflow-hidden border border-muted-foreground/20">
+            <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
               <div 
                 className="h-full bg-gradient-primary transition-all duration-300 ease-out"
                 style={{ width: `${progressData.progress}%` }}
