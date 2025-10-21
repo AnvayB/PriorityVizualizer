@@ -9,6 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChartSlice } from '@/types/priorities';
 import { Calendar, CheckCircle, Clock, Edit, Trash2, Palette, X, AlertTriangle, Check, ChevronDown } from 'lucide-react';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface HoverInfoProps {
   slice: ChartSlice | null;
@@ -22,6 +23,7 @@ interface HoverInfoProps {
 }
 
 const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorChange, onPriorityChange, onComplete, onClose, isPinned }) => {
+  const { theme } = useTheme();
   const [editTitle, setEditTitle] = useState('');
   const [editDueDate, setEditDueDate] = useState('');
   const [selectedColor, setSelectedColor] = useState('#3b82f6');
@@ -411,7 +413,7 @@ const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorC
           </div>
           {getCurrentPriority() && (
             <p className="text-xs text-muted-foreground ml-6">
-              This {slice.level} will display with a black border in the chart
+              This {slice.level} will display with a {theme === 'dark' ? 'white' : 'black'} border in the chart
             </p>
           )}
         </div>

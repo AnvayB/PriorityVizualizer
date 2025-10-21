@@ -235,7 +235,7 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover, onSliceClick }) 
                 centerPoint
               )}
               fill={slice.color}
-              stroke="white"
+              stroke="hsl(var(--background))"
               strokeWidth="2"
               className="transition-all duration-300 cursor-pointer hover:brightness-110"
               style={{
@@ -256,7 +256,7 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover, onSliceClick }) 
                   centerPoint
                 )}
                 fill="none"
-                stroke="#000000"
+                stroke="hsl(var(--foreground))"
                 strokeWidth="6"
                 className="pointer-events-none"
               />

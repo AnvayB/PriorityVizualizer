@@ -13,6 +13,7 @@ import {
   HardDrive,
   User
 } from 'lucide-react';
+import ThemeToggle from './ThemeToggle';
 
 interface MobileNavigationProps {
   onSignOut: () => void;
@@ -135,6 +136,9 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
             <p>Load your priorities</p>
           </TooltipContent>
         </Tooltip>
+
+        {/* Theme Toggle */}
+        <ThemeToggle />
       </div>
     </TooltipProvider>
   );

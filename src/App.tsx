@@ -5,6 +5,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -45,24 +46,26 @@ function App() {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <BrowserRouter>
-          <Routes>
-            <Route 
-              path="/" 
-              element={user ? <Index /> : <Navigate to="/auth" replace />} 
-            />
-            <Route 
-              path="/auth" 
-              element={!user ? <Auth /> : <Navigate to="/" replace />} 
-            />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <BrowserRouter>
+            <Routes>
+              <Route 
+                path="/" 
+                element={user ? <Index /> : <Navigate to="/auth" replace />} 
+              />
+              <Route 
+                path="/auth" 
+                element={!user ? <Auth /> : <Navigate to="/" replace />} 
+              />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
 
