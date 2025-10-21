@@ -85,14 +85,16 @@ All colors MUST be HSL.
   }
 
   .dark {
-    /* Custom dark grey background: rgb(30,30,30) = hsl(0, 0%, 12%) */
-    --background: 0 0% 12%;
+    /* True neutral dark background: #0D0F12 */
+    --background: 220 16% 6%;
     --foreground: 0 0% 95%;
 
-    --card: 0 0% 15%;
+    /* Subtly lighter tone for cards: #16191F */
+    --card: 220 16% 10%;
     --card-foreground: 0 0% 95%;
 
-    --popover: 0 0% 15%;
+    /* Slightly brighter variant for panels: #1C2028 */
+    --popover: 220 16% 15%;
     --popover-foreground: 0 0% 95%;
 
     /* Cyan blue primary colors for dark mode: #24B8DC */
@@ -107,8 +109,13 @@ All colors MUST be HSL.
     --muted: 0 0% 18%;
     --muted-foreground: 0 0% 65%;
 
-    --accent: 0 0% 25%;
+    /* Accent elements - slightly desaturated cyan: #3BB4FF */
+    --accent: 204 100% 62%;
     --accent-foreground: 0 0% 95%;
+    
+    /* Accent hover/focus variants with brightness instead of opacity */
+    --accent-hover: 204 100% 72%;
+    --accent-active: 204 100% 82%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
@@ -142,5 +149,28 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Dark mode accent color utilities with brightness-based hover/focus */
+@layer utilities {
+  .dark .accent-hover:hover {
+    background-color: hsl(var(--accent-hover));
+    transition: background-color 0.2s ease;
+  }
+  
+  .dark .accent-hover:focus {
+    background-color: hsl(var(--accent-active));
+    transition: background-color 0.2s ease;
+  }
+  
+  .dark .accent-text-hover:hover {
+    color: hsl(var(--accent-hover));
+    transition: color 0.2s ease;
+  }
+  
+  .dark .accent-text-hover:focus {
+    color: hsl(var(--accent-active));
+    transition: color 0.2s ease;
   }
 }
