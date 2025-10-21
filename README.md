@@ -4,8 +4,16 @@
 
 * The tasks completed today still don't show the actual tasks:
     - I tested this by completing a task from Job Apps > Aai > 1-5 and although the full total got incremented to show 1, the daily total remains 0 and clicking on that tab opens what I've shown in the image
+* Subsection select (filling in the fields for Add Task) only works after multiple subsections are clicked
+- For example, suppose I'm clicked on a slice in Section A. When I click to the Section B.2 subsection, that title is not filled in the "Add Priorities" component field. But if I click on Section B.3, then the subsection field in the Add Priorities component field _is_ filled, and same for if I go back to Section B.2. I need the clicked Subsection slice to fill its respective field in the Add Priorities component when it's clicked the first time. Otherwise, this will understandably cause frustration in the users' experience. 
 
+* How should I add a tutorial? Ideally, I want it to be an interactive "follow-along" tutorial where differnt parts of the website are highlighted and explained, but I'm open to making a tutorial video as a backup.
 * Improve pie chart resizing to fit writing inside the slices
+
+* add Dark mode for background and NavBar, give components a light grey background?
+
+* perform analytics on completed tasks from Supabase
+
 * maybe add RLS back for Supabase tables (since all the content is shared in the section, subsection, tasks)
 
  -->

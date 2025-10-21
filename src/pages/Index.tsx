@@ -9,6 +9,7 @@ import PriorityForm from '@/components/PriorityForm';
 import HoverInfo from '@/components/HoverInfo';
 import CompletionCounter from '@/components/CompletionCounter';
 import DeadlineEditor from '@/components/DeadlineEditor';
+import MobileNavigation from '@/components/MobileNavigation';
 import { Section, Subsection, Task, ChartSlice } from '@/types/priorities';
 import { PieChart as PieChartIcon, Target, Calendar, Save, Upload, ChevronDown, LogOut, User, Clock, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -969,58 +970,28 @@ const Index = () => {
                   <span className="truncate max-w-32 md:max-w-none">{user.email}</span>
                 </div>
               )}
-              <div className="flex gap-2">
-                <Button onClick={handleSignOut} variant="outline" size="sm" className="gap-1 md:gap-2">
-                  <LogOut className="w-4 h-4" />
-                  <span className="hidden md:inline">Sign Out</span>
-                </Button>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button className="gap-1 md:gap-2 text-sm">
-                      <Save className="w-4 h-4" />
-                      <span className="hidden sm:inline">Save</span>
-                      <ChevronDown className="w-4 h-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem onClick={handleSaveToDatabase}>
-                    to Supabase
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleReplaceCurrentData}>
-                    to Computer
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="gap-1 md:gap-2 text-sm">
-                      <Upload className="w-4 h-4" />
-                      <span className="hidden sm:inline">Load</span>
-                      <ChevronDown className="w-4 h-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem onClick={loadFromSupabase}>
-                    from Supabase
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleLoadFromFile}>
-                    from Computer
-                  </DropdownMenuItem>
-                  {isGuestUser() && (
-                    <DropdownMenuItem onClick={handleLoadGuestData}>
-                      Guest Data
-                    </DropdownMenuItem>
-                  )}
-                </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
+              <MobileNavigation
+                onSignOut={handleSignOut}
+                onSaveToDatabase={handleSaveToDatabase}
+                onSaveToComputer={handleReplaceCurrentData}
+                onLoadFromSupabase={loadFromSupabase}
+                onLoadFromFile={handleLoadFromFile}
+                onLoadGuestData={handleLoadGuestData}
+                user={user}
+                isGuestUser={isGuestUser}
+              />
             </div>
           </div>
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <p className="text-muted-foreground">
-              Visualize and manage your priorities across different areas of life
+              <span className="sm:hidden">Visualize and manage your priorities across life</span>
+              <span className="hidden sm:inline">Visualize and manage your priorities across different areas of life</span>
             </p>
-            {user && <DeadlineEditor userId={user.id} />}
+            {user && (
+              <div className="flex justify-start sm:justify-end">
+                <DeadlineEditor userId={user.id} />
+              </div>
+            )}
           </div>
         </div>
       </header>

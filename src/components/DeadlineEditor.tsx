@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { format } from 'date-fns';
+import { format, differenceInDays, startOfMonth, endOfMonth, eachMonthOfInterval } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
@@ -76,6 +76,46 @@ const DeadlineEditor: React.FC<DeadlineEditorProps> = ({ userId }) => {
     }
   };
 
+  // Calculate progress and generate month markers
+  const getProgressData = () => {
+    if (!deadline) return null;
+
+    const now = new Date();
+    const deadlineDate = deadline;
+    
+    // If deadline has passed, return 100% progress
+    if (deadlineDate < now) {
+      return { progress: 100, months: [], totalDays: 0, remainingDays: 0 };
+    }
+
+    // Calculate total days from start of January to deadline
+    const startOfYear = new Date(now.getFullYear(), 0, 1); // January 1st
+    const endOfDeadlineMonth = endOfMonth(deadlineDate);
+    const totalDays = differenceInDays(endOfDeadlineMonth, startOfYear);
+    const remainingDays = differenceInDays(deadlineDate, now);
+    
+    // Generate dynamic month markers: Jan, Jul, current month, Dec
+    const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const july = new Date(now.getFullYear(), 6, 1); // July (month 6)
+    const december = new Date(now.getFullYear(), 11, 1); // December (month 11)
+    
+    const months = [
+      new Date(now.getFullYear(), 0, 1), // January
+      july,
+      currentMonth,
+      december
+    ].filter((month, index, array) => {
+      // Remove duplicates and ensure months are in chronological order
+      return array.indexOf(month) === index;
+    }).sort((a, b) => a.getTime() - b.getTime());
+
+    const progress = Math.max(0, Math.min(100, ((totalDays - remainingDays) / totalDays) * 100));
+
+    return { progress, months, totalDays, remainingDays };
+  };
+
+  const progressData = getProgressData();
+
   if (isLoading) {
     return (
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -86,33 +126,77 @@ const DeadlineEditor: React.FC<DeadlineEditorProps> = ({ userId }) => {
   }
 
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant="ghost"
-          className={cn(
-            "h-auto p-0 font-normal text-sm hover:bg-transparent",
-            !deadline && "text-muted-foreground"
-          )}
-        >
-          <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4" />
-            <span>
-              Goal Deadline: {deadline ? format(deadline, 'PPP') : 'Set deadline'}
-            </span>
+    <div className="flex flex-col items-start sm:items-end gap-1">
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant="ghost"
+            className={cn(
+              "h-auto p-0 font-normal text-sm hover:bg-transparent",
+              !deadline && "text-muted-foreground"
+            )}
+          >
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4" />
+              <span>
+                <span className="sm:hidden">Deadline: </span>
+                <span className="hidden sm:inline">Goal Deadline: </span>
+                {deadline ? format(deadline, 'PPP') : 'Set deadline'}
+              </span>
+            </div>
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <CalendarComponent
+            mode="single"
+            selected={deadline}
+            onSelect={(date) => date && saveDeadline(date)}
+            initialFocus
+            className={cn("p-3 pointer-events-auto")}
+          />
+        </PopoverContent>
+      </Popover>
+      
+      {/* Progress bar for desktop only */}
+      {progressData && deadline && (
+        <div className="hidden sm:block w-full">
+          <div className="relative">
+            {/* Progress bar background */}
+            <div className="w-full h-2 bg-muted rounded-full overflow-hidden border border-muted-foreground/20">
+              <div 
+                className="h-full bg-gradient-primary transition-all duration-300 ease-out"
+                style={{ width: `${progressData.progress}%` }}
+              />
+            </div>
+            
+            {/* Month tick markers positioned proportionally */}
+            <div className="relative mt-1">
+              {progressData.months.map((month, index) => {
+                // Calculate the position as a percentage of the year
+                const startOfYear = new Date(month.getFullYear(), 0, 1);
+                const endOfYear = new Date(month.getFullYear(), 11, 31);
+                const totalDaysInYear = differenceInDays(endOfYear, startOfYear);
+                const daysFromStart = differenceInDays(month, startOfYear);
+                const positionPercent = (daysFromStart / totalDaysInYear) * 100;
+                
+                return (
+                  <div 
+                    key={index} 
+                    className="absolute flex flex-col items-center"
+                    style={{ left: `${positionPercent}%`, transform: 'translateX(-50%)' }}
+                  >
+                    <div className="w-px h-1 bg-muted-foreground/30" />
+                    <span className="text-xs text-muted-foreground mt-1">
+                      {format(month, 'MMM')}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
-        <CalendarComponent
-          mode="single"
-          selected={deadline}
-          onSelect={(date) => date && saveDeadline(date)}
-          initialFocus
-          className={cn("p-3 pointer-events-auto")}
-        />
-      </PopoverContent>
-    </Popover>
+        </div>
+      )}
+    </div>
   );
 };
 
