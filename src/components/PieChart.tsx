@@ -37,9 +37,9 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover, onSliceClick }) 
     const scaleFactor = Math.max(1.0, 1 + (maxTitleLength - 10) * 0.05);
     
     let currentAngle = 0;
-    const baseRadius = 80 * scaleFactor;
-    const subsectionRadius = 140 * scaleFactor;
-    const taskRadius = 200 * scaleFactor;
+    const baseRadius = 102 * scaleFactor;
+    const subsectionRadius = 181 * scaleFactor;
+    const taskRadius = 260 * scaleFactor;
     
     // Each section gets equal portion of 360 degrees
     const sectionAngle = 360 / sections.length;
@@ -124,7 +124,7 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover, onSliceClick }) 
   ) : 10;
   
   const scaleFactor = Math.max(1.0, 1 + (maxTitleLength - 10) * 0.05);
-  const chartSize = 500 * scaleFactor;
+  const chartSize = 650 * scaleFactor;
   const centerPoint = chartSize / 2;
 
   const createPath = (startAngle: number, endAngle: number, innerRadius: number, outerRadius: number, centerX: number, centerY: number) => {
@@ -171,8 +171,8 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover, onSliceClick }) 
   const getInnerRadius = (level: string, scaleFactor: number) => {
     switch (level) {
       case 'section': return 0;
-      case 'subsection': return 90 * scaleFactor;
-      case 'task': return 150 * scaleFactor;
+      case 'subsection': return 116 * scaleFactor;
+      case 'task': return 195 * scaleFactor;
       default: return 0;
     }
   };
@@ -220,8 +220,8 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover, onSliceClick }) 
     <div className="flex justify-center items-center w-full">
       <svg 
         viewBox={`0 0 ${chartSize} ${chartSize}`}
-        className="drop-shadow-soft w-full h-auto max-w-md md:max-w-lg"
-        style={{ aspectRatio: '1/1' }}
+        className="drop-shadow-soft w-full h-auto"
+        style={{ aspectRatio: '1/1', maxWidth: '624px' }}
       >
         {chartData.map((slice, index) => (
           <g key={index}>
@@ -267,9 +267,10 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover, onSliceClick }) 
                 y={getTextPosition(slice, centerPoint, centerPoint, scaleFactor).y}
                 textAnchor="middle"
                 dominantBaseline="middle"
-                className="fill-foreground text-xs font-medium pointer-events-none"
+                className="font-semibold pointer-events-none"
+                fill="#000000"
                 style={{
-                  fontSize: slice.level === 'section' ? '14px' : slice.level === 'subsection' ? '12px' : '10px',
+                  fontSize: slice.level === 'section' ? '18px' : slice.level === 'subsection' ? '16px' : '14px',
                 }}
               >
                 {getSliceText(slice)}

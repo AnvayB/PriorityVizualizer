@@ -10,8 +10,6 @@
 * How should I add a tutorial? Ideally, I want it to be an interactive "follow-along" tutorial where differnt parts of the website are highlighted and explained, but I'm open to making a tutorial video as a backup.
 * Improve pie chart resizing to fit writing inside the slices
 
-* add Dark mode for background and NavBar, give components a light grey background?
-
 * perform analytics on completed tasks from Supabase
 
 * maybe add RLS back for Supabase tables (since all the content is shared in the section, subsection, tasks)

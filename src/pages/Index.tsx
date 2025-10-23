@@ -1134,10 +1134,10 @@ const Index = () => {
           {/* Pie Chart */}
           <div className="xl:col-span-2">
             <Card className="bg-card/50 backdrop-blur-sm border-border/50 h-fit">
-              <CardHeader>
+              <CardHeader className="pb-2">
                 <CardTitle className="text-xl text-primary">Priority Display</CardTitle>
               </CardHeader>
-              <CardContent className="p-3 md:p-6" onClick={handleWhiteSpaceClick}>
+              <CardContent className="p-3 pt-0 md:p-6 md:pt-2" onClick={handleWhiteSpaceClick}>
                 {sections.length > 0 ? (
                   <PieChart 
                     sections={sections} 
