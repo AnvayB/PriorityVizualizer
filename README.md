@@ -8,7 +8,6 @@
 - For example, suppose I'm clicked on a slice in Section A. When I click to the Section B.2 subsection, that title is not filled in the "Add Priorities" component field. But if I click on Section B.3, then the subsection field in the Add Priorities component field _is_ filled, and same for if I go back to Section B.2. I need the clicked Subsection slice to fill its respective field in the Add Priorities component when it's clicked the first time. Otherwise, this will understandably cause frustration in the users' experience. 
 
 * How should I add a tutorial? Ideally, I want it to be an interactive "follow-along" tutorial where differnt parts of the website are highlighted and explained, but I'm open to making a tutorial video as a backup.
-* Improve pie chart resizing to fit writing inside the slices
 
 * perform analytics on completed tasks from Supabase
 

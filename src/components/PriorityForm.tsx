@@ -5,8 +5,12 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { Section, Subsection, Task } from '@/types/priorities';
-import { Plus, Calendar } from 'lucide-react';
+import { Plus, Calendar as CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface PriorityFormProps {
   sections: Section[];
@@ -33,7 +37,7 @@ const PriorityForm: React.FC<PriorityFormProps> = ({
   const [subsectionTitle, setSubsectionTitle] = useState('');
   const [selectedSectionId, setSelectedSectionId] = useState(prefilledSectionId);
   const [taskTitle, setTaskTitle] = useState('');
-  const [taskDueDate, setTaskDueDate] = useState('');
+  const [taskDueDate, setTaskDueDate] = useState<Date | undefined>(undefined);
   const [selectedSubsectionId, setSelectedSubsectionId] = useState(prefilledSubsectionId);
   const [currentTab, setCurrentTab] = useState(activeTab);
 
@@ -56,9 +60,10 @@ const PriorityForm: React.FC<PriorityFormProps> = ({
   const handleAddTask = (e: React.FormEvent) => {
     e.preventDefault();
     if (taskTitle.trim() && taskDueDate && selectedSectionId && selectedSubsectionId) {
-      onAddTask(selectedSectionId, selectedSubsectionId, taskTitle.trim(), taskDueDate);
+      const formattedDate = format(taskDueDate, 'yyyy-MM-dd');
+      onAddTask(selectedSectionId, selectedSubsectionId, taskTitle.trim(), formattedDate);
       setTaskTitle('');
-      setTaskDueDate('');
+      setTaskDueDate(undefined);
     }
   };
 
@@ -193,17 +198,32 @@ const PriorityForm: React.FC<PriorityFormProps> = ({
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="task-due-date" className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
+                <Label className="flex items-center gap-2">
+                  <CalendarIcon className="w-4 h-4" />
                   Due Date
                 </Label>
-                <Input
-                  id="task-due-date"
-                  type="date"
-                  value={taskDueDate}
-                  onChange={(e) => setTaskDueDate(e.target.value)}
-                  className="bg-background/80"
-                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal bg-background/80",
+                        !taskDueDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {taskDueDate ? format(taskDueDate, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={taskDueDate}
+                      onSelect={setTaskDueDate}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
               
               <Button 
