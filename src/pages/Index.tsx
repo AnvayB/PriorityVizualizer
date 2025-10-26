@@ -14,6 +14,7 @@ import { Section, Subsection, Task, ChartSlice } from '@/types/priorities';
 import { PieChart as PieChartIcon, Target, Calendar, Save, Upload, ChevronDown, LogOut, User, Clock, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { storeLocalBackup, detectDataLoss, downloadAutoBackup } from '@/utils/dataProtection';
 
 
 const Index = () => {
@@ -35,20 +36,20 @@ const Index = () => {
   // Load data from Supabase
   const loadFromSupabase = useCallback(async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
       
-      if (!user) {
+      if (!currentUser) {
         console.log('[loadFromSupabase] No user found');
         return;
       }
 
-      console.log('[loadFromSupabase] Loading data for user:', user.id);
+      console.log('[loadFromSupabase] Loading data for user:', currentUser.id);
 
       // Fetch sections
       const { data: sectionsData, error: sectionsError } = await supabase
         .from('sections')
         .select('*')
-        .eq('user_id', user.id);
+        .eq('user_id', currentUser.id);
 
       if (sectionsError) {
         console.error('[loadFromSupabase] Error fetching sections:', sectionsError);
@@ -137,6 +138,12 @@ const Index = () => {
       })));
 
       setSections(transformedSections);
+      
+      // DATA PROTECTION: Auto-backup after successful load
+      if (currentUser) {
+        storeLocalBackup(transformedSections, currentUser.id);
+        console.log('[DataProtection] Auto-backup created after load');
+      }
       
       toast({
         title: "Data loaded from Supabase",
@@ -520,6 +527,41 @@ const Index = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // DATA PROTECTION: Warn about completing sections/subsections (they get deleted!)
+      if (type === 'section' || type === 'subsection') {
+        const itemType = type === 'section' ? 'section' : 'subsection';
+        
+        let itemName = 'Unknown';
+        let countToDelete = 0;
+        
+        if (type === 'section') {
+          const section = sections.find(s => s.id === id);
+          itemName = section?.title || 'Unknown';
+          countToDelete = section?.subsections.reduce((sum, sub) => sum + sub.tasks.length, 0) || 0;
+        } else {
+          const subsection = sections.flatMap(s => s.subsections).find(sub => sub.id === id);
+          itemName = subsection?.title || 'Unknown';
+          countToDelete = subsection?.tasks.length || 0;
+        }
+
+        const confirmed = window.confirm(
+          `⚠️ PERMANENT ACTION\n\n` +
+          `Completing "${itemName}" will:\n` +
+          `• Mark ${countToDelete} task(s) as complete\n` +
+          `• PERMANENTLY DELETE this ${itemType} and all its data\n\n` +
+          `This action cannot be undone!\n\n` +
+          `Continue?`
+        );
+
+        if (!confirmed) {
+          return;
+        }
+
+        // Create backup before deletion
+        console.log('[DataProtection] Creating backup before completing', type);
+        storeLocalBackup(sections, user.id);
+      }
+
       let tasksCompletedCount = 0;
       const completedTaskDetails: Array<{ task_title: string; section_title: string; subsection_title: string | null }> = [];
       
@@ -730,6 +772,62 @@ const Index = () => {
         });
         return;
       }
+
+      // DATA PROTECTION: Create automatic backup before dangerous operation
+      console.log('[DataProtection] Creating safety backup before save...');
+      storeLocalBackup(sections, user.id);
+
+      // DATA PROTECTION: Check if we're about to save less data than we currently have
+      // Fetch current data from database
+      const { data: currentSections } = await supabase
+        .from('sections')
+        .select('*, subsections(*, tasks(*))')
+        .eq('user_id', user.id);
+
+      if (currentSections && currentSections.length > 0) {
+        // Transform current database data to Section[] format for comparison
+        const currentData = currentSections.map(section => ({
+          id: section.id,
+          title: section.title,
+          color: section.color,
+          high_priority: section.high_priority,
+          subsections: (section.subsections || []).map(sub => ({
+            id: sub.id,
+            title: sub.title,
+            high_priority: sub.high_priority,
+            tasks: (sub.tasks || []).map(task => ({
+              id: task.id,
+              title: task.title,
+              dueDate: task.due_date || '',
+              high_priority: task.high_priority
+            }))
+          }))
+        }));
+
+        const warning = detectDataLoss(currentData, sections, 0.3); // 30% loss threshold
+        
+        if (warning) {
+          // Download automatic backup
+          downloadAutoBackup(currentData, user.id);
+          
+          // Show warning and get confirmation
+          const confirmed = window.confirm(
+            warning + 
+            "\n\n⚠️ An automatic backup has been downloaded to your computer.\n" +
+            "If you proceed, your current database data will be REPLACED."
+          );
+          
+          if (!confirmed) {
+            toast({
+              title: "Save cancelled",
+              description: "Your data was not modified. The backup has been saved to your downloads.",
+            });
+            return;
+          }
+        }
+      }
+
+      console.log('[DataProtection] Proceeding with save...');
 
       // Clear existing data for this user
       await supabase.from('sections').delete().eq('user_id', user.id);

@@ -19,13 +19,13 @@ const __dirname = path.dirname(__filename);
 
 // Supabase credentials (from your client.ts)
 const SUPABASE_URL = "https://ktjrcdknewtliusorbcb.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0anJjZGtuZXd0bGl1c29yYmNiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc1NjQ1NzQsImV4cCI6MjA3MzE0MDU3NH0._azPNgEv7sphuv9_kfEG8dAmAMPCgxPO__3sp_LGDRE";
+// const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0anJjZGtuZXd0bGl1c29yYmNiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc1NjQ1NzQsImV4cCI6MjA3MzE0MDU3NH0._azPNgEv7sphuv9_kfEG8dAmAMPCgxPO__3sp_LGDRE";
 
 // For admin access, you may need the service role key instead
 // Get this from Supabase Dashboard > Settings > API > service_role key
-// const SUPABASE_SERVICE_KEY = "YOUR_SERVICE_ROLE_KEY_HERE";
+const SUPABASE_SERVICE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0anJjZGtuZXd0bGl1c29yYmNiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NzU2NDU3NCwiZXhwIjoyMDczMTQwNTc0fQ.EKyhY6jqc6cm0PyTYCqUbRdoAi8BG4wgj9rZd8keMRA";
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
 async function exportAllUserData() {
   console.log('🚀 Starting export...\n');
