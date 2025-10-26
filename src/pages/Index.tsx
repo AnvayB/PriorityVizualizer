@@ -38,8 +38,11 @@ const Index = () => {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
+        console.log('[loadFromSupabase] No user found');
         return;
       }
+
+      console.log('[loadFromSupabase] Loading data for user:', user.id);
 
       // Fetch sections
       const { data: sectionsData, error: sectionsError } = await supabase
@@ -47,26 +50,61 @@ const Index = () => {
         .select('*')
         .eq('user_id', user.id);
 
-      if (sectionsError) throw sectionsError;
+      if (sectionsError) {
+        console.error('[loadFromSupabase] Error fetching sections:', sectionsError);
+        throw sectionsError;
+      }
+
+      console.log('[loadFromSupabase] Sections loaded:', sectionsData?.length || 0);
 
       if (!sectionsData || sectionsData.length === 0) {
+        console.log('[loadFromSupabase] No sections found, setting empty array');
         setSections([]);
+        toast({
+          title: "No data found",
+          description: "Start by adding a section using the form on the right, or load data from a file.",
+        });
         return;
       }
 
-      // Fetch subsections
+      // Get all section IDs for filtering
+      const sectionIds = sectionsData.map(s => s.id);
+      console.log('[loadFromSupabase] Section IDs:', sectionIds);
+
+      // Fetch subsections with explicit filter by section_id
       const { data: subsectionsData, error: subsectionsError } = await supabase
         .from('subsections')
-        .select('*');
+        .select('*')
+        .in('section_id', sectionIds);
 
-      if (subsectionsError) throw subsectionsError;
+      if (subsectionsError) {
+        console.error('[loadFromSupabase] Error fetching subsections:', subsectionsError);
+        throw subsectionsError;
+      }
 
-      // Fetch tasks
-      const { data: tasksData, error: tasksError } = await supabase
-        .from('tasks')
-        .select('*');
+      console.log('[loadFromSupabase] Subsections loaded:', subsectionsData?.length || 0);
 
-      if (tasksError) throw tasksError;
+      // Get all subsection IDs for filtering tasks
+      const subsectionIds = subsectionsData?.map(s => s.id) || [];
+      console.log('[loadFromSupabase] Subsection IDs:', subsectionIds);
+
+      // Fetch tasks with explicit filter by subsection_id
+      let tasksData = [];
+      if (subsectionIds.length > 0) {
+        const { data: fetchedTasks, error: tasksError } = await supabase
+          .from('tasks')
+          .select('*')
+          .in('subsection_id', subsectionIds);
+
+        if (tasksError) {
+          console.error('[loadFromSupabase] Error fetching tasks:', tasksError);
+          throw tasksError;
+        }
+        
+        tasksData = fetchedTasks || [];
+      }
+
+      console.log('[loadFromSupabase] Tasks loaded:', tasksData?.length || 0);
 
       // Transform data to match frontend structure
       const transformedSections = sectionsData.map(section => ({
@@ -91,11 +129,18 @@ const Index = () => {
           }))
       }));
 
+      console.log('[loadFromSupabase] Transformed sections:', transformedSections.length);
+      console.log('[loadFromSupabase] Sections detail:', transformedSections.map(s => ({
+        title: s.title,
+        subsections: s.subsections.length,
+        tasks: s.subsections.reduce((sum, sub) => sum + sub.tasks.length, 0)
+      })));
+
       setSections(transformedSections);
       
       toast({
         title: "Data loaded from Supabase",
-        description: "Your priorities have been loaded successfully",
+        description: `Loaded ${transformedSections.length} section(s) successfully`,
       });
     } catch (error) {
       console.error('Error loading from Supabase:', error);
@@ -977,16 +1022,32 @@ const Index = () => {
                   <span className="truncate max-w-32 md:max-w-none">{user.email}</span>
                 </div>
               )}
-              <MobileNavigation
-                onSignOut={handleSignOut}
-                onSaveToDatabase={handleSaveToDatabase}
-                onSaveToComputer={handleReplaceCurrentData}
-                onLoadFromSupabase={loadFromSupabase}
-                onLoadFromFile={handleLoadFromFile}
-                onLoadGuestData={handleLoadGuestData}
-                user={user}
-                isGuestUser={isGuestUser}
-              />
+              <div className="flex items-center gap-2">
+                {user && (
+                  <Button
+                    onClick={loadFromSupabase}
+                    variant="outline"
+                    size="sm"
+                    className="hidden sm:flex"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
+                      <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/>
+                      <path d="M21 3v5h-5"/>
+                    </svg>
+                    Reload Data
+                  </Button>
+                )}
+                <MobileNavigation
+                  onSignOut={handleSignOut}
+                  onSaveToDatabase={handleSaveToDatabase}
+                  onSaveToComputer={handleReplaceCurrentData}
+                  onLoadFromSupabase={loadFromSupabase}
+                  onLoadFromFile={handleLoadFromFile}
+                  onLoadGuestData={handleLoadGuestData}
+                  user={user}
+                  isGuestUser={isGuestUser}
+                />
+              </div>
             </div>
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
@@ -1138,25 +1199,28 @@ const Index = () => {
                 <CardTitle className="text-xl text-primary">Priority Display</CardTitle>
               </CardHeader>
               <CardContent className="p-3 pt-0 md:p-6 md:pt-2" onClick={handleWhiteSpaceClick}>
-                {sections.length > 0 ? (
-                  <PieChart 
-                    sections={sections} 
-                    onHover={setHoveredSlice}
-                    onSliceClick={handleSliceClickForForm}
-                  />
-                ) : (
-                  <div className="flex items-center justify-center h-96 text-center">
-                    <div className="space-y-4">
-                      <div className="p-4 bg-muted/50 rounded-full w-fit mx-auto">
-                        <PieChartIcon className="w-12 h-12 text-muted-foreground" />
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-semibold text-foreground">No Data Yet</h3>
-                        <p className="text-muted-foreground">Add your first section to get started</p>
+                {(() => {
+                  console.log('[Index] Rendering PieChart area, sections.length:', sections.length);
+                  return sections.length > 0 ? (
+                    <PieChart 
+                      sections={sections} 
+                      onHover={setHoveredSlice}
+                      onSliceClick={handleSliceClickForForm}
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-96 text-center">
+                      <div className="space-y-4">
+                        <div className="p-4 bg-muted/50 rounded-full w-fit mx-auto">
+                          <PieChartIcon className="w-12 h-12 text-muted-foreground" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-semibold text-foreground">No Data Yet</h3>
+                          <p className="text-muted-foreground">Add your first section to get started</p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
               </CardContent>
             </Card>
           </div>

@@ -24,7 +24,17 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover, onSliceClick }) 
   const chartData = useMemo(() => {
     const slices: ChartSlice[] = [];
     
-    if (sections.length === 0) return [];
+    console.log('[PieChart] Rendering with sections:', sections.length);
+    console.log('[PieChart] Sections:', sections.map(s => ({
+      title: s.title,
+      color: s.color,
+      subsections: s.subsections?.length || 0
+    })));
+    
+    if (sections.length === 0) {
+      console.log('[PieChart] No sections, returning empty array');
+      return [];
+    }
 
     // Calculate dynamic scaling based on text content
     const maxTitleLength = Math.max(
