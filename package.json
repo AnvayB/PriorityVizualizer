@@ -8,7 +8,11 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "announcement": "node create-announcement.mjs",
+    "announcement:create": "node create-announcement.mjs",
+    "announcement:debug": "node debug-announcements.mjs",
+    "db:push": "npx supabase db push"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -45,6 +49,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "date-fns": "^3.6.0",
+    "dotenv": "^17.2.3",
     "embla-carousel-react": "^8.6.0",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.462.0",

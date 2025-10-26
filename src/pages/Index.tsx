@@ -10,6 +10,7 @@ import HoverInfo from '@/components/HoverInfo';
 import CompletionCounter from '@/components/CompletionCounter';
 import DeadlineEditor from '@/components/DeadlineEditor';
 import MobileNavigation from '@/components/MobileNavigation';
+import AnnouncementDialog from '@/components/AnnouncementDialog';
 import { Section, Subsection, Task, ChartSlice } from '@/types/priorities';
 import { PieChart as PieChartIcon, Target, Calendar, Save, Upload, ChevronDown, LogOut, User, Clock, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -1271,6 +1272,9 @@ const Index = () => {
 
           {user && <CompletionCounter userId={user.id} refreshTrigger={completionRefresh} />}
         </div>
+
+        {/* Announcement Dialog */}
+        {user && <AnnouncementDialog userId={user.id} />}
 
         {/* Main Content */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 md:gap-10">

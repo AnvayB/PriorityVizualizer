@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      announcements: {
+        Row: {
+          id: string
+          title: string
+          message: string
+          severity: string
+          is_active: boolean
+          created_at: string
+          expires_at: string | null
+          created_by: string | null
+        }
+        Insert: {
+          id?: string
+          title: string
+          message: string
+          severity?: string
+          is_active?: boolean
+          created_at?: string
+          expires_at?: string | null
+          created_by?: string | null
+        }
+        Update: {
+          id?: string
+          title?: string
+          message?: string
+          severity?: string
+          is_active?: boolean
+          created_at?: string
+          expires_at?: string | null
+          created_by?: string | null
+        }
+        Relationships: []
+      }
       completed_tasks: {
         Row: {
           completed_at: string
@@ -173,6 +206,35 @@ export type Database = {
             columns: ["subsection_id"]
             isOneToOne: false
             referencedRelation: "subsections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_announcements_seen: {
+        Row: {
+          id: string
+          user_id: string
+          announcement_id: string
+          seen_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          announcement_id: string
+          seen_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          announcement_id?: string
+          seen_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_announcements_seen_announcement_id_fkey"
+            columns: ["announcement_id"]
+            isOneToOne: false
+            referencedRelation: "announcements"
             referencedColumns: ["id"]
           },
         ]

@@ -110,4 +110,21 @@ sections (id, user_id, title, color, created_at, updated_at)
 - Secure API endpoints with proper authorization
 - Client-side and server-side data validation
 
+## 📢 User Communication System
+
+The app includes a built-in announcement system for communicating with users:
+
+- **One-time alerts**: Show important messages to users on their next login
+- **Severity levels**: Info, Success, Warning, Error with appropriate visual styling
+- **Smart tracking**: Each user sees announcements only once
+- **Easy management**: CLI tool for creating and managing announcements
+
+**For administrators**: See [`ANNOUNCEMENTS-GUIDE.md`](./ANNOUNCEMENTS-GUIDE.md) for detailed documentation or [`QUICK-ANNOUNCEMENTS.md`](./QUICK-ANNOUNCEMENTS.md) for quick reference.
+
+**Quick example**:
+```bash
+node create-announcement.mjs
+# Follow prompts to create announcements
+```
+
 
