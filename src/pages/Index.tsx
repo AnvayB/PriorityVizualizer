@@ -1120,32 +1120,16 @@ const Index = () => {
                   <span className="truncate max-w-32 md:max-w-none">{user.email}</span>
                 </div>
               )}
-              <div className="flex items-center gap-2">
-                {user && (
-                  <Button
-                    onClick={loadFromSupabase}
-                    variant="outline"
-                    size="sm"
-                    className="hidden sm:flex"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
-                      <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/>
-                      <path d="M21 3v5h-5"/>
-                    </svg>
-                    Reload Data
-                  </Button>
-                )}
-                <MobileNavigation
-                  onSignOut={handleSignOut}
-                  onSaveToDatabase={handleSaveToDatabase}
-                  onSaveToComputer={handleReplaceCurrentData}
-                  onLoadFromSupabase={loadFromSupabase}
-                  onLoadFromFile={handleLoadFromFile}
-                  onLoadGuestData={handleLoadGuestData}
-                  user={user}
-                  isGuestUser={isGuestUser}
-                />
-              </div>
+              <MobileNavigation
+                onSignOut={handleSignOut}
+                onSaveToDatabase={handleSaveToDatabase}
+                onSaveToComputer={handleReplaceCurrentData}
+                onLoadFromSupabase={loadFromSupabase}
+                onLoadFromFile={handleLoadFromFile}
+                onLoadGuestData={handleLoadGuestData}
+                user={user}
+                isGuestUser={isGuestUser}
+              />
             </div>
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">

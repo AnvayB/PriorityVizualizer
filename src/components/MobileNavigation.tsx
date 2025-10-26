@@ -11,7 +11,9 @@ import {
   FolderOpen,
   Database,
   HardDrive,
-  User
+  User,
+  RefreshCw,
+  Menu
 } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 
@@ -39,20 +41,40 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
   return (
     <TooltipProvider>
       <div className="flex gap-2 w-full sm:w-auto">
-        {/* Save Dropdown */}
+        {/* Combined Menu Dropdown */}
         <Tooltip>
           <TooltipTrigger asChild>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button className="gap-1 md:gap-2 text-sm flex-1 sm:flex-none">
-                  <Save className="w-4 h-4" />
-                  <span className="text-xs sm:hidden">Save</span>
-                  <span className="hidden sm:inline">Save</span>
+                <Button variant="outline" className="gap-1 md:gap-2 text-sm flex-1 sm:flex-none">
+                  <Menu className="w-4 h-4" />
+                  <span className="text-xs sm:hidden">Menu</span>
+                  <span className="hidden sm:inline">Menu</span>
                   <ChevronDown className="w-4 h-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={onSaveToDatabase} className="gap-2">
+              <DropdownMenuContent align="end" className="w-56">
+                {/* Load/Refresh Section */}
+                <DropdownMenuItem onClick={onLoadFromSupabase} className="gap-2">
+                  <RefreshCw className="w-4 h-4" />
+                  <div className="flex flex-col">
+                    <span className="font-medium">Reload Data</span>
+                    <span className="text-xs text-muted-foreground">Refresh from database</span>
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onLoadFromFile} className="gap-2">
+                  <FolderOpen className="w-4 h-4" />
+                  <div className="flex flex-col">
+                    <span className="font-medium">Open File</span>
+                    <span className="text-xs text-muted-foreground">Import from your device</span>
+                  </div>
+                </DropdownMenuItem>
+                
+                {/* Separator */}
+                <div className="my-1 h-px bg-border" />
+                
+                {/* Save Section */}
+                <DropdownMenuItem disabled className="gap-2 opacity-50 cursor-not-allowed pointer-events-none">
                   <Database className="w-4 h-4" />
                   <div className="flex flex-col">
                     <span className="font-medium">Save to Cloud</span>
@@ -66,55 +88,25 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
                     <span className="text-xs text-muted-foreground">Save to your device</span>
                   </div>
                 </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Save your priorities</p>
-          </TooltipContent>
-        </Tooltip>
-
-        {/* Load Dropdown */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="gap-1 md:gap-2 text-sm flex-1 sm:flex-none">
-                  <Upload className="w-4 h-4" />
-                  <span className="text-xs sm:hidden">Load</span>
-                  <span className="hidden sm:inline">Load</span>
-                  <ChevronDown className="w-4 h-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={onLoadFromSupabase} className="gap-2">
-                  <Database className="w-4 h-4" />
-                  <div className="flex flex-col">
-                    <span className="font-medium">Load from Cloud</span>
-                    <span className="text-xs text-muted-foreground">Restore from your account</span>
-                  </div>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={onLoadFromFile} className="gap-2">
-                  <FolderOpen className="w-4 h-4" />
-                  <div className="flex flex-col">
-                    <span className="font-medium">Open File</span>
-                    <span className="text-xs text-muted-foreground">Import from your device</span>
-                  </div>
-                </DropdownMenuItem>
+                
+                {/* Guest Demo Option */}
                 {isGuestUser?.() && onLoadGuestData && (
-                  <DropdownMenuItem onClick={onLoadGuestData} className="gap-2">
-                    <User className="w-4 h-4" />
-                    <div className="flex flex-col">
-                      <span className="font-medium">Try Demo</span>
-                      <span className="text-xs text-muted-foreground">Load sample data</span>
-                    </div>
-                  </DropdownMenuItem>
+                  <>
+                    <div className="my-1 h-px bg-border" />
+                    <DropdownMenuItem onClick={onLoadGuestData} className="gap-2">
+                      <User className="w-4 h-4" />
+                      <div className="flex flex-col">
+                        <span className="font-medium">Try Demo</span>
+                        <span className="text-xs text-muted-foreground">Load sample data</span>
+                      </div>
+                    </DropdownMenuItem>
+                  </>
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Load your priorities</p>
+            <p>File operations</p>
           </TooltipContent>
         </Tooltip>
 
