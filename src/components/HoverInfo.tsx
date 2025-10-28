@@ -7,9 +7,13 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { ChartSlice } from '@/types/priorities';
 import { Calendar, CheckCircle, Clock, Edit, Trash2, Palette, X, AlertTriangle, Check, ChevronDown } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface HoverInfoProps {
   slice: ChartSlice | null;
@@ -25,7 +29,7 @@ interface HoverInfoProps {
 const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorChange, onPriorityChange, onComplete, onClose, isPinned }) => {
   const { theme } = useTheme();
   const [editTitle, setEditTitle] = useState('');
-  const [editDueDate, setEditDueDate] = useState('');
+  const [editDueDate, setEditDueDate] = useState<Date | undefined>(undefined);
   const [selectedColor, setSelectedColor] = useState('#3b82f6');
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isColorOpen, setIsColorOpen] = useState(false);
@@ -46,7 +50,7 @@ const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorC
     
     let id = '';
     let currentTitle = '';
-    let currentDueDate = '';
+    let currentDueDate: Date | undefined = undefined;
     
     if (slice.level === 'section') {
       id = slice.section.id;
@@ -57,7 +61,11 @@ const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorC
     } else if (slice.level === 'task' && slice.task) {
       id = slice.task.id;
       currentTitle = slice.task.title;
-      currentDueDate = slice.task.dueDate;
+      // Convert date string to Date object
+      if (slice.task.dueDate) {
+        const [year, month, day] = slice.task.dueDate.split('-').map(Number);
+        currentDueDate = new Date(year, month - 1, day);
+      }
     }
     
     setEditTitle(currentTitle);
@@ -77,7 +85,9 @@ const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorC
       id = slice.task.id;
     }
     
-    onEdit(slice.level, id, editTitle, editDueDate || undefined);
+    // Convert Date object back to string format (YYYY-MM-DD) if it exists
+    const formattedDate = editDueDate ? format(editDueDate, 'yyyy-MM-dd') : undefined;
+    onEdit(slice.level, id, editTitle, formattedDate);
     setIsEditOpen(false);
   };
 
@@ -230,13 +240,33 @@ const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorC
                   />
                 </div>
                 {slice.level === 'task' && (
-                  <div>
-                    <label className="text-sm font-medium">Due Date</label>
-                    <Input
-                      type="date"
-                      value={editDueDate}
-                      onChange={(e) => setEditDueDate(e.target.value)}
-                    />
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium flex items-center gap-2">
+                      <Calendar className="w-4 h-4" />
+                      Due Date
+                    </label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !editDueDate && "text-muted-foreground"
+                          )}
+                        >
+                          <Calendar className="mr-2 h-4 w-4" />
+                          {editDueDate ? format(editDueDate, "PPP") : <span>Pick a date</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <CalendarComponent
+                          mode="single"
+                          selected={editDueDate}
+                          onSelect={setEditDueDate}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
                 )}
               </div>

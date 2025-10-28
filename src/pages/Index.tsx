@@ -26,6 +26,7 @@ const Index = () => {
   const [hoveredSlice, setHoveredSlice] = useState<ChartSlice | null>(null);
   const [pinnedSlice, setPinnedSlice] = useState<ChartSlice | null>(null);
   const [completionRefresh, setCompletionRefresh] = useState(0);
+  const [isDueTodayModalOpen, setIsDueTodayModalOpen] = useState(false);
   const [isDueSoonModalOpen, setIsDueSoonModalOpen] = useState(false);
   
   // Form prefill state
@@ -725,6 +726,28 @@ const Index = () => {
     return new Date(year, month - 1, day); // month is 0-indexed
   };
 
+  // Tasks due today
+  const dueTodayTasks = sections.flatMap(section => 
+    section.subsections.flatMap(subsection => 
+      subsection.tasks.filter(task => {
+        if (!task.dueDate) return false;
+        const dueDate = parseLocalDate(task.dueDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const endOfToday = new Date();
+        endOfToday.setHours(23, 59, 59, 999);
+        return dueDate >= today && dueDate <= endOfToday;
+      }).map(task => ({
+        ...task,
+        sectionTitle: section.title,
+        subsectionTitle: subsection.title,
+        sectionId: section.id,
+        subsectionId: subsection.id
+      }))
+    )
+  );
+
+  // Tasks due soon (1-5 days from now, excluding today)
   const upcomingTasks = sections.flatMap(section => 
     section.subsections.flatMap(subsection => 
       subsection.tasks.filter(task => {
@@ -732,10 +755,13 @@ const Index = () => {
         const dueDate = parseLocalDate(task.dueDate);
         const today = new Date();
         today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date();
+        tomorrow.setDate(today.getDate() + 1);
+        tomorrow.setHours(0, 0, 0, 0);
         const fiveDaysFromNow = new Date();
         fiveDaysFromNow.setDate(today.getDate() + 5);
         fiveDaysFromNow.setHours(23, 59, 59, 999);
-        return dueDate >= today && dueDate <= fiveDaysFromNow;
+        return dueDate >= tomorrow && dueDate <= fiveDaysFromNow;
       }).map(task => ({
         ...task,
         sectionTitle: section.title,
@@ -1161,34 +1187,119 @@ const Index = () => {
         {/* Stats Bar */}
       <div className="container mx-auto px-4 md:px-6 py-4 md:py-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-6 md:mb-10">
+          {/* Combined Tasks & Sections Card */}
           <Card className="bg-card/50 backdrop-blur-sm border-border/50">
             <CardContent className="p-5">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-chart-1/20 rounded-lg">
-                  <PieChartIcon className="w-5 h-5 text-chart-1" />
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-chart-2/20 rounded-lg">
+                    <Target className="w-5 h-5 text-chart-2" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-foreground">{totalTasks}</p>
+                    <p className="text-sm text-muted-foreground">Tasks</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-2xl font-bold text-foreground">{sections.length}</p>
-                  <p className="text-sm text-muted-foreground">Life Sections</p>
+                <div className="flex items-center gap-2 px-3 py-1 bg-muted/50 rounded-lg">
+                  <PieChartIcon className="w-4 h-4 text-chart-1" />
+                  <div className="text-right">
+                    <p className="text-lg font-semibold text-foreground">{sections.length}</p>
+                    <p className="text-xs text-muted-foreground">Sections</p>
+                  </div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-card/50 backdrop-blur-sm border-border/50">
-            <CardContent className="p-5">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-chart-2/20 rounded-lg">
-                  <Target className="w-5 h-5 text-chart-2" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-foreground">{totalTasks}</p>
-                  <p className="text-sm text-muted-foreground">Total Tasks</p>
-                </div>
+          {/* Due Today Card */}
+          <Dialog open={isDueTodayModalOpen} onOpenChange={setIsDueTodayModalOpen}>
+            <DialogTrigger asChild>
+              <Card className="bg-card/50 backdrop-blur-sm border-2 border-destructive/30 cursor-pointer hover:bg-card/70 hover:border-destructive/50 hover:shadow-lg hover:shadow-destructive/10 transition-all duration-200 group">
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-destructive/20 rounded-lg group-hover:bg-destructive/30 transition-colors">
+                      <Clock className="w-5 h-5 text-destructive group-hover:scale-110 transition-transform" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-foreground">{dueTodayTasks.length}</p>
+                      <p className="text-sm text-muted-foreground group-hover:text-destructive/80 transition-colors">Due Today</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </DialogTrigger>
+            <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-destructive" />
+                  Due Today ({dueTodayTasks.length})
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                {dueTodayTasks.length === 0 ? (
+                  <div className="text-center py-8">
+                    <div className="p-4 bg-muted/50 rounded-full w-fit mx-auto mb-4">
+                      <Clock className="w-12 h-12 text-muted-foreground" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-foreground mb-2">No Tasks Due Today</h3>
+                    <p className="text-muted-foreground">All clear! No tasks are due today.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <p className="text-sm text-muted-foreground">
+                      You have {dueTodayTasks.length} task{dueTodayTasks.length !== 1 ? 's' : ''} due today.
+                    </p>
+                    <div className="space-y-3">
+                      {dueTodayTasks
+                        .sort((a, b) => parseLocalDate(a.dueDate).getTime() - parseLocalDate(b.dueDate).getTime())
+                        .map((task) => {
+                          const overdue = isOverdue(task.dueDate);
+                          
+                          return (
+                            <div key={`${task.sectionId}-${task.subsectionId}-${task.id}`} className="flex items-start gap-3 p-4 bg-muted/30 rounded-lg border-l-4 border-destructive">
+                              <div className="p-2 bg-background rounded-lg">
+                                <Clock className="w-4 h-4 text-destructive" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="flex-1 min-w-0">
+                                    <h4 className="font-medium text-foreground truncate">{task.title}</h4>
+                                    <p className="text-sm text-muted-foreground">
+                                      {task.sectionTitle} → {task.subsectionTitle}
+                                    </p>
+                                  </div>
+                                  <div className="flex flex-col items-end gap-1">
+                                    <Badge 
+                                      variant="destructive"
+                                      className="text-xs whitespace-nowrap"
+                                    >
+                                      Today
+                                    </Badge>
+                                    {task.high_priority && (
+                                      <Badge variant="destructive" className="text-xs">
+                                        High Priority
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-1 mt-2">
+                                  <Calendar className="w-3 h-3 text-muted-foreground" />
+                                  <span className="text-xs text-muted-foreground">
+                                    Due: {formatDate(task.dueDate)}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </div>
+                )}
               </div>
-            </CardContent>
-          </Card>
+            </DialogContent>
+          </Dialog>
 
+          {/* Due Soon Card */}
           <Dialog open={isDueSoonModalOpen} onOpenChange={setIsDueSoonModalOpen}>
             <DialogTrigger asChild>
               <Card className="bg-card/50 backdrop-blur-sm border-2 border-warning/30 cursor-pointer hover:bg-card/70 hover:border-warning/50 hover:shadow-lg hover:shadow-warning/10 transition-all duration-200 group">
