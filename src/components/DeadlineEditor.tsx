@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { format, differenceInDays, startOfMonth, endOfMonth, eachMonthOfInterval } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -170,12 +171,25 @@ const DeadlineEditor: React.FC<DeadlineEditorProps> = ({ userId }) => {
         <div className="hidden sm:block w-full">
           <div className="relative">
             {/* Progress bar background */}
-            <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-gradient-primary transition-all duration-300 ease-out"
-                style={{ width: `${progressData.progress}%` }}
-              />
-            </div>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="w-full h-2 bg-muted rounded-full overflow-hidden cursor-help">
+                    <div 
+                      className="h-full bg-gradient-primary transition-all duration-300 ease-out"
+                      style={{ width: `${progressData.progress}%` }}
+                    />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="font-semibold">
+                    {progressData.remainingDays > 0 
+                      ? `${progressData.remainingDays} day${progressData.remainingDays !== 1 ? 's' : ''} remaining`
+                      : 'Deadline reached!'}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             
             {/* Month tick markers positioned proportionally */}
             <div className="relative mt-1">
