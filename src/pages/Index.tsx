@@ -717,13 +717,24 @@ const Index = () => {
     total + section.subsections.reduce((subTotal, subsection) => 
       subTotal + subsection.tasks.length, 0), 0);
 
+  // Parse date string as local date (not UTC) to avoid timezone shift
+  const parseLocalDate = (dateString: string): Date => {
+    if (!dateString) return new Date();
+    // Split the date string (format: YYYY-MM-DD) and create a date in local timezone
+    const [year, month, day] = dateString.split('-').map(Number);
+    return new Date(year, month - 1, day); // month is 0-indexed
+  };
+
   const upcomingTasks = sections.flatMap(section => 
     section.subsections.flatMap(subsection => 
       subsection.tasks.filter(task => {
-        const dueDate = new Date(task.dueDate);
+        if (!task.dueDate) return false;
+        const dueDate = parseLocalDate(task.dueDate);
         const today = new Date();
+        today.setHours(0, 0, 0, 0);
         const fiveDaysFromNow = new Date();
         fiveDaysFromNow.setDate(today.getDate() + 5);
+        fiveDaysFromNow.setHours(23, 59, 59, 999);
         return dueDate >= today && dueDate <= fiveDaysFromNow;
       }).map(task => ({
         ...task,
@@ -736,7 +747,7 @@ const Index = () => {
   );
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+    const date = parseLocalDate(dateString);
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -745,14 +756,14 @@ const Index = () => {
   };
 
   const isOverdue = (dateString: string) => {
-    const dueDate = new Date(dateString);
+    const dueDate = parseLocalDate(dateString);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return dueDate < today;
   };
 
   const getDaysUntilDue = (dateString: string) => {
-    const dueDate = new Date(dateString);
+    const dueDate = parseLocalDate(dateString);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const diffTime = dueDate.getTime() - today.getTime();
@@ -1217,7 +1228,7 @@ const Index = () => {
                     </p>
                     <div className="space-y-3">
                       {upcomingTasks
-                        .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+                        .sort((a, b) => parseLocalDate(a.dueDate).getTime() - parseLocalDate(b.dueDate).getTime())
                         .map((task) => {
                           const daysUntil = getDaysUntilDue(task.dueDate);
                           const overdue = isOverdue(task.dueDate);

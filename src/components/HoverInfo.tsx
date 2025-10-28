@@ -146,8 +146,16 @@ const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorC
     );
   }
 
+  // Parse date string as local date (not UTC) to avoid timezone shift
+  const parseLocalDate = (dateString: string): Date => {
+    if (!dateString) return new Date();
+    // Split the date string (format: YYYY-MM-DD) and create a date in local timezone
+    const [year, month, day] = dateString.split('-').map(Number);
+    return new Date(year, month - 1, day); // month is 0-indexed
+  };
+
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+    const date = parseLocalDate(dateString);
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -156,14 +164,14 @@ const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorC
   };
 
   const isOverdue = (dateString: string) => {
-    const dueDate = new Date(dateString);
+    const dueDate = parseLocalDate(dateString);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return dueDate < today;
   };
 
   const getDaysUntilDue = (dateString: string) => {
-    const dueDate = new Date(dateString);
+    const dueDate = parseLocalDate(dateString);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const diffTime = dueDate.getTime() - today.getTime();

@@ -21,6 +21,14 @@ const DeadlineEditor: React.FC<DeadlineEditorProps> = ({ userId }) => {
     loadDeadline();
   }, [userId]);
 
+  // Parse date string as local date (not UTC) to avoid timezone shift
+  const parseLocalDate = (dateString: string): Date => {
+    if (!dateString) return new Date();
+    // Split the date string (format: YYYY-MM-DD) and create a date in local timezone
+    const [year, month, day] = dateString.split('-').map(Number);
+    return new Date(year, month - 1, day); // month is 0-indexed
+  };
+
   const loadDeadline = async () => {
     try {
       const { data, error } = await supabase
@@ -32,7 +40,7 @@ const DeadlineEditor: React.FC<DeadlineEditorProps> = ({ userId }) => {
       if (error) throw error;
 
       if (data && data.deadline_date) {
-        setDeadline(new Date(data.deadline_date));
+        setDeadline(parseLocalDate(data.deadline_date));
       } else {
         // Default to December 31st of current year
         const defaultDeadline = new Date(new Date().getFullYear(), 11, 31);

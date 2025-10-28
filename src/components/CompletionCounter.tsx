@@ -28,10 +28,15 @@ const CompletionCounter: React.FC<CompletionCounterProps> = ({ userId, refreshTr
 
   const loadCompletionData = async () => {
     try {
-      // Get today's date
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const todayString = today.toISOString().split('T')[0];
+      // Get today's date in UTC (to match how completion_stats stores dates)
+      const now = new Date();
+      const todayString = now.toISOString().split('T')[0];
+      
+      // Calculate start and end of today in UTC for querying completed_tasks
+      const startOfTodayUTC = `${todayString}T00:00:00.000Z`;
+      const tomorrow = new Date(now);
+      tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+      const startOfTomorrowUTC = tomorrow.toISOString().split('T')[0] + 'T00:00:00.000Z';
 
       // Fetch daily count for today
       const { data: dailyData, error: dailyError } = await supabase
@@ -56,12 +61,13 @@ const CompletionCounter: React.FC<CompletionCounterProps> = ({ userId, refreshTr
       const total = totalData?.reduce((sum, record) => sum + record.daily_count, 0) || 0;
       setTotalCount(total);
 
-      // Fetch completed tasks for today
+      // Fetch completed tasks for today (using UTC day boundaries to match how dates are stored)
       const { data: tasksData, error: tasksError } = await supabase
         .from('completed_tasks')
         .select('*')
         .eq('user_id', userId)
-        .gte('completed_at', today.toISOString())
+        .gte('completed_at', startOfTodayUTC)
+        .lt('completed_at', startOfTomorrowUTC)
         .order('completed_at', { ascending: false });
 
       if (tasksError) throw tasksError;
