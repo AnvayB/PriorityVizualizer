@@ -1,3 +1,5 @@
+-include .env
+
 
 create:
 	git checkout -b trials
@@ -38,6 +40,12 @@ user-reset:
 user-check:
 	git config user.name
 	git config user.email
+
+# CRUD Announcements
+announcement:
+	export SUPABASE_SERVICE_KEY=$(SUPABASE_SERVICE_KEY)
+	node create-announcement.mjs
+
 
 # =============================================================================
 # BACKUP SYSTEM COMMANDS
