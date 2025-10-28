@@ -3,6 +3,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { CheckCircle, Clock, TrendingUp } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { format } from 'date-fns';
+import { toZonedTime, fromZonedTime } from 'date-fns-tz';
 
 interface CompletionCounterProps {
   userId: string;
@@ -28,17 +30,42 @@ const CompletionCounter: React.FC<CompletionCounterProps> = ({ userId, refreshTr
 
   const loadCompletionData = async () => {
     try {
-      // Get today's date in UTC (to match how completion_stats stores dates)
-      const now = new Date();
-      const todayString = now.toISOString().split('T')[0];
+      const PST_TZ = 'America/Los_Angeles';
       
-      // Calculate start and end of today in UTC for querying completed_tasks
-      const startOfTodayUTC = `${todayString}T00:00:00.000Z`;
-      const tomorrow = new Date(now);
-      tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
-      const startOfTomorrowUTC = tomorrow.toISOString().split('T')[0] + 'T00:00:00.000Z';
+      // Get current time in PST
+      const now = new Date();
+      const pstNow = toZonedTime(now, PST_TZ);
+      
+      // Get today's date string in PST
+      const todayString = format(pstNow, 'yyyy-MM-dd'); // Format: YYYY-MM-DD
+      
+      // Get start of today in PST (midnight PST)
+      const startOfTodayPST = new Date(pstNow.getFullYear(), pstNow.getMonth(), pstNow.getDate(), 0, 0, 0);
+      
+      // Convert PST midnight to UTC for database queries
+      const startOfTodayUTC = fromZonedTime(startOfTodayPST, PST_TZ).toISOString();
+      
+      // Get start of tomorrow in PST
+      const startOfTomorrowPST = new Date(pstNow.getFullYear(), pstNow.getMonth(), pstNow.getDate() + 1, 0, 0, 0);
+      const startOfTomorrowUTC = fromZonedTime(startOfTomorrowPST, PST_TZ).toISOString();
 
-      // Fetch daily count for today
+      // Fetch completed tasks for today first to get accurate count
+      const { data: tasksData, error: tasksError } = await supabase
+        .from('completed_tasks')
+        .select('*')
+        .eq('user_id', userId)
+        .gte('completed_at', startOfTodayUTC)
+        .lt('completed_at', startOfTomorrowUTC)
+        .order('completed_at', { ascending: false });
+
+      if (tasksError) throw tasksError;
+      
+      // Count tasks completed today directly from completed_tasks
+      const todayTasksCount = tasksData?.length || 0;
+      setDailyCount(todayTasksCount);
+      setCompletedTasks(tasksData || []);
+      
+      // Also fetch from completion_stats as a backup/secondary count
       const { data: dailyData, error: dailyError } = await supabase
         .from('completion_stats')
         .select('daily_count')
@@ -46,9 +73,10 @@ const CompletionCounter: React.FC<CompletionCounterProps> = ({ userId, refreshTr
         .eq('date', todayString)
         .maybeSingle();
 
-      if (dailyError) throw dailyError;
-
-      setDailyCount(dailyData?.daily_count || 0);
+      if (dailyError) {
+        // If completion_stats query fails, we already have the count from completed_tasks
+        console.warn('Could not fetch from completion_stats:', dailyError);
+      }
 
       // Fetch total count (sum of all daily_count)
       const { data: totalData, error: totalError } = await supabase
@@ -60,19 +88,6 @@ const CompletionCounter: React.FC<CompletionCounterProps> = ({ userId, refreshTr
 
       const total = totalData?.reduce((sum, record) => sum + record.daily_count, 0) || 0;
       setTotalCount(total);
-
-      // Fetch completed tasks for today (using UTC day boundaries to match how dates are stored)
-      const { data: tasksData, error: tasksError } = await supabase
-        .from('completed_tasks')
-        .select('*')
-        .eq('user_id', userId)
-        .gte('completed_at', startOfTodayUTC)
-        .lt('completed_at', startOfTomorrowUTC)
-        .order('completed_at', { ascending: false });
-
-      if (tasksError) throw tasksError;
-
-      setCompletedTasks(tasksData || []);
     } catch (error) {
       console.error('Error loading completion data:', error);
     } finally {

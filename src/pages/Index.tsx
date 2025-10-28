@@ -16,6 +16,8 @@ import { PieChart as PieChartIcon, Target, Calendar, Save, Upload, ChevronDown, 
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { storeLocalBackup, detectDataLoss, downloadAutoBackup } from '@/utils/dataProtection';
+import { toZonedTime } from 'date-fns-tz';
+import { format } from 'date-fns';
 
 
 const Index = () => {
@@ -618,7 +620,10 @@ const Index = () => {
       }
       
       // Update completion_stats in Supabase
-      const today = new Date().toISOString().split('T')[0];
+      // Get today's date in PST (Pacific Time)
+      const now = new Date();
+      const pstNow = toZonedTime(now, 'America/Los_Angeles');
+      const today = format(pstNow, 'yyyy-MM-dd');
       
       const { data: existingStat, error: fetchError } = await supabase
         .from('completion_stats')
