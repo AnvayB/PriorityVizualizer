@@ -12,7 +12,7 @@ import DeadlineEditor from '@/components/DeadlineEditor';
 import MobileNavigation from '@/components/MobileNavigation';
 import AnnouncementDialog from '@/components/AnnouncementDialog';
 import { Section, Subsection, Task, ChartSlice } from '@/types/priorities';
-import { PieChart as PieChartIcon, Target, Calendar, Save, Upload, ChevronDown, LogOut, User, Clock, AlertTriangle } from 'lucide-react';
+import { PieChart as PieChartIcon, Target, Calendar, Save, Upload, ChevronDown, LogOut, User, Clock, AlertTriangle, CheckCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { storeLocalBackup, detectDataLoss, downloadAutoBackup } from '@/utils/dataProtection';
@@ -30,6 +30,7 @@ const Index = () => {
   const [completionRefresh, setCompletionRefresh] = useState(0);
   const [isDueTodayModalOpen, setIsDueTodayModalOpen] = useState(false);
   const [isDueSoonModalOpen, setIsDueSoonModalOpen] = useState(false);
+  const [isOverdueModalOpen, setIsOverdueModalOpen] = useState(false);
   
   // Form prefill state
   const [formPrefilledSectionId, setFormPrefilledSectionId] = useState('');
@@ -802,6 +803,22 @@ const Index = () => {
     return diffDays;
   };
 
+  // Overdue tasks
+  const overdueTasks = sections.flatMap(section => 
+    section.subsections.flatMap(subsection => 
+      subsection.tasks.filter(task => {
+        if (!task.dueDate) return false;
+        return isOverdue(task.dueDate);
+      }).map(task => ({
+        ...task,
+        sectionTitle: section.title,
+        subsectionTitle: subsection.title,
+        sectionId: section.id,
+        subsectionId: subsection.id
+      }))
+    )
+  );
+
   const handleSaveToDatabase = async () => {
     try {
       // Check if user is authenticated
@@ -1191,7 +1208,7 @@ const Index = () => {
 
         {/* Stats Bar */}
       <div className="container mx-auto px-4 md:px-6 py-4 md:py-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-6 md:mb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-6 md:mb-10">
           {/* Combined Tasks & Sections Card */}
           <Card className="bg-card/50 backdrop-blur-sm border-border/50">
             <CardContent className="p-5">
@@ -1279,6 +1296,94 @@ const Index = () => {
                                       className="text-xs whitespace-nowrap"
                                     >
                                       Today
+                                    </Badge>
+                                    {task.high_priority && (
+                                      <Badge variant="destructive" className="text-xs">
+                                        High Priority
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-1 mt-2">
+                                  <Calendar className="w-3 h-3 text-muted-foreground" />
+                                  <span className="text-xs text-muted-foreground">
+                                    Due: {formatDate(task.dueDate)}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Overdue Card */}
+          <Dialog open={isOverdueModalOpen} onOpenChange={setIsOverdueModalOpen}>
+            <DialogTrigger asChild>
+              <Card className="bg-card/50 backdrop-blur-sm border-2 border-purple-500/40 cursor-pointer hover:bg-card/70 hover:border-purple-500/60 hover:shadow-lg hover:shadow-purple-500/20 transition-all duration-200 group">
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-purple-500/30 rounded-lg group-hover:bg-purple-500/40 transition-colors">
+                      <AlertTriangle className="w-5 h-5 text-purple-500 group-hover:scale-110 transition-transform" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-foreground">{overdueTasks.length}</p>
+                      <p className="text-sm text-muted-foreground group-hover:text-purple-500/80 transition-colors">Overdue</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </DialogTrigger>
+            <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5 text-purple-500" />
+                  Overdue Tasks ({overdueTasks.length})
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                {overdueTasks.length === 0 ? (
+                  <div className="text-center py-8">
+                    <div className="p-4 bg-muted/50 rounded-full w-fit mx-auto mb-4">
+                      <CheckCircle className="w-12 h-12 text-muted-foreground" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-foreground mb-2">No Overdue Tasks</h3>
+                    <p className="text-muted-foreground">Great job! All your tasks are up to date.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <p className="text-sm text-muted-foreground">
+                      You have {overdueTasks.length} overdue task{overdueTasks.length !== 1 ? 's' : ''}.
+                    </p>
+                    <div className="space-y-3">
+                      {overdueTasks
+                        .sort((a, b) => parseLocalDate(b.dueDate).getTime() - parseLocalDate(a.dueDate).getTime())
+                        .map((task) => {
+                          const daysOverdue = Math.abs(getDaysUntilDue(task.dueDate));
+                          
+                          return (
+                            <div key={`${task.sectionId}-${task.subsectionId}-${task.id}`} className="flex items-start gap-3 p-4 bg-muted/30 rounded-lg border-l-4 border-purple-500">
+                              <div className="p-2 bg-background rounded-lg">
+                                <AlertTriangle className="w-4 h-4 text-purple-500" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="flex-1 min-w-0">
+                                    <h4 className="font-medium text-foreground truncate">{task.title}</h4>
+                                    <p className="text-sm text-muted-foreground">
+                                      {task.sectionTitle} → {task.subsectionTitle}
+                                    </p>
+                                  </div>
+                                  <div className="flex flex-col items-end gap-1">
+                                    <Badge 
+                                      variant="secondary"
+                                      className="text-xs whitespace-nowrap bg-purple-500 text-white"
+                                    >
+                                      {daysOverdue === 1 ? '1 day overdue' : `${daysOverdue} days overdue`}
                                     </Badge>
                                     {task.high_priority && (
                                       <Badge variant="destructive" className="text-xs">

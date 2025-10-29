@@ -34,6 +34,7 @@ const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorC
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isColorOpen, setIsColorOpen] = useState(false);
   const [isTasksOpen, setIsTasksOpen] = useState(false);
+  
 
   const colors = [
     '#1338BE', '#ef4444', '#10b981', '#f59e0b', 
@@ -439,6 +440,8 @@ const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorC
                 );
               })()}
             </div>
+
+            
           </div>
         )}
         
