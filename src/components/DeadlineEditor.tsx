@@ -129,42 +129,55 @@ const DeadlineEditor: React.FC<DeadlineEditorProps> = ({ userId }) => {
     return (
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Calendar className="w-4 h-4" />
-        <span>Loading deadline...</span>
+        <span>Loading target...</span>
       </div>
     );
   }
 
   return (
     <div className="flex flex-col items-start sm:items-end gap-1">
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button
-            variant="ghost"
-            className={cn(
-              "h-auto p-0 font-normal text-sm hover:bg-transparent",
-              !deadline && "text-muted-foreground"
-            )}
-          >
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              <span>
-                <span className="sm:hidden">Deadline: </span>
-                <span className="hidden sm:inline">Goal Deadline: </span>
-                {deadline ? format(deadline, 'PPP') : 'Set deadline'}
-              </span>
-            </div>
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
-          <CalendarComponent
-            mode="single"
-            selected={deadline}
-            onSelect={(date) => date && saveDeadline(date)}
-            initialFocus
-            className={cn("p-3 pointer-events-auto")}
-          />
-        </PopoverContent>
-      </Popover>
+      <TooltipProvider>
+        <Tooltip delayDuration={300}>
+          <TooltipTrigger asChild>
+            <span>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className={cn(
+                      "h-auto p-0 font-normal text-sm hover:bg-transparent",
+                      !deadline && "text-muted-foreground"
+                    )}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4" />
+                      <span>
+                        <span className="sm:hidden">Target: </span>
+                        <span className="hidden sm:inline">Target Completion: </span>
+                        {deadline ? format(deadline, 'PPP') : 'Set date'}
+                      </span>
+                    </div>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarComponent
+                    mode="single"
+                    selected={deadline}
+                    onSelect={(date) => date && saveDeadline(date)}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p className="max-w-xs">
+              Your overall goal for completing all your priorities. This is separate from individual task deadlines.
+            </p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
       
       {/* Progress bar for desktop only */}
       {progressData && deadline && (
