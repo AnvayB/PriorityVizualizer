@@ -44,6 +44,37 @@ function question(prompt) {
   });
 }
 
+function multilineQuestion(prompt) {
+  return new Promise((resolve) => {
+    console.log(prompt);
+    console.log('(Press Enter twice when done)\n');
+    
+    let lines = [];
+    let emptyLineCount = 0;
+    
+    const promptUser = () => {
+      rl.question('', (line) => {
+        if (line.trim() === '') {
+          emptyLineCount++;
+          if (emptyLineCount >= 2) {
+            // Two empty lines = done
+            resolve(lines.join('\n'));
+          } else {
+            lines.push('');
+            promptUser();
+          }
+        } else {
+          emptyLineCount = 0;
+          lines.push(line);
+          promptUser();
+        }
+      });
+    };
+    
+    promptUser();
+  });
+}
+
 async function createAnnouncement() {
   console.log('\n📢 Create New Announcement\n');
   console.log('This announcement will be shown to all users on their next login.\n');
@@ -56,7 +87,7 @@ async function createAnnouncement() {
     return;
   }
 
-  const message = await question('Enter announcement message: ');
+  const message = await multilineQuestion('Enter announcement message:');
   if (!message.trim()) {
     console.error('❌ Message is required');
     rl.close();

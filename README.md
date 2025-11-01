@@ -10,11 +10,8 @@
 * How should I add a tutorial? Ideally, I want it to be an interactive "follow-along" tutorial where differnt parts of the website are highlighted and explained, but I'm open to making a tutorial video as a backup.
 
 * add description box
-*Password Recovery
+* Password Recovery
 
---- complete
-Switched signout and system theme buttons for easier usability
-Hover over the Target Completion date for more information about its purpose
 
 
 * perform analytics on completed tasks from Supabase
