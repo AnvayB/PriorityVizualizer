@@ -25,17 +25,31 @@ const ThemeToggle: React.FC = () => {
     }
   };
 
+  const getThemeLabel = () => {
+    switch (theme) {
+      case 'light':
+        return 'Light';
+      case 'dark':
+        return 'Dark';
+      case 'system':
+        return 'System';
+      default:
+        return 'Light';
+    }
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
           variant="outline"
           size="sm"
-          className="h-9 w-9 p-0"
+          className="gap-1 md:gap-2 text-sm flex-1 sm:flex-none"
           title="Change theme"
         >
           {getIcon()}
-          <span className="sr-only">Change theme</span>
+          <span className="text-xs sm:hidden">{getThemeLabel()}</span>
+          <span className="hidden sm:inline">{getThemeLabel()}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">

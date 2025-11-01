@@ -9,8 +9,16 @@
 
 * How should I add a tutorial? Ideally, I want it to be an interactive "follow-along" tutorial where differnt parts of the website are highlighted and explained, but I'm open to making a tutorial video as a backup.
 
-* perform analytics on completed tasks from Supabase
+* add description box
+* chenge text for mobile
+* change placeholder text
+* switch logout and lighting
+* fix system lighting or remove it
+*Password Recovery
 
+
+* perform analytics on completed tasks from Supabase
+* multiple projects under 1 account
 * maybe add RLS back for Supabase tables (since all the content is shared in the section, subsection, tasks)
 
  -->

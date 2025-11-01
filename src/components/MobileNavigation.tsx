@@ -110,6 +110,9 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
           </TooltipContent>
         </Tooltip>
 
+        {/* Theme Toggle */}
+        <ThemeToggle />
+
         {/* Sign Out Button */}
         <Tooltip>
           <TooltipTrigger asChild>
@@ -117,20 +120,16 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
               onClick={onSignOut} 
               variant="outline" 
               size="sm" 
-              className="gap-1 md:gap-2 flex-1 sm:flex-none"
+              className="h-9 w-9 p-0"
             >
               <LogOut className="w-4 h-4" />
-              <span className="text-xs sm:hidden">Logout</span>
-              <span className="hidden sm:inline">Sign Out</span>
+              <span className="sr-only">Sign Out</span>
             </Button>
           </TooltipTrigger>
           <TooltipContent>
             <p>Sign out of your account</p>
           </TooltipContent>
         </Tooltip>
-
-        {/* Theme Toggle */}
-        <ThemeToggle />
       </div>
     </TooltipProvider>
   );
