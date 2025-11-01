@@ -37,10 +37,29 @@ const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorC
   
 
   const colors = [
-    '#1338BE', '#ef4444', '#10b981', '#f59e0b', 
-    '#0ea5e9', '#ec4899', '#06b6d4', '#84cc16',
-    '#8b5cf6', '#f97316', '#14b8a6', '#a855f7',
-    '#eab308', '#22c55e', '#6366f1', '#fb923c'
+    // Column 1 (cool blues/teals)
+    '#0ea5e9', // Sky blue
+    '#06b6d4', // Cyan
+    '#6366f1', // Indigo/violet-blue
+    '#8b5cf6', // Light purple/blue
+
+    // Column 2 (greens & yellowy greens)
+    '#10b981', // Emerald/green
+    '#14b8a6', // Teal-green
+    '#22c55e', // Green
+    '#84cc16', // Lime green
+
+    // Column 3 (yellows/oranges)
+    '#eab308', // Yellow/gold
+    '#f59e0b', // Amber/orange
+    '#fb923c', // Orange
+    '#f97316', // Deep orange
+
+    // Column 4 (pinks/reds/berry)
+    '#ef4444', // Red
+    '#cc6e6e', // Dusty rose
+    '#ec4899', // Pink
+    '#a855f7', // Violet
   ];
 
   // Reset tasks dropdown when slice changes
@@ -312,7 +331,7 @@ const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorC
                   {colors.map((color) => (
                     <button
                       key={color}
-                      className="w-12 h-12 rounded-lg border-2 border-gray-200 hover:border-gray-400 transition-colors"
+                      className="w-12 h-12 rounded-lg border-2 border-black dark:border-white hover:opacity-80 transition-colors"
                       style={{ backgroundColor: color }}
                       onClick={() => handleColorChange(color)}
                     />
