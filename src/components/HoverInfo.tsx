@@ -151,9 +151,21 @@ const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorC
     return (
       <Card className="w-full max-w-md h-64 bg-card/30 backdrop-blur-sm border-border/30">
         <CardContent className="flex items-center justify-center h-full">
-          <p className="text-muted-foreground text-center">
-            {isPinned ? 'Click on a pie chart section to pin details here' : 'Hover over the pie chart to see details'}
-          </p>
+          <div className="text-muted-foreground text-center space-y-1">
+            {isPinned ? (
+              <p>
+                <span className="sm:hidden">Tap on a pie chart section</span>
+                <span className="hidden sm:inline">Click on a pie chart section</span>
+                {' to pin details here'}
+              </p>
+            ) : (
+              <>
+                <p className="hidden sm:block">Hover over the pie chart to see details</p>
+                <p className="hidden sm:block text-s">Click to select a slice</p>
+                <p className="sm:hidden">Tap on the pie chart to see details</p>
+              </>
+            )}
+          </div>
         </CardContent>
       </Card>
     );

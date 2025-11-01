@@ -98,7 +98,7 @@ const PriorityForm: React.FC<PriorityFormProps> = ({
                 <Label htmlFor="section-title">Section Title</Label>
                 <Input
                   id="section-title"
-                  placeholder="e.g., MSADI, Job Applications"
+                  placeholder="e.g., Work, Personal, School"
                   value={sectionTitle}
                   onChange={(e) => setSectionTitle(e.target.value)}
                   className="bg-background/80"
@@ -131,7 +131,7 @@ const PriorityForm: React.FC<PriorityFormProps> = ({
                 <Label htmlFor="subsection-title">Subsection Title</Label>
                 <Input
                   id="subsection-title"
-                  placeholder="e.g., DATA 255, sent by Aai"
+                  placeholder="e.g., Payroll, Class Project, Chores"
                   value={subsectionTitle}
                   onChange={(e) => setSubsectionTitle(e.target.value)}
                   className="bg-background/80"
@@ -190,7 +190,7 @@ const PriorityForm: React.FC<PriorityFormProps> = ({
                 <Label htmlFor="task-title">Task Title</Label>
                 <Input
                   id="task-title"
-                  placeholder="e.g., Project Proposal, job app 1"
+                  placeholder="e.g., Finish Part 1, 2 Job Apps"
                   value={taskTitle}
                   onChange={(e) => setTaskTitle(e.target.value)}
                   className="bg-background/80"

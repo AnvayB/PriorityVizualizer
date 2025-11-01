@@ -12,7 +12,6 @@
 * add description box
 * chenge text for mobile
 * change placeholder text
-* switch logout and lighting
 * fix system lighting or remove it
 *Password Recovery
 
