@@ -59,8 +59,8 @@ const PriorityForm: React.FC<PriorityFormProps> = ({
 
   const handleAddTask = (e: React.FormEvent) => {
     e.preventDefault();
-    if (taskTitle.trim() && taskDueDate && selectedSectionId && selectedSubsectionId) {
-      const formattedDate = format(taskDueDate, 'yyyy-MM-dd');
+    if (taskTitle.trim() && selectedSectionId && selectedSubsectionId) {
+      const formattedDate = taskDueDate ? format(taskDueDate, 'yyyy-MM-dd') : '';
       onAddTask(selectedSectionId, selectedSubsectionId, taskTitle.trim(), formattedDate);
       setTaskTitle('');
       setTaskDueDate(undefined);
@@ -113,7 +113,7 @@ const PriorityForm: React.FC<PriorityFormProps> = ({
           <TabsContent value="subsection" className="space-y-4">
             <form onSubmit={handleAddSubsection} className="space-y-4">
               <div className="space-y-2">
-                <Label>Parent Section</Label>
+                <Label>Section</Label>
                 <Select value={selectedSectionId} onValueChange={setSelectedSectionId}>
                   <SelectTrigger className="bg-background/80">
                     <SelectValue placeholder="Select a section" />
@@ -150,7 +150,7 @@ const PriorityForm: React.FC<PriorityFormProps> = ({
           <TabsContent value="task" className="space-y-4">
             <form onSubmit={handleAddTask} className="space-y-4">
               <div className="space-y-2">
-                <Label>Parent Section</Label>
+                <Label>Section</Label>
                 <Select value={selectedSectionId} onValueChange={(value) => {
                   setSelectedSectionId(value);
                   setSelectedSubsectionId('');
@@ -170,7 +170,7 @@ const PriorityForm: React.FC<PriorityFormProps> = ({
               
               {selectedSection && (
                 <div className="space-y-2">
-                  <Label>Parent Subsection</Label>
+                  <Label>Subsection</Label>
                   <Select value={selectedSubsectionId} onValueChange={setSelectedSubsectionId}>
                     <SelectTrigger className="bg-background/80">
                       <SelectValue placeholder="Select a subsection" />
@@ -200,7 +200,7 @@ const PriorityForm: React.FC<PriorityFormProps> = ({
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
                   <CalendarIcon className="w-4 h-4" />
-                  Due Date
+                  Due Date <span className="text-muted-foreground text-xs font-normal">(Optional)</span>
                 </Label>
                 <Popover>
                   <PopoverTrigger asChild>
@@ -212,7 +212,7 @@ const PriorityForm: React.FC<PriorityFormProps> = ({
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {taskDueDate ? format(taskDueDate, "PPP") : <span>Pick a date</span>}
+                      {taskDueDate ? format(taskDueDate, "PPP") : <span>Pick a date (optional)</span>}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">

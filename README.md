@@ -2,21 +2,32 @@
 
 <!-- Additions:
 
-* The tasks completed today still don't show the actual tasks:
-    - I tested this by completing a task from Job Apps > Aai > 1-5 and although the full total got incremented to show 1, the daily total remains 0 and clicking on that tab opens what I've shown in the image
+EASY --------------------------------------------
+* add description box
+* fix high priority select (clicking doesn't update the button state visually)
+
+MEDIUM --------------------------------------------
+* In Add Priorities, replace section/subsection tabs with dropdowns (to reduce form length?)
 * Subsection select (filling in the fields for Add Task) only works after multiple subsections are clicked
 - For example, suppose I'm clicked on a slice in Section A. When I click to the Section B.2 subsection, that title is not filled in the "Add Priorities" component field. But if I click on Section B.3, then the subsection field in the Add Priorities component field _is_ filled, and same for if I go back to Section B.2. I need the clicked Subsection slice to fill its respective field in the Add Priorities component when it's clicked the first time. Otherwise, this will understandably cause frustration in the users' experience. 
-
-* How should I add a tutorial? Ideally, I want it to be an interactive "follow-along" tutorial where differnt parts of the website are highlighted and explained, but I'm open to making a tutorial video as a backup.
-
-* add description box
 * Password Recovery
-
-
-
 * perform analytics on completed tasks from Supabase
+* add text/email reminders 
+    * create signup for who wants reminders
+    * may need to charge for key usage
+
+HARD --------------------------------------------
+* How should I add a tutorial? Ideally, I want it to be an interactive "follow-along" tutorial where differnt parts of the website are highlighted and explained, but I'm open to making a tutorial video as a backup.
 * multiple projects under 1 account
 * maybe add RLS back for Supabase tables (since all the content is shared in the section, subsection, tasks)
+
+
+
+
+* The tasks completed today still don't show the actual tasks:
+    - I tested this by completing a task from Job Apps > Aai > 1-5 and although the full total got incremented to show 1, the daily total remains 0 and clicking on that tab opens what I've shown in the image
+    
+
 
  -->
 

@@ -479,8 +479,48 @@ const Index = () => {
         if (error) throw error;
       }
 
-      // Update local state
-      setSections(prev => prev.map(section => {
+      // Helper function to recreate a slice from updated sections data
+      const recreateSlice = (oldSlice: ChartSlice, updatedSections: Section[]): ChartSlice | null => {
+        if (!oldSlice) return null;
+        
+        const section = updatedSections.find(s => s.id === oldSlice.section.id);
+        if (!section) return oldSlice;
+        
+        if (oldSlice.level === 'section') {
+          return {
+            ...oldSlice,
+            section: section
+          };
+        }
+        
+        const subsection = section.subsections.find(sub => sub.id === oldSlice.subsection?.id);
+        if (!subsection) return oldSlice;
+        
+        if (oldSlice.level === 'subsection') {
+          return {
+            ...oldSlice,
+            section: section,
+            subsection: subsection
+          };
+        }
+        
+        const task = subsection.tasks.find(t => t.id === oldSlice.task?.id);
+        if (!task) return oldSlice;
+        
+        return {
+          ...oldSlice,
+          section: section,
+          subsection: subsection,
+          task: task
+        };
+      };
+
+      // Store current slice references
+      const currentHoveredSlice = hoveredSlice;
+      const currentPinnedSlice = pinnedSlice;
+
+      // Calculate updated sections
+      const updatedSections = sections.map(section => {
         if (type === 'section' && section.id === id) {
           return { ...section, high_priority: highPriority };
         }
@@ -511,7 +551,40 @@ const Index = () => {
             };
           })
         };
-      }));
+      });
+
+      // Update sections state
+      setSections(updatedSections);
+
+      // Update hoveredSlice if it matches the item we just updated
+      if (currentHoveredSlice) {
+        const matchesCurrentSlice = 
+          (type === 'section' && currentHoveredSlice.section.id === id) ||
+          (type === 'subsection' && currentHoveredSlice.subsection?.id === id) ||
+          (type === 'task' && currentHoveredSlice.task?.id === id);
+        
+        if (matchesCurrentSlice) {
+          const recreated = recreateSlice(currentHoveredSlice, updatedSections);
+          if (recreated) {
+            setHoveredSlice(recreated);
+          }
+        }
+      }
+      
+      // Update pinnedSlice if it matches the item we just updated
+      if (currentPinnedSlice) {
+        const matchesCurrentSlice = 
+          (type === 'section' && currentPinnedSlice.section.id === id) ||
+          (type === 'subsection' && currentPinnedSlice.subsection?.id === id) ||
+          (type === 'task' && currentPinnedSlice.task?.id === id);
+        
+        if (matchesCurrentSlice) {
+          const recreated = recreateSlice(currentPinnedSlice, updatedSections);
+          if (recreated) {
+            setPinnedSlice(recreated);
+          }
+        }
+      }
 
       toast({
         title: "Priority updated",
