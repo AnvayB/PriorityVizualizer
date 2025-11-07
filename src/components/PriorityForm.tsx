@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -16,7 +17,7 @@ interface PriorityFormProps {
   sections: Section[];
   onAddSection: (title: string) => void;
   onAddSubsection: (sectionId: string, title: string) => void;
-  onAddTask: (sectionId: string, subsectionId: string, title: string, dueDate: string) => void;
+  onAddTask: (sectionId: string, subsectionId: string, title: string, dueDate: string, description?: string) => void;
   prefilledSectionId?: string;
   prefilledSubsectionId?: string;
   activeTab?: 'section' | 'subsection' | 'task';
@@ -37,6 +38,7 @@ const PriorityForm: React.FC<PriorityFormProps> = ({
   const [subsectionTitle, setSubsectionTitle] = useState('');
   const [selectedSectionId, setSelectedSectionId] = useState(prefilledSectionId);
   const [taskTitle, setTaskTitle] = useState('');
+  const [taskDescription, setTaskDescription] = useState('');
   const [taskDueDate, setTaskDueDate] = useState<Date | undefined>(undefined);
   const [selectedSubsectionId, setSelectedSubsectionId] = useState(prefilledSubsectionId);
   const [currentTab, setCurrentTab] = useState(activeTab);
@@ -61,8 +63,9 @@ const PriorityForm: React.FC<PriorityFormProps> = ({
     e.preventDefault();
     if (taskTitle.trim() && selectedSectionId && selectedSubsectionId) {
       const formattedDate = taskDueDate ? format(taskDueDate, 'yyyy-MM-dd') : '';
-      onAddTask(selectedSectionId, selectedSubsectionId, taskTitle.trim(), formattedDate);
+      onAddTask(selectedSectionId, selectedSubsectionId, taskTitle.trim(), formattedDate, taskDescription.trim() || undefined);
       setTaskTitle('');
+      setTaskDescription('');
       setTaskDueDate(undefined);
     }
   };
@@ -194,6 +197,19 @@ const PriorityForm: React.FC<PriorityFormProps> = ({
                   value={taskTitle}
                   onChange={(e) => setTaskTitle(e.target.value)}
                   className="bg-background/80"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="task-description">
+                  Description <span className="text-muted-foreground text-xs font-normal">(Optional)</span>
+                </Label>
+                <Textarea
+                  id="task-description"
+                  placeholder="Add more details about this task..."
+                  value={taskDescription}
+                  onChange={(e) => setTaskDescription(e.target.value)}
+                  className="bg-background/80 min-h-[80px]"
                 />
               </div>
               

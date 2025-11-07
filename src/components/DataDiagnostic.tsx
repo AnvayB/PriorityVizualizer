@@ -89,17 +89,12 @@ const DataDiagnostic: React.FC = () => {
         warning: (tasksData?.length || 0) === 0 ? 'No tasks returned - possible RLS issue' : null
       });
 
-      // Check 6: Check RLS policies
-      const { data: rlsData, error: rlsError } = await supabase
-        .rpc('pg_policies')
-        .select('*');
-
+      // Check 6: Check RLS policies - skipped (not available to regular users)
       results.checks.push({
         name: 'RLS Policies Check',
-        status: rlsError ? 'warning' : 'info',
-        data: { available: !rlsError },
-        error: rlsError?.message,
-        note: 'RLS policies query may not be available to regular users'
+        status: 'info',
+        data: { available: false },
+        note: 'RLS policies query not available to regular users'
       });
 
       // Check 7: Data transformation test

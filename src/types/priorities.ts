@@ -3,6 +3,7 @@ export interface Task {
   title: string;
   dueDate: string;
   high_priority?: boolean;
+  description?: string;
 }
 
 export interface Subsection {

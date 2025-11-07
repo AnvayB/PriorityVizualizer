@@ -436,6 +436,24 @@ const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorC
               </p>
             </div>
             
+            {slice.task.description && (
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="w-full">
+                    View Description
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle>Task Description</DialogTitle>
+                  </DialogHeader>
+                  <div className="p-4 bg-muted/30 rounded-lg">
+                    <p className="text-sm whitespace-pre-wrap">{slice.task.description}</p>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
+            
             <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg">
               <Calendar className="w-4 h-4 text-primary" />
               <div className="flex-1">

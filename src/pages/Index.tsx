@@ -130,7 +130,8 @@ const Index = () => {
                 id: task.id,
                 title: task.title,
                 dueDate: task.due_date || '',
-                high_priority: task.high_priority || false
+                high_priority: task.high_priority || false,
+                description: task.description || undefined,
               }))
           }))
       }));
@@ -251,7 +252,7 @@ const Index = () => {
     }
   };
 
-  const handleAddTask = async (sectionId: string, subsectionId: string, title: string, dueDate: string) => {
+  const handleAddTask = async (sectionId: string, subsectionId: string, title: string, dueDate: string, description?: string) => {
     try {
       const { data, error } = await supabase
         .from('tasks')
@@ -259,6 +260,7 @@ const Index = () => {
           subsection_id: subsectionId,
           title,
           due_date: dueDate || null,
+          description: description || null,
         })
         .select()
         .single();
@@ -274,7 +276,8 @@ const Index = () => {
                 const newTask: Task = {
                   id: data.id,
                   title: data.title,
-                  dueDate: data.due_date || ''
+                  dueDate: data.due_date || '',
+                  description: data.description || undefined,
                 };
                 return {
                   ...subsection,

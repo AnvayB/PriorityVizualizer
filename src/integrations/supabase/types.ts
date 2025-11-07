@@ -16,34 +16,34 @@ export type Database = {
     Tables: {
       announcements: {
         Row: {
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
           id: string
-          title: string
+          is_active: boolean
           message: string
           severity: string
-          is_active: boolean
-          created_at: string
-          expires_at: string | null
-          created_by: string | null
+          title: string
         }
         Insert: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
           id?: string
-          title: string
+          is_active?: boolean
           message: string
           severity?: string
-          is_active?: boolean
-          created_at?: string
-          expires_at?: string | null
-          created_by?: string | null
+          title: string
         }
         Update: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
           id?: string
-          title?: string
+          is_active?: boolean
           message?: string
           severity?: string
-          is_active?: boolean
-          created_at?: string
-          expires_at?: string | null
-          created_by?: string | null
+          title?: string
         }
         Relationships: []
       }
@@ -173,6 +173,7 @@ export type Database = {
         Row: {
           completed: boolean
           created_at: string
+          description: string | null
           due_date: string | null
           high_priority: boolean
           id: string
@@ -183,6 +184,7 @@ export type Database = {
         Insert: {
           completed?: boolean
           created_at?: string
+          description?: string | null
           due_date?: string | null
           high_priority?: boolean
           id?: string
@@ -193,6 +195,7 @@ export type Database = {
         Update: {
           completed?: boolean
           created_at?: string
+          description?: string | null
           due_date?: string | null
           high_priority?: boolean
           id?: string
@@ -212,22 +215,22 @@ export type Database = {
       }
       user_announcements_seen: {
         Row: {
-          id: string
-          user_id: string
           announcement_id: string
+          id: string
           seen_at: string
+          user_id: string
         }
         Insert: {
-          id?: string
-          user_id: string
           announcement_id: string
+          id?: string
           seen_at?: string
+          user_id: string
         }
         Update: {
-          id?: string
-          user_id?: string
           announcement_id?: string
+          id?: string
           seen_at?: string
+          user_id?: string
         }
         Relationships: [
           {
