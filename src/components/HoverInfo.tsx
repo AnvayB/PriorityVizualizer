@@ -255,7 +255,7 @@ const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorC
         <div className="flex items-center gap-2 mt-2">
           <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm" onClick={handleEdit}>
+              <Button variant="outline" size="sm" onClick={handleEdit} className="border-gray-400 dark:border-border">
                 <Edit className="w-3 h-3 mr-1" />
                 Edit
               </Button>
@@ -318,7 +318,7 @@ const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorC
           {slice.level === 'section' && (
             <Dialog open={isColorOpen} onOpenChange={setIsColorOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="border-gray-400 dark:border-border">
                   <Palette className="w-3 h-3 mr-1" />
                   Color
                 </Button>
@@ -341,14 +341,14 @@ const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorC
             </Dialog>
           )}
 
-          <Button variant="outline" size="sm" onClick={handleComplete}>
+          <Button variant="outline" size="sm" onClick={handleComplete} className="border-gray-400 dark:border-border">
             <Check className="w-3 h-3 mr-1" />
             Complete
           </Button>
 
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="outline" size="sm" className="px-2" title="Delete">
+              <Button variant="outline" size="sm" className="px-2 border-gray-400 dark:border-border" title="Delete">
                 <Trash2 className="w-4 h-4" />
               </Button>
             </AlertDialogTrigger>
@@ -394,7 +394,7 @@ const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorC
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="w-full justify-between mt-2"
+                    className="w-full justify-between mt-2 border-gray-400 dark:border-border"
                   >
                     <span className="text-xs">View Tasks</span>
                     <ChevronDown 
@@ -427,32 +427,34 @@ const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorC
 
         {slice.level === 'task' && slice.task && (
           <div className="space-y-3">
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">
-                Section: <span className="text-foreground font-medium">{slice.section.title}</span>
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Subsection: <span className="text-foreground font-medium">{slice.subsection?.title}</span>
-              </p>
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-1 flex-1 min-w-0">
+                <p className="text-sm text-muted-foreground">
+                  Section: <span className="text-foreground font-medium">{slice.section.title}</span>
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Subsection: <span className="text-foreground font-medium">{slice.subsection?.title}</span>
+                </p>
+              </div>
+              
+              {slice.task.description && (
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm" className="shrink-0 border-gray-400 dark:border-border">
+                      View Description
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-lg">
+                    <DialogHeader>
+                      <DialogTitle>Task Description</DialogTitle>
+                    </DialogHeader>
+                    <div className="p-4 bg-muted/30 rounded-lg">
+                      <p className="text-sm whitespace-pre-wrap">{slice.task.description}</p>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              )}
             </div>
-            
-            {slice.task.description && (
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="sm" className="w-full">
-                    View Description
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-lg">
-                  <DialogHeader>
-                    <DialogTitle>Task Description</DialogTitle>
-                  </DialogHeader>
-                  <div className="p-4 bg-muted/30 rounded-lg">
-                    <p className="text-sm whitespace-pre-wrap">{slice.task.description}</p>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            )}
             
             <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg">
               <Calendar className="w-4 h-4 text-primary" />
