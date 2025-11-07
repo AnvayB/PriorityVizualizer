@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import RichTextEditor from '@/components/RichTextEditor';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -18,7 +17,7 @@ import { cn } from '@/lib/utils';
 
 interface HoverInfoProps {
   slice: ChartSlice | null;
-  onEdit?: (type: 'section' | 'subsection' | 'task', id: string, newTitle: string, newDueDate?: string, newDescription?: string) => void;
+  onEdit?: (type: 'section' | 'subsection' | 'task', id: string, newTitle: string, newDueDate?: string) => void;
   onDelete?: (type: 'section' | 'subsection' | 'task', sectionId: string, subsectionId?: string, taskId?: string) => void;
   onColorChange?: (sectionId: string, color: string) => void;
   onPriorityChange?: (type: 'section' | 'subsection' | 'task', id: string, highPriority: boolean) => void;
@@ -31,7 +30,6 @@ const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorC
   const { theme } = useTheme();
   const [editTitle, setEditTitle] = useState('');
   const [editDueDate, setEditDueDate] = useState<Date | undefined>(undefined);
-  const [editDescription, setEditDescription] = useState('');
   const [selectedColor, setSelectedColor] = useState('#3b82f6');
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isColorOpen, setIsColorOpen] = useState(false);
@@ -75,7 +73,6 @@ const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorC
     let id = '';
     let currentTitle = '';
     let currentDueDate: Date | undefined = undefined;
-    let currentDescription = '';
     
     if (slice.level === 'section') {
       id = slice.section.id;
@@ -86,7 +83,6 @@ const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorC
     } else if (slice.level === 'task' && slice.task) {
       id = slice.task.id;
       currentTitle = slice.task.title;
-      currentDescription = slice.task.description || '';
       // Convert date string to Date object
       if (slice.task.dueDate) {
         const [year, month, day] = slice.task.dueDate.split('-').map(Number);
@@ -96,7 +92,6 @@ const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorC
     
     setEditTitle(currentTitle);
     setEditDueDate(currentDueDate);
-    setEditDescription(currentDescription);
     setIsEditOpen(true);
   };
 
@@ -114,8 +109,7 @@ const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorC
     
     // Convert Date object back to string format (YYYY-MM-DD) if it exists
     const formattedDate = editDueDate ? format(editDueDate, 'yyyy-MM-dd') : undefined;
-    const description = slice.level === 'task' ? editDescription : undefined;
-    onEdit(slice.level, id, editTitle, formattedDate, description);
+    onEdit(slice.level, id, editTitle, formattedDate);
     setIsEditOpen(false);
   };
 
@@ -280,44 +274,34 @@ const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorC
                   />
                 </div>
                 {slice.level === 'task' && (
-                  <>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Description</label>
-                      <RichTextEditor
-                        content={editDescription}
-                        onChange={setEditDescription}
-                        placeholder="Add description..."
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium flex items-center gap-2">
-                        <Calendar className="w-4 h-4" />
-                        Due Date
-                      </label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "w-full justify-start text-left font-normal",
-                              !editDueDate && "text-muted-foreground"
-                            )}
-                          >
-                            <Calendar className="mr-2 h-4 w-4" />
-                            {editDueDate ? format(editDueDate, "PPP") : <span>Pick a date</span>}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                          <CalendarComponent
-                            mode="single"
-                            selected={editDueDate}
-                            onSelect={setEditDueDate}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                  </>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium flex items-center gap-2">
+                      <Calendar className="w-4 h-4" />
+                      Due Date
+                    </label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !editDueDate && "text-muted-foreground"
+                          )}
+                        >
+                          <Calendar className="mr-2 h-4 w-4" />
+                          {editDueDate ? format(editDueDate, "PPP") : <span>Pick a date</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <CalendarComponent
+                          mode="single"
+                          selected={editDueDate}
+                          onSelect={setEditDueDate}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
                 )}
               </div>
               <div className="flex justify-end gap-2 mt-4">
@@ -453,13 +437,21 @@ const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorC
             </div>
             
             {slice.task.description && (
-              <div className="space-y-2">
-                <p className="text-xs font-medium text-muted-foreground">Description</p>
-                <div 
-                  className="prose prose-sm dark:prose-invert max-w-none p-3 bg-muted/30 rounded-lg text-sm"
-                  dangerouslySetInnerHTML={{ __html: slice.task.description }}
-                />
-              </div>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="w-full">
+                    View Description
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle>Task Description</DialogTitle>
+                  </DialogHeader>
+                  <div className="p-4 bg-muted/30 rounded-lg">
+                    <p className="text-sm whitespace-pre-wrap">{slice.task.description}</p>
+                  </div>
+                </DialogContent>
+              </Dialog>
             )}
             
             <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg">
