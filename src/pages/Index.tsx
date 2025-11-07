@@ -1225,6 +1225,38 @@ const Index = () => {
     }
   };
 
+  const handleTaskClick = (taskId: string, sectionId: string, subsectionId: string) => {
+    // Find the section, subsection, and task from the sections state
+    const section = sections.find(s => s.id === sectionId);
+    if (!section) return;
+
+    const subsection = section.subsections.find(sub => sub.id === subsectionId);
+    if (!subsection) return;
+
+    const task = subsection.tasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    // Create a ChartSlice object for this task
+    const taskSlice: ChartSlice = {
+      section: section,
+      subsection: subsection,
+      task: task,
+      startAngle: 0,
+      endAngle: 0,
+      radius: 0,
+      level: 'task',
+      color: section.color || 'hsl(var(--chart-1))'
+    };
+
+    // Set it as the pinned slice
+    setPinnedSlice(taskSlice);
+
+    // Close all dialogs
+    setIsDueTodayModalOpen(false);
+    setIsDueSoonModalOpen(false);
+    setIsOverdueModalOpen(false);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-bg">
       {/* Header */}
@@ -1351,7 +1383,11 @@ const Index = () => {
                           const overdue = isOverdue(task.dueDate);
                           
                           return (
-                            <div key={`${task.sectionId}-${task.subsectionId}-${task.id}`} className="flex items-start gap-3 p-4 bg-muted/30 rounded-lg border-l-4 border-destructive">
+                            <div 
+                              key={`${task.sectionId}-${task.subsectionId}-${task.id}`} 
+                              className="flex items-start gap-3 p-4 bg-muted/30 rounded-lg border-l-4 border-destructive cursor-pointer hover:bg-muted/50 transition-colors"
+                              onClick={() => handleTaskClick(task.id, task.sectionId, task.subsectionId)}
+                            >
                               <div className="p-2 bg-background rounded-lg">
                                 <Clock className="w-4 h-4 text-destructive" />
                               </div>
@@ -1439,7 +1475,11 @@ const Index = () => {
                           const daysOverdue = Math.abs(getDaysUntilDue(task.dueDate));
                           
                           return (
-                            <div key={`${task.sectionId}-${task.subsectionId}-${task.id}`} className="flex items-start gap-3 p-4 bg-muted/30 rounded-lg border-l-4 border-purple-500">
+                            <div 
+                              key={`${task.sectionId}-${task.subsectionId}-${task.id}`} 
+                              className="flex items-start gap-3 p-4 bg-muted/30 rounded-lg border-l-4 border-purple-500 cursor-pointer hover:bg-muted/50 transition-colors"
+                              onClick={() => handleTaskClick(task.id, task.sectionId, task.subsectionId)}
+                            >
                               <div className="p-2 bg-background rounded-lg">
                                 <AlertTriangle className="w-4 h-4 text-purple-500" />
                               </div>
@@ -1528,7 +1568,12 @@ const Index = () => {
                           const overdue = isOverdue(task.dueDate);
                           
                           return (
-                            <div key={`${task.sectionId}-${task.subsectionId}-${task.id}`} className="flex items-start gap-3 p-4 bg-muted/30 rounded-lg border-l-4" style={{borderLeftColor: overdue ? '#ef4444' : daysUntil <= 1 ? '#f59e0b' : '#3b82f6'}}>
+                            <div 
+                              key={`${task.sectionId}-${task.subsectionId}-${task.id}`} 
+                              className="flex items-start gap-3 p-4 bg-muted/30 rounded-lg border-l-4 cursor-pointer hover:bg-muted/50 transition-colors" 
+                              style={{borderLeftColor: overdue ? '#ef4444' : daysUntil <= 1 ? '#f59e0b' : '#3b82f6'}}
+                              onClick={() => handleTaskClick(task.id, task.sectionId, task.subsectionId)}
+                            >
                               <div className="p-2 bg-background rounded-lg">
                                 {overdue ? (
                                   <AlertTriangle className="w-4 h-4 text-destructive" />
