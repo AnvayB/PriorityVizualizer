@@ -327,8 +327,33 @@ const Index = () => {
         if (error) throw error;
       }
 
+      // Helper function to recreate slice with updated data
+      const recreateSlice = (oldSlice: ChartSlice, updatedSections: Section[]): ChartSlice | null => {
+        const section = updatedSections.find(s => s.id === oldSlice.section.id);
+        if (!section) return null;
+        
+        const subsection = oldSlice.subsection 
+          ? section.subsections.find(ss => ss.id === oldSlice.subsection?.id)
+          : undefined;
+        
+        const task = oldSlice.task && subsection
+          ? subsection.tasks.find(t => t.id === oldSlice.task?.id)
+          : undefined;
+        
+        return {
+          ...oldSlice,
+          section: section,
+          subsection: subsection,
+          task: task
+        };
+      };
+
+      // Store current slice references
+      const currentHoveredSlice = hoveredSlice;
+      const currentPinnedSlice = pinnedSlice;
+
       // Update local state
-      setSections(prev => prev.map(section => {
+      const updatedSections = sections.map(section => {
         if (type === 'section' && section.id === id) {
           return { ...section, title: newTitle };
         }
@@ -356,7 +381,39 @@ const Index = () => {
             };
           })
         };
-      }));
+      });
+
+      setSections(updatedSections);
+
+      // Update hoveredSlice if it matches the item we just updated
+      if (currentHoveredSlice) {
+        const matchesCurrentSlice = 
+          (type === 'section' && currentHoveredSlice.section.id === id) ||
+          (type === 'subsection' && currentHoveredSlice.subsection?.id === id) ||
+          (type === 'task' && currentHoveredSlice.task?.id === id);
+        
+        if (matchesCurrentSlice) {
+          const recreated = recreateSlice(currentHoveredSlice, updatedSections);
+          if (recreated) {
+            setHoveredSlice(recreated);
+          }
+        }
+      }
+      
+      // Update pinnedSlice if it matches the item we just updated
+      if (currentPinnedSlice) {
+        const matchesCurrentSlice = 
+          (type === 'section' && currentPinnedSlice.section.id === id) ||
+          (type === 'subsection' && currentPinnedSlice.subsection?.id === id) ||
+          (type === 'task' && currentPinnedSlice.task?.id === id);
+        
+        if (matchesCurrentSlice) {
+          const recreated = recreateSlice(currentPinnedSlice, updatedSections);
+          if (recreated) {
+            setPinnedSlice(recreated);
+          }
+        }
+      }
     } catch (error) {
       console.error('Error updating:', error);
       toast({
