@@ -300,7 +300,7 @@ const Index = () => {
     }
   };
 
-  const handleEdit = async (type: 'section' | 'subsection' | 'task', id: string, newTitle: string, newDueDate?: string) => {
+  const handleEdit = async (type: 'section' | 'subsection' | 'task', id: string, newTitle: string, newDueDate?: string, newDescription?: string) => {
     try {
       // Update database
       if (type === 'section') {
@@ -320,7 +320,8 @@ const Index = () => {
           .from('tasks')
           .update({ 
             title: newTitle,
-            due_date: newDueDate || null
+            due_date: newDueDate || null,
+            description: newDescription || null
           })
           .eq('id', id);
         if (error) throw error;
@@ -343,7 +344,12 @@ const Index = () => {
               ...subsection,
               tasks: subsection.tasks.map(task => {
                 if (type === 'task' && task.id === id) {
-                  return { ...task, title: newTitle, dueDate: newDueDate || task.dueDate };
+                  return { 
+                    ...task, 
+                    title: newTitle, 
+                    dueDate: newDueDate || task.dueDate,
+                    description: newDescription !== undefined ? newDescription : task.description
+                  };
                 }
                 return task;
               })
