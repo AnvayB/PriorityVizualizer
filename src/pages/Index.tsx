@@ -10,6 +10,7 @@ import HoverInfo from '@/components/HoverInfo';
 import CompletionCounter from '@/components/CompletionCounter';
 import DeadlineEditor from '@/components/DeadlineEditor';
 import MobileNavigation from '@/components/MobileNavigation';
+import ThemeToggle from '@/components/ThemeToggle';
 import AnnouncementDialog from '@/components/AnnouncementDialog';
 import { Section, Subsection, Task, ChartSlice } from '@/types/priorities';
 import { PieChart as PieChartIcon, Target, Calendar, Save, Upload, ChevronDown, LogOut, User, Clock, AlertTriangle, CheckCircle } from 'lucide-react';
@@ -1351,7 +1352,8 @@ const Index = () => {
                   <span className="truncate max-w-32 md:max-w-none">{user.email}</span>
                 </div>
               )}
-              <MobileNavigation
+              {/* Menu button commented out - data auto-loads from Supabase, mainly for dev purposes */}
+              {/* <MobileNavigation
                 onSignOut={handleSignOut}
                 onSaveToDatabase={handleSaveToDatabase}
                 onSaveToComputer={handleReplaceCurrentData}
@@ -1360,7 +1362,21 @@ const Index = () => {
                 onLoadGuestData={handleLoadGuestData}
                 user={user}
                 isGuestUser={isGuestUser}
-              />
+              /> */}
+              
+              {/* Keep Theme Toggle and Sign Out */}
+              <div className="flex gap-2">
+                <ThemeToggle />
+                <Button 
+                  onClick={handleSignOut} 
+                  variant="outline" 
+                  size="sm" 
+                  className="h-9 w-9 p-0"
+                  title="Sign Out"
+                >
+                  <LogOut className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">

@@ -47,7 +47,7 @@ function question(prompt) {
 function multilineQuestion(prompt) {
   return new Promise((resolve) => {
     console.log(prompt);
-    console.log('(Press Enter twice when done)\n');
+    console.log('(Press Enter three times when done)\n');
     
     let lines = [];
     let emptyLineCount = 0;
@@ -56,7 +56,7 @@ function multilineQuestion(prompt) {
       rl.question('', (line) => {
         if (line.trim() === '') {
           emptyLineCount++;
-          if (emptyLineCount >= 2) {
+          if (emptyLineCount >= 3) {
             // Two empty lines = done
             resolve(lines.join('\n'));
           } else {
