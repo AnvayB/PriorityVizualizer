@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Section, Subsection, Task } from '@/types/priorities';
-import { Plus, Calendar as CalendarIcon } from 'lucide-react';
+import { Plus, Calendar as CalendarIcon, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -72,8 +72,6 @@ const PriorityForm: React.FC<PriorityFormProps> = ({
     }
   };
 
-  const selectedSection = sections.find(s => s.id === selectedSectionId);
-
   // Update local state when prefilled values change
   React.useEffect(() => {
     // Only update if props actually changed
@@ -83,8 +81,8 @@ const PriorityForm: React.FC<PriorityFormProps> = ({
       lastPrefilledSubsectionId.current = prefilledSubsectionId;
       
       // Update both values together - React will batch these
-      setSelectedSectionId(prefilledSectionId);
-      setSelectedSubsectionId(prefilledSubsectionId);
+    setSelectedSectionId(prefilledSectionId);
+    setSelectedSubsectionId(prefilledSubsectionId);
     }
     setCurrentTab(activeTab);
   }, [prefilledSectionId, prefilledSubsectionId, activeTab]);
@@ -104,6 +102,9 @@ const PriorityForm: React.FC<PriorityFormProps> = ({
     }
   }, [selectedSectionId, prefilledSectionId, prefilledSubsectionId, selectedSubsectionId, sections]);
 
+  const selectedSection = sections.find(s => s.id === selectedSectionId);
+  const selectedSubsection = selectedSection?.subsections.find(s => s.id === selectedSubsectionId);
+
   return (
     <Card className={`w-full max-w-md bg-card/50 backdrop-blur-sm border-border/50 ${isHighlighted ? 'ring-2 ring-primary/20' : ''}`}>
       <CardHeader>
@@ -114,10 +115,136 @@ const PriorityForm: React.FC<PriorityFormProps> = ({
       </CardHeader>
       <CardContent>
         <Tabs value={currentTab} onValueChange={(value) => setCurrentTab(value as 'section' | 'subsection' | 'task')} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="section">Section</TabsTrigger>
-            <TabsTrigger value="subsection">Subsection</TabsTrigger>
-            <TabsTrigger value="task">Task</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 p-0 gap-0 bg-muted/30">
+            {/* Section Tab - Dynamic Dropdown */}
+            {sections.length > 0 ? (
+              <Select 
+                value={selectedSectionId || ''} 
+                onValueChange={(value) => {
+                  // If this matches the prefilled section AND we have a prefilled subsection,
+                  // this is a prop update - set both and don't clear
+                  if (value === prefilledSectionId && prefilledSubsectionId) {
+                    setSelectedSectionId(value);
+                    setSelectedSubsectionId(prefilledSubsectionId);
+                    setCurrentTab('task');
+                    return;
+                  }
+                  
+                  // Otherwise, this is a user-initiated change
+                  setSelectedSectionId(value);
+                  setSelectedSubsectionId('');
+                  setCurrentTab('subsection');
+                }}
+              >
+                <SelectTrigger 
+                  className={cn(
+                    "h-9 rounded-none border-r border-border/50 bg-background shadow-none",
+                    "hover:bg-muted/50 data-[state=open]:bg-muted/50",
+                    currentTab === 'section' 
+                      ? "text-foreground font-semibold" 
+                      : "text-muted-foreground",
+                    "first:rounded-l-md"
+                  )}
+                  onClick={() => {
+                    // Switch to section tab when clicking the trigger
+                    if (currentTab !== 'section') {
+                      setCurrentTab('section');
+                    }
+                  }}
+                >
+                  <SelectValue>
+                    {selectedSectionId && selectedSection ? (
+                      <span className="font-medium">{selectedSection.title}</span>
+                    ) : (
+                      <span className="font-semibold">Section</span>
+                    )}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {sections.map((section) => (
+                    <SelectItem key={section.id} value={section.id}>
+                      {section.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <TabsTrigger 
+                value="section" 
+                className={cn(
+                  "rounded-none first:rounded-l-md border-r border-border/50",
+                  currentTab === 'section' && "font-semibold"
+                )}
+              >
+                Section
+              </TabsTrigger>
+            )}
+
+            {/* Subsection Tab - Dynamic Dropdown */}
+            {selectedSection && selectedSection.subsections.length > 0 ? (
+              <Select 
+                value={selectedSubsectionId || ''} 
+                onValueChange={(value) => {
+                  setSelectedSubsectionId(value);
+                  setCurrentTab('task');
+                }}
+              >
+                <SelectTrigger 
+                  className={cn(
+                    "h-9 rounded-none border-r border-border/50 bg-background shadow-none",
+                    "hover:bg-muted/50 data-[state=open]:bg-muted/50",
+                    currentTab === 'subsection' 
+                      ? "text-foreground font-semibold" 
+                      : "text-muted-foreground",
+                    !selectedSectionId && "opacity-50 cursor-not-allowed"
+                  )}
+                  disabled={!selectedSectionId}
+                  onClick={() => {
+                    // Switch to subsection tab when clicking the trigger
+                    if (currentTab !== 'subsection' && selectedSectionId) {
+                      setCurrentTab('subsection');
+                    }
+                  }}
+                >
+                  <SelectValue>
+                    {selectedSubsectionId && selectedSubsection ? (
+                      <span className="font-medium">{selectedSubsection.title}</span>
+                    ) : (
+                      <span className="font-semibold">Subsection</span>
+                    )}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {selectedSection.subsections.map((subsection) => (
+                    <SelectItem key={subsection.id} value={subsection.id}>
+                      {subsection.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <TabsTrigger 
+                value="subsection" 
+                disabled={!selectedSectionId} 
+                className={cn(
+                  "rounded-none border-r border-border/50",
+                  currentTab === 'subsection' && "font-semibold"
+                )}
+              >
+                Subsection
+              </TabsTrigger>
+            )}
+
+            {/* Task Tab - Regular Tab */}
+            <TabsTrigger 
+              value="task" 
+              className={cn(
+                "rounded-none last:rounded-r-md bg-background",
+                currentTab === 'task' && "font-semibold"
+              )}
+            >
+              Task
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="section" className="space-y-4">
@@ -141,21 +268,6 @@ const PriorityForm: React.FC<PriorityFormProps> = ({
           <TabsContent value="subsection" className="space-y-4">
             <form onSubmit={handleAddSubsection} className="space-y-4">
               <div className="space-y-2">
-                <Label>Section</Label>
-                <Select value={selectedSectionId} onValueChange={setSelectedSectionId}>
-                  <SelectTrigger className="bg-background/80">
-                    <SelectValue placeholder="Select a section" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sections.map((section) => (
-                      <SelectItem key={section.id} value={section.id}>
-                        {section.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
                 <Label htmlFor="subsection-title">Subsection Title</Label>
                 <Input
                   id="subsection-title"
@@ -177,57 +289,6 @@ const PriorityForm: React.FC<PriorityFormProps> = ({
 
           <TabsContent value="task" className="space-y-4">
             <form onSubmit={handleAddTask} className="space-y-4">
-              <div className="space-y-2">
-                <Label>Section</Label>
-                <Select value={selectedSectionId} onValueChange={(value) => {
-                  // If this matches the prefilled section AND we have a prefilled subsection,
-                  // this is a prop update - set both and don't clear
-                  if (value === prefilledSectionId && prefilledSubsectionId) {
-                    setSelectedSectionId(value);
-                    setSelectedSubsectionId(prefilledSubsectionId);
-                    return;
-                  }
-                  
-                  // Otherwise, this is a user-initiated change
-                  setSelectedSectionId(value);
-                  // Check if current subsection belongs to new section
-                  const newSection = sections.find(s => s.id === value);
-                  const subsectionExists = newSection?.subsections.some(sub => sub.id === selectedSubsectionId);
-                  if (!subsectionExists) {
-                    setSelectedSubsectionId('');
-                  }
-                }}>
-                  <SelectTrigger className="bg-background/80">
-                    <SelectValue placeholder="Select a section" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sections.map((section) => (
-                      <SelectItem key={section.id} value={section.id}>
-                        {section.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              {selectedSection && (
-                <div className="space-y-2">
-                  <Label>Subsection</Label>
-                  <Select value={selectedSubsectionId} onValueChange={setSelectedSubsectionId}>
-                    <SelectTrigger className="bg-background/80">
-                      <SelectValue placeholder="Select a subsection" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {selectedSection.subsections.map((subsection) => (
-                        <SelectItem key={subsection.id} value={subsection.id}>
-                          {subsection.title}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-              
               <div className="space-y-2">
                 <Label htmlFor="task-title">Task Title</Label>
                 <Input
@@ -262,7 +323,7 @@ const PriorityForm: React.FC<PriorityFormProps> = ({
                     <Button
                       variant="outline"
                       className={cn(
-                        "w-full justify-start text-left font-normal bg-background/80",
+                        "w-full justify-start text-left font-normal bg-background/80 border-gray-400 dark:border-border",
                         !taskDueDate && "text-muted-foreground"
                       )}
                     >

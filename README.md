@@ -7,7 +7,7 @@ EASY --------------------------------------------
 
 MEDIUM --------------------------------------------
 * In Add Priorities, replace section/subsection tabs with dropdowns (to reduce form length?)
-* Password Recovery
+* Password Recovery - thru Lovable
 * perform analytics on completed tasks from Supabase
     * v0 templates
     * rechart plots
