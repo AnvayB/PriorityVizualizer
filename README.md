@@ -3,10 +3,7 @@
 <!-- Additions:
 
 EASY --------------------------------------------
-* Subsection select (filling in the fields for Add Task) only works after multiple subsections are clicked
-- For example, suppose I'm clicked on a slice in Section A. When I click to the Section B.2 subsection, that title is not filled in the "Add Priorities" component field. But if I click on Section B.3, then the subsection field in the Add Priorities component field _is_ filled, and same for if I go back to Section B.2. I need the clicked Subsection slice to fill its respective field in the Add Priorities component when it's clicked the first time. Otherwise, this will understandably cause frustration in the users' experience. 
-* remove menu dropdown
-* clarify target completion bar
+
 
 MEDIUM --------------------------------------------
 * In Add Priorities, replace section/subsection tabs with dropdowns (to reduce form length?)

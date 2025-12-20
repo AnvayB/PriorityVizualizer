@@ -42,6 +42,8 @@ const PriorityForm: React.FC<PriorityFormProps> = ({
   const [taskDueDate, setTaskDueDate] = useState<Date | undefined>(undefined);
   const [selectedSubsectionId, setSelectedSubsectionId] = useState(prefilledSubsectionId);
   const [currentTab, setCurrentTab] = useState(activeTab);
+  const lastPrefilledSectionId = React.useRef(prefilledSectionId);
+  const lastPrefilledSubsectionId = React.useRef(prefilledSubsectionId);
 
   const handleAddSection = (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,10 +76,33 @@ const PriorityForm: React.FC<PriorityFormProps> = ({
 
   // Update local state when prefilled values change
   React.useEffect(() => {
-    setSelectedSectionId(prefilledSectionId);
-    setSelectedSubsectionId(prefilledSubsectionId);
+    // Only update if props actually changed
+    if (prefilledSectionId !== lastPrefilledSectionId.current || 
+        prefilledSubsectionId !== lastPrefilledSubsectionId.current) {
+      lastPrefilledSectionId.current = prefilledSectionId;
+      lastPrefilledSubsectionId.current = prefilledSubsectionId;
+      
+      // Update both values together - React will batch these
+      setSelectedSectionId(prefilledSectionId);
+      setSelectedSubsectionId(prefilledSubsectionId);
+    }
     setCurrentTab(activeTab);
   }, [prefilledSectionId, prefilledSubsectionId, activeTab]);
+  
+  // Ensure subsection is set when section matches prefilled and subsection is provided
+  // This handles the case where onValueChange might have cleared it
+  React.useEffect(() => {
+    if (selectedSectionId === prefilledSectionId && 
+        prefilledSubsectionId && 
+        selectedSubsectionId !== prefilledSubsectionId) {
+      // Check if the prefilled subsection actually exists in the current section
+      const section = sections.find(s => s.id === selectedSectionId);
+      const subsectionExists = section?.subsections.some(sub => sub.id === prefilledSubsectionId);
+      if (subsectionExists) {
+        setSelectedSubsectionId(prefilledSubsectionId);
+      }
+    }
+  }, [selectedSectionId, prefilledSectionId, prefilledSubsectionId, selectedSubsectionId, sections]);
 
   return (
     <Card className={`w-full max-w-md bg-card/50 backdrop-blur-sm border-border/50 ${isHighlighted ? 'ring-2 ring-primary/20' : ''}`}>
@@ -155,8 +180,22 @@ const PriorityForm: React.FC<PriorityFormProps> = ({
               <div className="space-y-2">
                 <Label>Section</Label>
                 <Select value={selectedSectionId} onValueChange={(value) => {
+                  // If this matches the prefilled section AND we have a prefilled subsection,
+                  // this is a prop update - set both and don't clear
+                  if (value === prefilledSectionId && prefilledSubsectionId) {
+                    setSelectedSectionId(value);
+                    setSelectedSubsectionId(prefilledSubsectionId);
+                    return;
+                  }
+                  
+                  // Otherwise, this is a user-initiated change
                   setSelectedSectionId(value);
-                  setSelectedSubsectionId('');
+                  // Check if current subsection belongs to new section
+                  const newSection = sections.find(s => s.id === value);
+                  const subsectionExists = newSection?.subsections.some(sub => sub.id === selectedSubsectionId);
+                  if (!subsectionExists) {
+                    setSelectedSubsectionId('');
+                  }
                 }}>
                   <SelectTrigger className="bg-background/80">
                     <SelectValue placeholder="Select a section" />
