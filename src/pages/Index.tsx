@@ -373,7 +373,7 @@ const Index = () => {
                   return { 
                     ...task, 
                     title: newTitle, 
-                    dueDate: newDueDate || task.dueDate,
+                    dueDate: newDueDate !== undefined ? (newDueDate === '' ? '' : newDueDate) : task.dueDate,
                     description: newDescription !== undefined ? newDescription : task.description
                   };
                 }
@@ -919,6 +919,7 @@ const Index = () => {
   );
 
   const formatDate = (dateString: string) => {
+    if (!dateString) return 'No due date';
     const date = parseLocalDate(dateString);
     return date.toLocaleDateString('en-US', {
       month: 'short',
@@ -928,18 +929,22 @@ const Index = () => {
   };
 
   const isOverdue = (dateString: string) => {
+    if (!dateString) return false; // No due date means not overdue
     const dueDate = parseLocalDate(dateString);
+    dueDate.setHours(0, 0, 0, 0);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return dueDate < today;
   };
 
   const getDaysUntilDue = (dateString: string) => {
+    if (!dateString) return Infinity; // No due date
     const dueDate = parseLocalDate(dateString);
+    dueDate.setHours(0, 0, 0, 0);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const diffTime = dueDate.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
     return diffDays;
   };
 

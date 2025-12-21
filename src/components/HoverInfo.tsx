@@ -205,6 +205,7 @@ const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorC
   };
 
   const formatDate = (dateString: string) => {
+    if (!dateString) return 'No due date';
     const date = parseLocalDate(dateString);
     return date.toLocaleDateString('en-US', {
       month: 'short',
@@ -214,18 +215,22 @@ const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorC
   };
 
   const isOverdue = (dateString: string) => {
+    if (!dateString) return false; // No due date means not overdue
     const dueDate = parseLocalDate(dateString);
+    dueDate.setHours(0, 0, 0, 0);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return dueDate < today;
   };
 
   const getDaysUntilDue = (dateString: string) => {
+    if (!dateString) return Infinity; // No due date
     const dueDate = parseLocalDate(dateString);
+    dueDate.setHours(0, 0, 0, 0);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const diffTime = dueDate.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
     return diffDays;
   };
 
@@ -473,41 +478,63 @@ const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorC
               )}
             </div>
             
-            <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg">
-              <Calendar className="w-4 h-4 text-primary" />
-              <div className="flex-1">
-                <p className="text-sm font-medium">Due Date</p>
-                <p className="text-xs text-muted-foreground">{formatDate(slice.task.dueDate)}</p>
-              </div>
-              {(() => {
-                const daysUntil = getDaysUntilDue(slice.task.dueDate);
-                const overdue = isOverdue(slice.task.dueDate);
-                
-                return (
-                  <Badge 
-                    variant={overdue ? 'destructive' : daysUntil <= 3 ? 'secondary' : 'outline'}
-                    className="flex items-center gap-1"
+            {slice.task.dueDate && (
+              <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg">
+                <Calendar className="w-4 h-4 text-primary" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium">Due Date</p>
+                  <p className="text-xs text-muted-foreground">{formatDate(slice.task.dueDate)}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {(() => {
+                    const daysUntil = getDaysUntilDue(slice.task.dueDate);
+                    const overdue = isOverdue(slice.task.dueDate);
+                    
+                    return (
+                      <Badge 
+                        variant={overdue ? 'destructive' : daysUntil <= 3 ? 'secondary' : 'outline'}
+                        className="flex items-center gap-1"
+                      >
+                        {overdue ? (
+                          <>
+                            <Clock className="w-3 h-3" />
+                            Overdue
+                          </>
+                        ) : daysUntil === 0 ? (
+                          <>
+                            <CheckCircle className="w-3 h-3" />
+                            Today
+                          </>
+                        ) : daysUntil === 1 ? (
+                          <>
+                            <Clock className="w-3 h-3" />
+                            Tomorrow
+                          </>
+                        ) : (
+                          <>
+                            <Clock className="w-3 h-3" />
+                            {`${daysUntil} days`}
+                          </>
+                        )}
+                      </Badge>
+                    );
+                  })()}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 p-0 hover:bg-destructive/10 hover:text-destructive"
+                    onClick={() => {
+                      if (onEdit && slice.task) {
+                        onEdit('task', slice.task.id, slice.task.title, '', slice.task.description);
+                      }
+                    }}
+                    title="Remove due date"
                   >
-                    {overdue ? (
-                      <>
-                        <Clock className="w-3 h-3" />
-                        Overdue
-                      </>
-                    ) : daysUntil === 0 ? (
-                      <>
-                        <CheckCircle className="w-3 h-3" />
-                        Today
-                      </>
-                    ) : (
-                      <>
-                        <Clock className="w-3 h-3" />
-                        {daysUntil === 1 ? 'Tomorrow' : `${daysUntil} days`}
-                      </>
-                    )}
-                  </Badge>
-                );
-              })()}
-            </div>
+                    <X className="w-3 h-3" />
+                  </Button>
+                </div>
+              </div>
+            )}
 
             
           </div>
