@@ -12,6 +12,7 @@ import DeadlineEditor from '@/components/DeadlineEditor';
 import MobileNavigation from '@/components/MobileNavigation';
 import ThemeToggle from '@/components/ThemeToggle';
 import AnnouncementDialog from '@/components/AnnouncementDialog';
+import AnnouncementHistory from '@/components/AnnouncementHistory';
 import { Section, Subsection, Task, ChartSlice } from '@/types/priorities';
 import { PieChart as PieChartIcon, Target, Calendar, Save, Upload, ChevronDown, LogOut, User, Clock, AlertTriangle, CheckCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -1371,6 +1372,7 @@ const Index = () => {
               
               {/* Keep Theme Toggle and Sign Out */}
               <div className="flex gap-2">
+                {user && <AnnouncementHistory userId={user.id} />}
                 <ThemeToggle />
                 <Button 
                   onClick={handleSignOut} 
