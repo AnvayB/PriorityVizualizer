@@ -149,7 +149,10 @@ const AnnouncementDialog: React.FC<AnnouncementDialogProps> = ({ userId }) => {
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogAction onClick={markAsSeen}>
+          <AlertDialogAction
+            onClick={markAsSeen}
+            className="rounded-md bg-blue-500 text-white hover:bg-blue-600"
+          >
             Got it
           </AlertDialogAction>
         </AlertDialogFooter>
