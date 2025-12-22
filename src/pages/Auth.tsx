@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Target, Mail, Lock, UserPlus, LogIn, ArrowLeft, KeyRound } from 'lucide-react';
+import { Target, Mail, Lock, UserPlus, LogIn } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
@@ -12,45 +12,20 @@ import { useNavigate } from 'react-router-dom';
 const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const [isRecoveryMode, setIsRecoveryMode] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check URL hash for recovery token - this handles the redirect from Supabase
-    const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    const type = hashParams.get('type');
-    
-    if (type === 'recovery') {
-      setIsRecoveryMode(true);
-      // Clear the hash to clean up the URL
-      window.history.replaceState(null, '', window.location.pathname);
-    }
-
-    // Listen for auth state changes including password recovery
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'PASSWORD_RECOVERY') {
-        setIsRecoveryMode(true);
-      } else if (event === 'SIGNED_IN' && !isRecoveryMode && type !== 'recovery') {
-        navigate('/');
-      }
-    });
-
-    // Check if user is already logged in (but not if we're in recovery mode)
+    // Check if user is already logged in
     const checkAuth = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (user && !isRecoveryMode && type !== 'recovery') {
+      if (user) {
         navigate('/');
       }
     };
     checkAuth();
-
-    return () => subscription.unsubscribe();
-  }, [navigate, isRecoveryMode]);
+  }, [navigate]);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -116,88 +91,6 @@ const Auth = () => {
     }
   };
 
-  const handleForgotPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!email) {
-      toast({
-        title: "Email required",
-        description: "Please enter your email address.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setLoading(true);
-
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth`,
-    });
-
-    setLoading(false);
-
-    if (error) {
-      toast({
-        title: "Reset failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "Check your email!",
-        description: "We've sent you a password reset link.",
-      });
-      setShowForgotPassword(false);
-    }
-  };
-
-  const handlePasswordUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (newPassword !== confirmPassword) {
-      toast({
-        title: "Passwords don't match",
-        description: "Please make sure both passwords are the same.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (newPassword.length < 6) {
-      toast({
-        title: "Password too short",
-        description: "Password must be at least 6 characters.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setLoading(true);
-
-    const { error } = await supabase.auth.updateUser({
-      password: newPassword,
-    });
-
-    setLoading(false);
-
-    if (error) {
-      toast({
-        title: "Update failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "Password updated!",
-        description: "Your password has been successfully changed.",
-      });
-      setIsRecoveryMode(false);
-      setNewPassword('');
-      setConfirmPassword('');
-      navigate('/');
-    }
-  };
-
   const handleGuestLogin = async () => {
     setLoading(true);
 
@@ -222,136 +115,6 @@ const Auth = () => {
       navigate('/');
     }
   };
-
-  // Password Recovery Mode UI
-  if (isRecoveryMode) {
-    return (
-      <div className="min-h-screen bg-gradient-bg flex items-center justify-center p-6">
-        <div className="w-full max-w-md">
-          <Card className="bg-card/50 backdrop-blur-sm border-border/50">
-            <CardHeader className="text-center space-y-4">
-              <div className="flex justify-center">
-                <div className="p-3 bg-gradient-primary rounded-xl">
-                  <KeyRound className="w-8 h-8 text-white" />
-                </div>
-              </div>
-              <div>
-                <CardTitle className="text-2xl bg-gradient-primary bg-clip-text text-transparent">
-                  Set New Password
-                </CardTitle>
-                <p className="text-muted-foreground mt-2">
-                  Enter your new password below
-                </p>
-              </div>
-            </CardHeader>
-            
-            <CardContent>
-              <form onSubmit={handlePasswordUpdate} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="new-password">New Password</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="new-password"
-                      type="password"
-                      placeholder="Enter new password (min 6 characters)"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      className="pl-10"
-                      minLength={6}
-                      required
-                    />
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="confirm-password">Confirm Password</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="confirm-password"
-                      type="password"
-                      placeholder="Confirm your new password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="pl-10"
-                      minLength={6}
-                      required
-                    />
-                  </div>
-                </div>
-                
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Updating..." : "Update Password"}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
-  // Forgot Password UI
-  if (showForgotPassword) {
-    return (
-      <div className="min-h-screen bg-gradient-bg flex items-center justify-center p-6">
-        <div className="w-full max-w-md">
-          <Card className="bg-card/50 backdrop-blur-sm border-border/50">
-            <CardHeader className="text-center space-y-4">
-              <div className="flex justify-center">
-                <div className="p-3 bg-gradient-primary rounded-xl">
-                  <Mail className="w-8 h-8 text-white" />
-                </div>
-              </div>
-              <div>
-                <CardTitle className="text-2xl bg-gradient-primary bg-clip-text text-transparent">
-                  Reset Password
-                </CardTitle>
-                <p className="text-muted-foreground mt-2">
-                  Enter your email to receive a reset link
-                </p>
-              </div>
-            </CardHeader>
-            
-            <CardContent>
-              <form onSubmit={handleForgotPassword} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="reset-email">Email</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="reset-email"
-                      type="email"
-                      placeholder="Enter your email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10"
-                      required
-                    />
-                  </div>
-                </div>
-                
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Sending..." : "Send Reset Link"}
-                </Button>
-                
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="w-full flex items-center gap-2"
-                  onClick={() => setShowForgotPassword(false)}
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  Back to Sign In
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-bg flex items-center justify-center p-6">
@@ -418,13 +181,6 @@ const Auth = () => {
                         required
                       />
                     </div>
-                    <button
-                      type="button"
-                      className="text-sm text-primary hover:underline"
-                      onClick={() => setShowForgotPassword(true)}
-                    >
-                      Forgot password?
-                    </button>
                   </div>
                   
                   <Button type="submit" className="w-full" disabled={loading}>
