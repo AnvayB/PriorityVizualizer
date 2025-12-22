@@ -21,19 +21,29 @@ const Auth = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Check URL hash for recovery token - this handles the redirect from Supabase
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const type = hashParams.get('type');
+    
+    if (type === 'recovery') {
+      setIsRecoveryMode(true);
+      // Clear the hash to clean up the URL
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+
     // Listen for auth state changes including password recovery
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'PASSWORD_RECOVERY') {
         setIsRecoveryMode(true);
-      } else if (event === 'SIGNED_IN' && !isRecoveryMode) {
+      } else if (event === 'SIGNED_IN' && !isRecoveryMode && type !== 'recovery') {
         navigate('/');
       }
     });
 
-    // Check if user is already logged in
+    // Check if user is already logged in (but not if we're in recovery mode)
     const checkAuth = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (user && !isRecoveryMode) {
+      if (user && !isRecoveryMode && type !== 'recovery') {
         navigate('/');
       }
     };
