@@ -6,11 +6,12 @@ EASY --------------------------------------------
 
 
 MEDIUM --------------------------------------------
-* In Add Priorities, replace section/subsection tabs with dropdowns (to reduce form length?)
-* Password Recovery
+* In Add Priorities, replace section/subsection tabs with dropdowns (to reduce form length?) - in progress
+* Password Recovery - nvery difficult, needs Lovable
 * perform analytics on completed tasks from Supabase
     * v0 templates
     * rechart plots
+    - how many days been using, total tasks completed, grouped bar chart of monthly tasks added and completed
 * add text/email reminders 
     * create signup for who wants reminders
     * may need to charge for key usage
