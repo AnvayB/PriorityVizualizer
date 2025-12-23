@@ -5,7 +5,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { format, parseISO, subDays, startOfDay } from 'date-fns';
 import { toZonedTime, fromZonedTime } from 'date-fns-tz';
 import * as d3 from 'd3';
-import { BarChart3, TrendingUp, Calendar, Flame, Trophy, Target } from 'lucide-react';
+import { BarChart3, TrendingUp, Calendar, Flame, Trophy, Target, ArrowUp, ArrowDown } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Progress } from '@/components/ui/progress';
 
 interface AnalyticsDashboardProps {
@@ -38,6 +39,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
   const [totalTasks, setTotalTasks] = useState(0);
   const [avgDaily, setAvgDaily] = useState(0);
   const [bestDay, setBestDay] = useState<{ date: string; count: number } | null>(null);
+  const [momentum, setMomentum] = useState<{ value: number | null; status: 'positive' | 'negative' | 'neutral' | 'not-enough-data' | 'new-activity' }>({ value: null, status: 'not-enough-data' });
   const [currentStreak, setCurrentStreak] = useState(0);
   const [longestStreak, setLongestStreak] = useState(0);
   const [consistencyScore, setConsistencyScore] = useState(0);
@@ -262,6 +264,52 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
       );
       setBestDay(best.count > 0 ? best : null);
 
+      // Calculate Momentum
+      // Reuse pstNow from earlier in function
+      // Create a map of date to count for easy lookup
+      const dateToCountMap = new Map<string, number>();
+      dailyArray.forEach(stat => {
+        dateToCountMap.set(stat.date, stat.count);
+      });
+      
+      // Calculate last 7 days (A) and previous 7 days (B)
+      let totalLast7Days = 0;
+      let totalPrevious7Days = 0;
+      
+      // Count tasks in last 7 days (days 0-6)
+      for (let i = 0; i < 7; i++) {
+        const checkDate = subDays(pstNow, i);
+        const dateKey = format(checkDate, 'yyyy-MM-dd');
+        const count = dateToCountMap.get(dateKey) || 0;
+        totalLast7Days += count;
+      }
+      
+      // Count tasks in previous 7 days (days 7-13)
+      for (let i = 7; i < 14; i++) {
+        const checkDate = subDays(pstNow, i);
+        const dateKey = format(checkDate, 'yyyy-MM-dd');
+        const count = dateToCountMap.get(dateKey) || 0;
+        totalPrevious7Days += count;
+      }
+      
+      // Calculate averages (always divide by 7, even if some days have 0 tasks)
+      const A = totalLast7Days / 7; // Average over last 7 days
+      const B = totalPrevious7Days / 7; // Average over previous 7 days
+      
+      // Check if we have fewer than 14 total days of data across all time
+      if (dailyArray.length < 14) {
+        // Not enough data across entire dataset
+        setMomentum({ value: null, status: 'not-enough-data' });
+      } else if (B === 0 && A > 0) {
+        // New activity (B = 0 but A > 0)
+        setMomentum({ value: null, status: 'new-activity' });
+      } else {
+        // Calculate momentum percentage: ((A - B) / max(B, 1)) * 100
+        const momentumValue = ((A - B) / Math.max(B, 1)) * 100;
+        const status = momentumValue > 0 ? 'positive' : momentumValue < 0 ? 'negative' : 'neutral';
+        setMomentum({ value: momentumValue, status });
+      }
+
       // Calculate streaks from all tasks
       if (allTasksData && allTasksData.length > 0) {
         const allDailyMap = new Map<string, number>();
@@ -309,9 +357,9 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
       .append('g')
       .attr('transform', `translate(${margin.left},${margin.top})`);
 
-    // Get top 3 sections for stacking, rest go to ".etc"
+    // Get top 3 sections for stacking, rest go to "other"
     const topSections = sectionStats.slice(0, 3).map(s => s.section);
-    const sectionKeys = [...topSections, '.etc'];
+    const sectionKeys = [...topSections, 'other'];
     
     // Default colors
     const defaultColors = [
@@ -356,13 +404,13 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
         result[section] = d.sections[section] || 0;
       });
       
-      // Calculate ".etc" as everything not in top 3
+      // Calculate "other" as everything not in top 3
       Object.keys(d.sections).forEach((section) => {
         if (!topSections.includes(section)) {
           otherCount += d.sections[section];
         }
       });
-      result['.etc'] = otherCount;
+      result['other'] = otherCount;
       
       return result;
     });
@@ -468,7 +516,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <BarChart3 className="w-5 h-5" />
-            Task Completion Analytics
+            Task Completion Analytics <span className="text-sm text-muted-foreground font-normal">(in the last 60 days)</span>
           </DialogTitle>
         </DialogHeader>
 
@@ -554,12 +602,45 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
                       <span className="text-sm font-bold">{avgDaily.toFixed(1)}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">Max/Day</span>
-                      <span className="text-sm font-bold">{bestDay?.count || 0}</span>
+                      <TooltipProvider>
+                        <Tooltip delayDuration={300}>
+                          <TooltipTrigger asChild>
+                            <span className="text-xs text-muted-foreground cursor-help">Momentum</span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="max-w-xs">
+                              Momentum compares your average daily completions over the last 7 days to the previous week.
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      <span className="text-sm font-bold flex items-center gap-1">
+                        {momentum.status === 'not-enough-data' && (
+                          <span className="text-muted-foreground">Not enough data</span>
+                        )}
+                        {momentum.status === 'new-activity' && (
+                          <span className="text-foreground">New activity</span>
+                        )}
+                        {momentum.status === 'positive' && momentum.value !== null && (
+                          <span className="text-foreground flex items-center gap-1">
+                            <ArrowUp className="w-4 h-4" />
+                            {Math.round(momentum.value)}%
+                          </span>
+                        )}
+                        {momentum.status === 'negative' && momentum.value !== null && (
+                          <span className="text-foreground flex items-center gap-1">
+                            <ArrowDown className="w-4 h-4" />
+                            {Math.abs(Math.round(momentum.value))}%
+                          </span>
+                        )}
+                        {momentum.status === 'neutral' && momentum.value !== null && (
+                          <span className="text-foreground">0%</span>
+                        )}
+                      </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">Days w/ Tasks</span>
-                      <span className="text-sm font-bold">{dailyStats.length}</span>
+                      <span className="text-xs text-muted-foreground">Missed Days</span>
+                      <span className="text-sm font-bold">{60 - dailyStats.length}</span>
                     </div>
                   </div>
                 </CardContent>
@@ -571,7 +652,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
               <Card>
                 <CardHeader>
                   <CardTitle>Daily Completion Trends by Section</CardTitle>
-                  <CardDescription>Tasks completed over the last 60 days, broken down by section</CardDescription>
+                  {/* <CardDescription>Tasks completed over the last 60 days, broken down by section</CardDescription> */}
                 </CardHeader>
                 <CardContent>
                   {dailySectionStats.length > 0 && sectionStats.length > 0 ? (
@@ -586,7 +667,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
                       <div className="absolute right-4 top-5 space-y-2 bg-card/95 backdrop-blur-sm p-3 rounded-lg border border-border shadow-sm">
                         {(() => {
                           const topSections = sectionStats.slice(0, 3).map(s => s.section);
-                          const sectionKeys = [...topSections, '.etc'];
+                          const sectionKeys = [...topSections, 'other'];
                           const defaultColors = [
                             'hsl(var(--chart-1))',
                             'hsl(var(--chart-2))',
