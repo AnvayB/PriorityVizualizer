@@ -594,11 +594,33 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
                 <CardContent className="pt-1.5">
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">Total Tasks</span>
+                      <TooltipProvider>
+                        <Tooltip delayDuration={300}>
+                          <TooltipTrigger asChild>
+                            <span className="text-xs text-muted-foreground cursor-help">Total Tasks</span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="max-w-xs">
+                              Total number of tasks completed in the last 60 days.
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                       <span className="text-sm font-bold">{totalTasks}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">Avg Tasks/Day</span>
+                      <TooltipProvider>
+                        <Tooltip delayDuration={300}>
+                          <TooltipTrigger asChild>
+                            <span className="text-xs text-muted-foreground cursor-help">Avg Tasks/Day</span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="max-w-xs">
+                              Average number of tasks completed per day, calculated as total tasks divided by the number of days with completed tasks.
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                       <span className="text-sm font-bold">{avgDaily.toFixed(1)}</span>
                     </div>
                     <div className="flex items-center justify-between">
@@ -639,7 +661,18 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">Missed Days</span>
+                      <TooltipProvider>
+                        <Tooltip delayDuration={300}>
+                          <TooltipTrigger asChild>
+                            <span className="text-xs text-muted-foreground cursor-help">Missed Days</span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="max-w-xs">
+                              Number of days in the last 60 days where no tasks were completed.
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                       <span className="text-sm font-bold">{60 - dailyStats.length}</span>
                     </div>
                   </div>
