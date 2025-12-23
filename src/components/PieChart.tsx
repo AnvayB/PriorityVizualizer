@@ -216,7 +216,17 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover, onSliceClick }) 
   const shouldShowText = (slice: ChartSlice) => {
     // Only show text if the slice is large enough
     const angleDiff = slice.endAngle - slice.startAngle;
-    return angleDiff > 15; // Show text only if slice is larger than 15 degrees
+    if (angleDiff <= 15) {
+      return false; // Don't show text if slice is too small
+    }
+    
+    // Don't show text if title is more than 20 characters
+    const text = getSliceText(slice);
+    if (text.length >= 15) {
+      return false;
+    }
+    
+    return true;
   };
 
   const getIsHighPriority = (slice: ChartSlice) => {
