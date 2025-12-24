@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
@@ -14,7 +15,7 @@ import ThemeToggle from '@/components/ThemeToggle';
 import AnnouncementDialog from '@/components/AnnouncementDialog';
 import AnnouncementHistory from '@/components/AnnouncementHistory';
 import { Section, Subsection, Task, ChartSlice } from '@/types/priorities';
-import { PieChart as PieChartIcon, Target, Calendar, Save, Upload, ChevronDown, LogOut, User, Clock, AlertTriangle, CheckCircle } from 'lucide-react';
+import { PieChart as PieChartIcon, Target, Calendar, Save, Upload, ChevronDown, LogOut, User, Clock, AlertTriangle, CheckCircle, Info } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { storeLocalBackup, detectDataLoss, downloadAutoBackup } from '@/utils/dataProtection';
@@ -695,7 +696,7 @@ const Index = () => {
           `Completing "${itemName}" will:\n` +
           `• Mark ${countToDelete} task(s) as complete\n` +
           `• PERMANENTLY DELETE this ${itemType} and all its data\n\n` +
-          `This action cannot be undone!\n\n` +
+          `This action cannot be undone.\n\n` +
           `Continue?`
         );
 
@@ -1721,7 +1722,21 @@ const Index = () => {
           <div className="xl:col-span-2">
             <Card className="bg-card/50 backdrop-blur-sm border-border/50 h-fit">
               <CardHeader className="pb-2">
-                <CardTitle className="text-xl text-primary">Priority Display</CardTitle>
+                <CardTitle className="text-xl text-primary flex items-center gap-2">
+                  Priority Display
+                  <TooltipProvider>
+                    <Tooltip delayDuration={300}>
+                      <TooltipTrigger asChild>
+                        <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="max-w-xs">
+                          This chart is flexible. Some people structure it as Roles → Goals → Actions (inspired by Stephen Covey) instead of priorities. Use whatever labels help you focus on what matters most.
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </CardTitle>
               </CardHeader>
               <CardContent className="p-3 pt-0 md:p-6 md:pt-2" onClick={handleWhiteSpaceClick}>
                 {(() => {

@@ -3,12 +3,15 @@
 <!-- Additions:
 
 EASY --------------------------------------------
+- delete Baba's old data
+    user_id = 'fcca47ad-56ff-48fe-a6d6-5baec2db2bf0';
+    user_id = '7836f34c-275b-46fa-aa92-7d18edf1fcc2';
 
 
 MEDIUM --------------------------------------------
 * In Add Priorities, replace section/subsection tabs with dropdowns (to reduce form length?) - in progress
 * Password Recovery - nvery difficult, needs Lovable
-* perform analytics on completed tasks from Supabase
+* perform analytics on completed tasks from Supabase -- use full data for better stats
     * v0 templates
     * rechart plots
     - how many days been using, total tasks completed, grouped bar chart of monthly tasks added and completed
