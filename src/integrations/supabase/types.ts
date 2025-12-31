@@ -242,6 +242,38 @@ export type Database = {
           },
         ]
       }
+      task_effort: {
+        Row: {
+          id: string
+          task_id: string
+          user_id: string
+          date: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          task_id: string
+          user_id: string
+          date: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          task_id?: string
+          user_id?: string
+          date?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_effort_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_settings: {
         Row: {
           created_at: string
@@ -249,6 +281,9 @@ export type Database = {
           id: string
           updated_at: string
           user_id: string
+          purpose_mode_enabled: boolean
+          purpose_image_url: string | null
+          effort_animation_icon: string
         }
         Insert: {
           created_at?: string
@@ -256,6 +291,9 @@ export type Database = {
           id?: string
           updated_at?: string
           user_id: string
+          purpose_mode_enabled?: boolean
+          purpose_image_url?: string | null
+          effort_animation_icon?: string
         }
         Update: {
           created_at?: string
@@ -263,6 +301,9 @@ export type Database = {
           id?: string
           updated_at?: string
           user_id?: string
+          purpose_mode_enabled?: boolean
+          purpose_image_url?: string | null
+          effort_animation_icon?: string
         }
         Relationships: []
       }

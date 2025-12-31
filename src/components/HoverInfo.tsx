@@ -15,6 +15,8 @@ import { Calendar, CheckCircle, Clock, Edit, Trash2, Palette, X, AlertTriangle, 
 import { useTheme } from '@/contexts/ThemeContext';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import EffortButton from '@/components/EffortButton';
+import EffortAnimation from '@/components/EffortAnimation';
 
 interface HoverInfoProps {
   slice: ChartSlice | null;
@@ -25,9 +27,28 @@ interface HoverInfoProps {
   onComplete?: (type: 'section' | 'subsection' | 'task', id: string) => void;
   onClose?: () => void;
   isPinned?: boolean;
+  userId?: string;
+  purposeModeEnabled?: boolean;
+  animationIcon?: 'flower' | 'star' | 'sparkle';
+  onEffortRecorded?: () => void;
+  purposeAnchorPosition?: { x: number; y: number } | null;
 }
 
-const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorChange, onPriorityChange, onComplete, onClose, isPinned }) => {
+const HoverInfo: React.FC<HoverInfoProps> = ({ 
+  slice, 
+  onEdit, 
+  onDelete, 
+  onColorChange, 
+  onPriorityChange, 
+  onComplete, 
+  onClose, 
+  isPinned,
+  userId,
+  purposeModeEnabled = false,
+  animationIcon = 'flower',
+  onEffortRecorded,
+  purposeAnchorPosition,
+}) => {
   const { theme } = useTheme();
   const [editTitle, setEditTitle] = useState('');
   const [editDueDate, setEditDueDate] = useState<Date | undefined>(undefined);
@@ -36,6 +57,7 @@ const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorC
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isColorOpen, setIsColorOpen] = useState(false);
   const [isTasksOpen, setIsTasksOpen] = useState(false);
+  const [animationState, setAnimationState] = useState<{ start: { x: number; y: number } | null; show: boolean }>({ start: null, show: false });
   
 
   const colors = [
@@ -560,7 +582,36 @@ const HoverInfo: React.FC<HoverInfoProps> = ({ slice, onEdit, onDelete, onColorC
               This {slice.level} will display with a {theme === 'dark' ? 'white' : 'black'} border in the chart
             </p>
           )}
+          
+          {/* Effort Button - only for tasks */}
+          {slice?.level === 'task' && slice.task && userId && (
+            <div className="flex items-center space-x-2 mt-3">
+              <EffortButton
+                taskId={slice.task.id}
+                userId={userId}
+                animationIcon={animationIcon}
+                onEffortRecorded={onEffortRecorded}
+                onAnimationTrigger={(startPos) => {
+                  if (purposeModeEnabled && purposeAnchorPosition) {
+                    setAnimationState({ start: startPos, show: true });
+                  }
+                }}
+              />
+            </div>
+          )}
         </div>
+        
+        {/* Effort Animation */}
+        {animationState.show && animationState.start && purposeAnchorPosition && (
+          <EffortAnimation
+            startPosition={animationState.start}
+            endPosition={purposeAnchorPosition}
+            icon={animationIcon}
+            onComplete={() => {
+              setAnimationState({ start: null, show: false });
+            }}
+          />
+        )}
       </CardContent>
     </Card>
   );

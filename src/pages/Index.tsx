@@ -9,11 +9,13 @@ import PieChart from '@/components/PieChart';
 import PriorityForm from '@/components/PriorityForm';
 import HoverInfo from '@/components/HoverInfo';
 import CompletionCounter from '@/components/CompletionCounter';
+import EffortCounter from '@/components/EffortCounter';
 import DeadlineEditor from '@/components/DeadlineEditor';
 import MobileNavigation from '@/components/MobileNavigation';
 import ThemeToggle from '@/components/ThemeToggle';
 import AnnouncementDialog from '@/components/AnnouncementDialog';
 import AnnouncementHistory from '@/components/AnnouncementHistory';
+import PurposeModeSettings from '@/components/PurposeModeSettings';
 import { Section, Subsection, Task, ChartSlice } from '@/types/priorities';
 import { PieChart as PieChartIcon, Target, Calendar, Save, Upload, ChevronDown, LogOut, User, Clock, AlertTriangle, CheckCircle, Info } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -31,9 +33,17 @@ const Index = () => {
   const [hoveredSlice, setHoveredSlice] = useState<ChartSlice | null>(null);
   const [pinnedSlice, setPinnedSlice] = useState<ChartSlice | null>(null);
   const [completionRefresh, setCompletionRefresh] = useState(0);
+  const [effortRefresh, setEffortRefresh] = useState(0);
   const [isDueTodayModalOpen, setIsDueTodayModalOpen] = useState(false);
   const [isDueSoonModalOpen, setIsDueSoonModalOpen] = useState(false);
   const [isOverdueModalOpen, setIsOverdueModalOpen] = useState(false);
+  
+  // Purpose mode state
+  const [purposeModeEnabled, setPurposeModeEnabled] = useState(false);
+  const [purposeImageUrl, setPurposeImageUrl] = useState<string | null>(null);
+  const [animationIcon, setAnimationIcon] = useState<'flower' | 'star' | 'sparkle'>('flower');
+  const [purposeAnchorRef, setPurposeAnchorRef] = useState<HTMLDivElement | null>(null);
+  const [purposeAnchorPosition, setPurposeAnchorPosition] = useState<{ x: number; y: number } | null>(null);
   
   // Form prefill state
   const [formPrefilledSectionId, setFormPrefilledSectionId] = useState('');
@@ -169,6 +179,55 @@ const Index = () => {
   }, [toast]);
 
 
+  // Load user settings (purpose mode)
+  const loadUserSettings = useCallback(async () => {
+    try {
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) return;
+
+      const { data: settings, error } = await supabase
+        .from('user_settings')
+        .select('purpose_mode_enabled, purpose_image_url, effort_animation_icon')
+        .eq('user_id', currentUser.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error loading user settings:', error);
+        return;
+      }
+
+      if (settings) {
+        setPurposeModeEnabled(settings.purpose_mode_enabled || false);
+        setPurposeImageUrl(settings.purpose_image_url || null);
+        setAnimationIcon((settings.effort_animation_icon as 'flower' | 'star' | 'sparkle') || 'flower');
+      }
+    } catch (error) {
+      console.error('Error loading user settings:', error);
+    }
+  }, []);
+
+  // Update purpose anchor position when ref changes
+  useEffect(() => {
+    const updateAnchorPosition = () => {
+      if (purposeAnchorRef) {
+        const rect = purposeAnchorRef.getBoundingClientRect();
+        setPurposeAnchorPosition({
+          x: rect.left + rect.width / 2,
+          y: rect.top + rect.height / 2,
+        });
+      }
+    };
+
+    updateAnchorPosition();
+    window.addEventListener('resize', updateAnchorPosition);
+    window.addEventListener('scroll', updateAnchorPosition, true);
+
+    return () => {
+      window.removeEventListener('resize', updateAnchorPosition);
+      window.removeEventListener('scroll', updateAnchorPosition, true);
+    };
+  }, [purposeAnchorRef, purposeModeEnabled]);
+
   // Auth state management and data loading
   useEffect(() => {
     const getUser = async () => {
@@ -177,10 +236,11 @@ const Index = () => {
       
       if (user) {
         await loadFromSupabase();
+        await loadUserSettings();
       }
     };
     getUser();
-  }, [loadFromSupabase]);
+  }, [loadFromSupabase, loadUserSettings]);
 
   const generateId = () => {
     return Math.random().toString(36).substr(2, 9);
@@ -1352,6 +1412,23 @@ const Index = () => {
                 Priority Vizualizer
               </h1>
             </div>
+            
+            {/* Purpose Anchor - Center of header */}
+            {purposeModeEnabled && purposeImageUrl && (
+              <div 
+                ref={setPurposeAnchorRef}
+                className="flex items-center justify-center"
+              >
+                <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-primary/30 shadow-lg">
+                  <img 
+                    src={purposeImageUrl} 
+                    alt="Purpose anchor" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+            )}
+            
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
               {user && (
                 <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
@@ -1374,6 +1451,15 @@ const Index = () => {
               {/* Keep Theme Toggle and Sign Out */}
               <div className="flex gap-2">
                 {user && <AnnouncementHistory userId={user.id} />}
+                {user && (
+                  <PurposeModeSettings
+                    userId={user.id}
+                    purposeModeEnabled={purposeModeEnabled}
+                    purposeImageUrl={purposeImageUrl}
+                    animationIcon={animationIcon}
+                    onSettingsUpdate={loadUserSettings}
+                  />
+                )}
                 <ThemeToggle />
                 <Button 
                   onClick={handleSignOut} 
@@ -1711,6 +1797,7 @@ const Index = () => {
           </Dialog>
 
           {user && <CompletionCounter userId={user.id} refreshTrigger={completionRefresh} />}
+          {user && <EffortCounter userId={user.id} refreshTrigger={effortRefresh} />}
         </div>
 
         {/* Announcement Dialog */}
@@ -1777,6 +1864,11 @@ const Index = () => {
               onComplete={handleComplete}
               onClose={() => setPinnedSlice(null)}
               isPinned={!!pinnedSlice}
+              userId={user?.id}
+              purposeModeEnabled={purposeModeEnabled}
+              animationIcon={animationIcon}
+              onEffortRecorded={() => setEffortRefresh(prev => prev + 1)}
+              purposeAnchorPosition={purposeAnchorPosition}
             />
 
             {/* Add Form */}
