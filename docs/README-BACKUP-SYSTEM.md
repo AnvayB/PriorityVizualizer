@@ -16,7 +16,7 @@ Status:        RUNNING
 launchctl list | grep prioritymanager
 
 # Run backup NOW (test)
-cd ~/Desktop/Projects/PriorityManager && ./run-backup.sh
+cd ~/Desktop/Projects/PriorityManager && ./scripts/run-backup.sh
 
 # View today's log
 cat ~/Desktop/Projects/PriorityManager/logs/backup-$(date +%Y-%m-%d).log
@@ -116,14 +116,14 @@ launchctl load ~/Library/LaunchAgents/com.prioritymanager.backup.plist
 ### Export ALL Users from Supabase
 ```bash
 cd ~/Desktop/Projects/PriorityManager
-node export-all-users.mjs
+node scripts/export-all-users.mjs
 ```
 
 ### Export from Supabase SQL Editor
-Run queries from `supabase-export-queries.sql`
+Run queries from `scripts/supabase-export-queries.sql`
 
 ### User Self-Export (in browser console)
-Copy/paste from `browser-export-script.js`
+Copy/paste from `scripts/browser-export-script.js`
 
 ## Monitor Health
 

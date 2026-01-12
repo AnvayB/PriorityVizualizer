@@ -8,9 +8,10 @@
 echo "🔄 Setting up automated daily backups for Priority Manager"
 echo ""
 
-# Get the project directory (where this script is located)
-PROJECT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-BACKUP_SCRIPT="$PROJECT_DIR/export-all-users.mjs"
+# Get the project directory (parent of scripts/)
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+PROJECT_DIR="$( cd "$SCRIPT_DIR/.." && pwd )"
+BACKUP_SCRIPT="$SCRIPT_DIR/export-all-users.mjs"
 
 echo "📁 Project directory: $PROJECT_DIR"
 echo "📄 Backup script: $BACKUP_SCRIPT"
@@ -18,17 +19,19 @@ echo ""
 
 # Check if the export script exists
 if [ ! -f "$BACKUP_SCRIPT" ]; then
-    echo "❌ Error: export-all-users.mjs not found!"
+    echo "❌ Error: scripts/export-all-users.mjs not found!"
     exit 1
 fi
 
 # Create a backup runner script that handles logging
-cat > "$PROJECT_DIR/run-backup.sh" << 'EOF'
+cat > "$SCRIPT_DIR/run-backup.sh" << 'EOF'
 #!/bin/bash
 # Daily backup runner with logging
 
-# Change to project directory
-cd "$(dirname "$0")"
+# Change to project root directory (parent of scripts/)
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+PROJECT_DIR="$( cd "$SCRIPT_DIR/.." && pwd )"
+cd "$PROJECT_DIR"
 
 # Create logs directory if it doesn't exist
 mkdir -p logs
@@ -40,7 +43,7 @@ echo "Backup started at $(date)" >> "$LOG_FILE"
 echo "========================================" >> "$LOG_FILE"
 
 # Run the Node.js export script
-node export-all-users.mjs >> "$LOG_FILE" 2>&1
+node scripts/export-all-users.mjs >> "$LOG_FILE" 2>&1
 
 # Check if backup was successful
 if [ $? -eq 0 ]; then
@@ -58,8 +61,8 @@ find logs -name "backup-*.log" -mtime +30 -delete
 # find backups -name "*.json" -mtime +30 -delete
 EOF
 
-chmod +x "$PROJECT_DIR/run-backup.sh"
-echo "✅ Created run-backup.sh"
+chmod +x "$SCRIPT_DIR/run-backup.sh"
+echo "✅ Created scripts/run-backup.sh"
 echo ""
 
 # Determine OS and set up appropriate scheduler
@@ -80,7 +83,7 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     <key>ProgramArguments</key>
     <array>
         <string>/bin/bash</string>
-        <string>$PROJECT_DIR/run-backup.sh</string>
+        <string>$SCRIPT_DIR/run-backup.sh</string>
     </array>
     
     <key>StartCalendarInterval</key>
@@ -119,10 +122,10 @@ elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
     # Linux - use cron
     echo "🐧 Detected Linux - Setting up cron job"
     
-    CRON_CMD="55 23 * * * cd $PROJECT_DIR && ./run-backup.sh"
+    CRON_CMD="55 23 * * * cd $PROJECT_DIR && ./scripts/run-backup.sh"
     
     # Check if cron job already exists
-    if crontab -l 2>/dev/null | grep -q "run-backup.sh"; then
+    if crontab -l 2>/dev/null | grep -q "scripts/run-backup.sh"; then
         echo "⚠️  Cron job already exists"
     else
         # Add to crontab
@@ -150,6 +153,6 @@ echo "Logs will be saved to: $PROJECT_DIR/logs/"
 echo ""
 echo "To test the backup manually, run:"
 echo "  cd $PROJECT_DIR"
-echo "  ./run-backup.sh"
+echo "  ./scripts/run-backup.sh"
 echo ""
 

@@ -1,0 +1,384 @@
+import React, { useState, useRef } from 'react';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { Settings, Upload, X, Flower, Star, Sparkles } from 'lucide-react';
+
+interface PurposeModeSettingsProps {
+  userId: string;
+  purposeModeEnabled: boolean;
+  purposeImageUrl: string | null;
+  animationIcon: 'flower' | 'star' | 'sparkle';
+  onSettingsUpdate: () => void;
+}
+
+const PurposeModeSettings: React.FC<PurposeModeSettingsProps> = ({
+  userId,
+  purposeModeEnabled,
+  purposeImageUrl,
+  animationIcon,
+  onSettingsUpdate,
+}) => {
+  const { toast } = useToast();
+  const [isOpen, setIsOpen] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleTogglePurposeMode = async (enabled: boolean) => {
+    try {
+      // Get or create user settings
+      const { data: existing } = await supabase
+        .from('user_settings')
+        .select('id')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (existing) {
+        const { error } = await supabase
+          .from('user_settings')
+          .update({ purpose_mode_enabled: enabled })
+          .eq('user_id', userId);
+
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('user_settings')
+          .insert({
+            user_id: userId,
+            purpose_mode_enabled: enabled,
+          });
+
+        if (error) throw error;
+      }
+
+      onSettingsUpdate();
+      toast({
+        title: enabled ? "Purpose mode enabled" : "Purpose mode disabled",
+        description: enabled 
+          ? "Your purpose anchor is now visible. Upload an image to customize it."
+          : "Purpose mode has been disabled.",
+      });
+    } catch (error) {
+      console.error('Error toggling purpose mode:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update purpose mode settings.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleImageUpload = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid file",
+        description: "Please upload an image file.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check if image is square (recommend 256x256px but allow any square)
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    
+    img.onload = async () => {
+      URL.revokeObjectURL(objectUrl);
+      
+      if (img.width !== img.height) {
+        toast({
+          title: "Image should be square",
+          description: "For best results, use a square image (recommended: 256x256px).",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setIsUploading(true);
+      try {
+        const fileExt = file.name.split('.').pop();
+        // Path structure: userId/purpose-image-timestamp.ext
+        // This matches the storage policy that checks folder[1] = auth.uid()
+        const filePath = `${userId}/purpose-image-${Date.now()}.${fileExt}`;
+
+        // Upload to Supabase Storage
+        const { error: uploadError } = await supabase.storage
+          .from('purpose-images')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false,
+          });
+
+        if (uploadError) throw uploadError;
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('purpose-images')
+          .getPublicUrl(filePath);
+
+        // Update user settings
+        const { data: existing } = await supabase
+          .from('user_settings')
+          .select('id')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+        if (existing) {
+          const { error: updateError } = await supabase
+            .from('user_settings')
+            .update({ purpose_image_url: publicUrl })
+            .eq('user_id', userId);
+
+          if (updateError) throw updateError;
+        } else {
+          const { error: insertError } = await supabase
+            .from('user_settings')
+            .insert({
+              user_id: userId,
+              purpose_image_url: publicUrl,
+            });
+
+          if (insertError) throw insertError;
+        }
+
+        // Delete old image if exists
+        if (purposeImageUrl) {
+          // Extract path from URL: https://...supabase.co/storage/v1/object/public/purpose-images/userId/filename
+          // We need just userId/filename
+          const urlParts = purposeImageUrl.split('/');
+          const bucketIndex = urlParts.findIndex(part => part === 'purpose-images');
+          if (bucketIndex !== -1 && urlParts.length > bucketIndex + 2) {
+            const oldPath = `${urlParts[bucketIndex + 1]}/${urlParts[bucketIndex + 2]}`;
+            await supabase.storage
+              .from('purpose-images')
+              .remove([oldPath]);
+          }
+        }
+
+        onSettingsUpdate();
+        toast({
+          title: "Image uploaded",
+          description: "Your purpose anchor image has been updated.",
+        });
+      } catch (error) {
+        console.error('Error uploading image:', error);
+        toast({
+          title: "Error",
+          description: "Failed to upload image. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsUploading(false);
+      }
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      toast({
+        title: "Invalid image",
+        description: "Could not load the image file.",
+        variant: "destructive",
+      });
+    };
+
+    img.src = objectUrl;
+  };
+
+  const handleRemoveImage = async () => {
+    try {
+      if (purposeImageUrl) {
+        // Extract path from URL: https://...supabase.co/storage/v1/object/public/purpose-images/userId/filename
+        // We need just userId/filename
+        const urlParts = purposeImageUrl.split('/');
+        const bucketIndex = urlParts.findIndex(part => part === 'purpose-images');
+        if (bucketIndex !== -1 && urlParts.length > bucketIndex + 2) {
+          const path = `${urlParts[bucketIndex + 1]}/${urlParts[bucketIndex + 2]}`;
+          await supabase.storage
+            .from('purpose-images')
+            .remove([path]);
+        }
+      }
+
+      const { error } = await supabase
+        .from('user_settings')
+        .update({ purpose_image_url: null })
+        .eq('user_id', userId);
+
+      if (error) throw error;
+
+      onSettingsUpdate();
+      toast({
+        title: "Image removed",
+        description: "Purpose anchor image has been removed.",
+      });
+    } catch (error) {
+      console.error('Error removing image:', error);
+      toast({
+        title: "Error",
+        description: "Failed to remove image.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAnimationIconChange = async (icon: 'flower' | 'star' | 'sparkle') => {
+    try {
+      const { data: existing } = await supabase
+        .from('user_settings')
+        .select('id')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (existing) {
+        const { error } = await supabase
+          .from('user_settings')
+          .update({ effort_animation_icon: icon })
+          .eq('user_id', userId);
+
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('user_settings')
+          .insert({
+            user_id: userId,
+            effort_animation_icon: icon,
+          });
+
+        if (error) throw error;
+      }
+
+      onSettingsUpdate();
+    } catch (error) {
+      console.error('Error updating animation icon:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update animation icon.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  return (
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="outline" size="sm" className="h-9 w-9 p-0" title="Purpose Mode Settings">
+          <Settings className="w-4 h-4" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-80" align="end">
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <h4 className="font-medium text-sm">Purpose Mode</h4>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="purpose-mode"
+                checked={purposeModeEnabled}
+                onCheckedChange={handleTogglePurposeMode}
+              />
+              <Label
+                htmlFor="purpose-mode"
+                className="text-sm font-normal cursor-pointer"
+              >
+                Enable purpose anchor
+              </Label>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Display a purpose anchor in the header. When you mark effort on tasks, an animation will move toward this anchor.
+            </p>
+          </div>
+
+          {purposeModeEnabled && (
+            <>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Purpose Image</Label>
+                <p className="text-xs text-muted-foreground">
+                  Upload a square image (recommended: 256x256px) for your purpose anchor.
+                </p>
+                <div className="flex items-center gap-2">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleImageUpload(file);
+                    }}
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading}
+                    className="flex-1"
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    {isUploading ? 'Uploading...' : purposeImageUrl ? 'Change Image' : 'Upload Image'}
+                  </Button>
+                  {purposeImageUrl && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleRemoveImage}
+                      className="px-2"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+                {purposeImageUrl && (
+                  <div className="mt-2">
+                    <img
+                      src={purposeImageUrl}
+                      alt="Purpose anchor preview"
+                      className="w-16 h-16 rounded-full object-cover border border-border"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Animation Icon</Label>
+                <Select value={animationIcon} onValueChange={handleAnimationIconChange}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="flower">
+                      <div className="flex items-center gap-2">
+                        <Flower className="w-4 h-4" />
+                        <span>Flower</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="star">
+                      <div className="flex items-center gap-2">
+                        <Star className="w-4 h-4" />
+                        <span>Star</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="sparkle">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="w-4 h-4" />
+                        <span>Sparkle</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Choose the icon that animates when you mark effort on tasks.
+                </p>
+              </div>
+            </>
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+};
+
+export default PurposeModeSettings;
+

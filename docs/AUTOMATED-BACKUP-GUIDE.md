@@ -37,7 +37,7 @@ launchctl load ~/Library/LaunchAgents/com.prioritymanager.backup.plist
 
 # Test it manually
 cd /Users/anvaybhanap/Desktop/Projects/PriorityManager
-./run-backup.sh
+./scripts/run-backup.sh
 ```
 
 ### Option 2: Linux (cron)
@@ -49,7 +49,7 @@ crontab -e
 
 2. Add this line (runs at 11:55 PM daily):
 ```bash
-55 23 * * * cd /path/to/PriorityManager && ./run-backup.sh
+55 23 * * * cd /path/to/PriorityManager && ./scripts/run-backup.sh
 ```
 
 ### Option 3: Windows (Task Scheduler)
@@ -223,7 +223,7 @@ chmod +x setup-automated-backups.sh
 ## 📋 Backup Checklist
 
 - [ ] Automated daily backup set up
-- [ ] Tested backup manually (`./run-backup.sh`)
+- [ ] Tested backup manually (`./scripts/run-backup.sh`)
 - [ ] Verified backups folder has new files
 - [ ] Checked logs for success message
 - [ ] Set up cloud sync (optional)
@@ -267,9 +267,9 @@ Change the time (format: minute hour day month weekday):
 
 If backups fail:
 1. Check `logs/backup-[date].log`
-2. Run manually: `./run-backup.sh`
+2. Run manually: `./scripts/run-backup.sh`
 3. Verify Node.js is installed: `node --version`
-4. Check Supabase credentials in `export-all-users.mjs`
+4. Check Supabase credentials in `scripts/export-all-users.mjs`
 
 ---
 

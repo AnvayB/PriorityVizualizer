@@ -49,7 +49,7 @@ git push origin main
 npm install
 
 # Run the export script
-node export-all-users.mjs
+node scripts/export-all-users.mjs
 
 # This creates a 'backups/' folder with:
 # - One JSON file per user
@@ -58,7 +58,7 @@ node export-all-users.mjs
 
 **Option B: Using Supabase SQL Editor**
 1. Go to https://supabase.com/dashboard/project/ktjrcdknewtliusorbcb/sql/new
-2. Copy Query #1 from `supabase-export-queries.sql`
+2. Copy Query #1 from `scripts/supabase-export-queries.sql`
 3. Run it to see all users and their data counts
 4. Copy Query #3, replace `YOUR_USER_ID_HERE` with actual user ID
 5. Run for each user to get their data as JSON
@@ -66,7 +66,7 @@ node export-all-users.mjs
 **Option C: Using Browser Console** (For individual users)
 1. Have user log in to https://priorityviz.netlify.app/
 2. Press F12 → Console tab
-3. Copy contents of `browser-export-script.js`
+3. Copy contents of `scripts/browser-export-script.js`
 4. Paste and press Enter
 5. JSON file downloads automatically
 
@@ -129,15 +129,15 @@ WHERE schemaname = 'public'
 
 Should show 12 policies total (4 per table: SELECT, INSERT, UPDATE, DELETE).
 
-If policies are missing, see repair queries in `supabase-export-queries.sql`.
+If policies are missing, see repair queries in `scripts/supabase-export-queries.sql`.
 
 ## 📁 Files Created
 
 - ✅ `DATA-RECOVERY-GUIDE.md` - Full detailed guide
 - ✅ `QUICK-START.md` - This file
-- ✅ `browser-export-script.js` - User data export for browser
-- ✅ `export-all-users.mjs` - Admin export all users (Node.js)
-- ✅ `supabase-export-queries.sql` - SQL queries for Supabase
+- ✅ `scripts/browser-export-script.js` - User data export for browser
+- ✅ `scripts/export-all-users.mjs` - Admin export all users (Node.js)
+- ✅ `scripts/supabase-export-queries.sql` - SQL queries for Supabase
 - ✅ `src/components/DataDiagnostic.tsx` - Debug component (optional)
 
 ## ✨ Code Changes Summary

@@ -9,9 +9,9 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "announcement": "node create-announcement.mjs",
-    "announcement:create": "node create-announcement.mjs",
-    "announcement:debug": "node debug-announcements.mjs",
+    "announcement": "node scripts/create-announcement.mjs",
+    "announcement:create": "node scripts/create-announcement.mjs",
+    "announcement:debug": "node scripts/debug-announcements.mjs",
     "db:push": "npx supabase db push"
   },
   "dependencies": {

@@ -13,7 +13,7 @@ npx supabase db push
 
 ### 2. Create an announcement
 ```bash
-node create-announcement.mjs
+node scripts/create-announcement.mjs
 # Select option 1 and follow prompts
 ```
 
@@ -21,7 +21,7 @@ node create-announcement.mjs
 
 ### Create Warning Announcement
 ```bash
-node create-announcement.mjs
+node scripts/create-announcement.mjs
 # Option 1
 # Title: Your title here
 # Message: Your message here  
@@ -31,13 +31,13 @@ node create-announcement.mjs
 
 ### List Active Announcements
 ```bash
-node create-announcement.mjs
+node scripts/create-announcement.mjs
 # Option 2
 ```
 
 ### Deactivate Announcement
 ```bash
-node create-announcement.mjs
+node scripts/create-announcement.mjs
 # Option 3
 # Enter announcement ID
 ```

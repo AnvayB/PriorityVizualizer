@@ -21,7 +21,7 @@ A complete announcement/alert system that allows you to send one-time notificati
    - Marks announcements as seen when user dismisses them
    - Supports different severity levels with appropriate icons and colors
 
-3. **`create-announcement.mjs`**
+3. **`scripts/create-announcement.mjs`**
    - Interactive CLI tool for managing announcements
    - Create new announcements with title, message, severity, and expiration
    - List all active announcements

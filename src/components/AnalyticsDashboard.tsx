@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { format, parseISO, subDays, startOfDay } from 'date-fns';
 import { toZonedTime, fromZonedTime } from 'date-fns-tz';
@@ -32,6 +33,9 @@ interface DailySectionStats {
 }
 
 const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen, onOpenChange }) => {
+  const [activeTab, setActiveTab] = useState<'completion' | 'effort'>('completion');
+  
+  // Completion analytics state
   const [isLoading, setIsLoading] = useState(true);
   const [dailyStats, setDailyStats] = useState<DailyStats[]>([]);
   const [sectionStats, setSectionStats] = useState<SectionStats[]>([]);
@@ -46,15 +50,29 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
   const [sectionColors, setSectionColors] = useState<{ [key: string]: string }>({});
   const [supabaseSectionColors, setSupabaseSectionColors] = useState<{ [key: string]: string }>({});
   
+  // Effort analytics state
+  const [isEffortLoading, setIsEffortLoading] = useState(true);
+  const [effortDailyStats, setEffortDailyStats] = useState<DailyStats[]>([]);
+  const [effortTotalCount, setEffortTotalCount] = useState(0);
+  const [effortAvgDaily, setEffortAvgDaily] = useState(0);
+  const [effortCurrentStreak, setEffortCurrentStreak] = useState(0);
+  const [effortLongestStreak, setEffortLongestStreak] = useState(0);
+  const [effortConsistencyScore, setEffortConsistencyScore] = useState(0);
+  
   const lineChartRef = useRef<SVGSVGElement>(null);
+  const effortChartRef = useRef<SVGSVGElement>(null);
 
   const PST_TZ = 'America/Los_Angeles';
 
   useEffect(() => {
     if (isOpen && userId) {
-      loadAnalyticsData();
+      if (activeTab === 'completion') {
+        loadAnalyticsData();
+      } else {
+        loadEffortAnalyticsData();
+      }
     }
-  }, [isOpen, userId]);
+  }, [isOpen, userId, activeTab]);
 
   useEffect(() => {
     if (dailySectionStats.length > 0) {
@@ -338,6 +356,90 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
     }
   };
 
+  const loadEffortAnalyticsData = async () => {
+    try {
+      setIsEffortLoading(true);
+
+      // Get date range (last 60 days)
+      const now = new Date();
+      const pstNow = toZonedTime(now, PST_TZ);
+      const sixtyDaysAgo = subDays(pstNow, 60);
+      const startDateUTC = fromZonedTime(startOfDay(sixtyDaysAgo), PST_TZ).toISOString();
+
+      // Fetch effort records for last 60 days
+      const { data: effortData, error: effortError } = await supabase
+        .from('task_effort')
+        .select('date, created_at')
+        .eq('user_id', userId)
+        .gte('created_at', startDateUTC)
+        .order('date', { ascending: true });
+
+      if (effortError) throw effortError;
+
+      // Fetch ALL effort records for streak calculation
+      const { data: allEffortData, error: allEffortError } = await supabase
+        .from('task_effort')
+        .select('date')
+        .eq('user_id', userId)
+        .order('date', { ascending: true });
+
+      if (allEffortError) throw allEffortError;
+
+      // Process daily stats
+      const dailyMap = new Map<string, number>();
+      effortData?.forEach((effort) => {
+        const effortDate = parseISO(effort.date);
+        const pstDate = toZonedTime(effortDate, PST_TZ);
+        const dateKey = format(pstDate, 'yyyy-MM-dd');
+        dailyMap.set(dateKey, (dailyMap.get(dateKey) || 0) + 1);
+      });
+
+      // Convert to array and sort
+      const dailyArray: DailyStats[] = Array.from(dailyMap.entries())
+        .map(([date, count]) => ({ date, count }))
+        .sort((a, b) => a.date.localeCompare(b.date));
+
+      setEffortDailyStats(dailyArray);
+
+      // Calculate statistics
+      const total = effortData?.length || 0;
+      setEffortTotalCount(total);
+      setEffortAvgDaily(dailyArray.length > 0 ? total / dailyArray.length : 0);
+
+      // Calculate consistency score
+      const activeDays = dailyArray.length;
+      const totalDays = 60;
+      const consistency = totalDays > 0 ? (activeDays / totalDays) * 100 : 0;
+      setEffortConsistencyScore(Math.round(consistency));
+
+      // Calculate streaks from all effort records
+      if (allEffortData && allEffortData.length > 0) {
+        const allDailyMap = new Map<string, number>();
+        allEffortData.forEach((effort) => {
+          const effortDate = parseISO(effort.date);
+          const pstDate = toZonedTime(effortDate, PST_TZ);
+          const dateKey = format(pstDate, 'yyyy-MM-dd');
+          allDailyMap.set(dateKey, (allDailyMap.get(dateKey) || 0) + 1);
+        });
+
+        const allDailyArray: DailyStats[] = Array.from(allDailyMap.entries())
+          .map(([date, count]) => ({ date, count }))
+          .sort((a, b) => a.date.localeCompare(b.date));
+
+        const streaks = calculateStreaks(allDailyArray);
+        setEffortCurrentStreak(streaks.current);
+        setEffortLongestStreak(streaks.longest);
+      } else {
+        setEffortCurrentStreak(0);
+        setEffortLongestStreak(0);
+      }
+    } catch (error) {
+      console.error('Error loading effort analytics data:', error);
+    } finally {
+      setIsEffortLoading(false);
+    }
+  };
+
   const drawStackedBarChart = () => {
     if (!lineChartRef.current || dailySectionStats.length === 0 || sectionStats.length === 0) return;
 
@@ -516,10 +618,17 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <BarChart3 className="w-5 h-5" />
-            Task Completion Analytics <span className="text-sm text-muted-foreground font-normal">(in the last 60 days)</span>
+            Analytics <span className="text-sm text-muted-foreground font-normal">(in the last 60 days)</span>
           </DialogTitle>
         </DialogHeader>
 
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'completion' | 'effort')} className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="completion">Completion</TabsTrigger>
+            <TabsTrigger value="effort">Effort</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="completion" className="space-y-6">
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -761,6 +870,123 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
             </div>
           </div>
         )}
+          </TabsContent>
+
+          <TabsContent value="effort" className="space-y-6">
+        {isEffortLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {/* Effort Streak Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+              <Card className="border-2 border-orange-500/30 bg-gradient-to-br from-orange-500/10 to-orange-600/5">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5">
+                  <CardTitle className="text-xs font-medium flex items-center gap-1.5">
+                    <span className="text-lg">🔥</span>
+                    Current Streak
+                  </CardTitle>
+                  <Flame className="h-3.5 w-3.5 text-orange-500" />
+                </CardHeader>
+                <CardContent className="pt-1.5">
+                  <div className="text-2xl font-bold text-orange-500">{effortCurrentStreak}</div>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {effortCurrentStreak === 0 
+                      ? 'Start today!' 
+                      : effortCurrentStreak === 1 
+                      ? 'day in a row' 
+                      : 'days in a row'}
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-2 border-yellow-500/30 bg-gradient-to-br from-yellow-500/10 to-yellow-600/5">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5">
+                  <CardTitle className="text-xs font-medium flex items-center gap-1.5">
+                    <span className="text-lg">🏆</span>
+                    Best Streak
+                  </CardTitle>
+                  <Trophy className="h-3.5 w-3.5 text-yellow-500" />
+                </CardHeader>
+                <CardContent className="pt-1.5">
+                  <div className="text-2xl font-bold text-yellow-500">{effortLongestStreak}</div>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {effortLongestStreak === 0 
+                      ? 'No streak yet' 
+                      : effortLongestStreak === 1 
+                      ? 'day (all time)' 
+                      : 'days (all time)'}
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-2 border-blue-500/30 bg-gradient-to-br from-blue-500/10 to-blue-600/5">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5">
+                  <CardTitle className="text-xs font-medium flex items-center gap-1.5">
+                    <Target className="h-3.5 w-3.5 text-blue-500" />
+                    Consistency
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-1.5">
+                  <div className="text-2xl font-bold text-blue-500 mb-2">{effortConsistencyScore}%</div>
+                  <Progress value={effortConsistencyScore} className="h-1.5 mb-1" />
+                  <p className="text-xs text-muted-foreground">
+                    {effortDailyStats.length} / 60 days
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-2 border-purple-500/30 bg-gradient-to-br from-purple-500/10 to-purple-600/5">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5">
+                  <CardTitle className="text-xs font-medium flex items-center gap-1.5">
+                    <BarChart3 className="h-3.5 w-3.5 text-purple-500" />
+                    Summary
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-1.5">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">Total Effort</span>
+                      <span className="text-sm font-bold">{effortTotalCount}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">Avg Effort/Day</span>
+                      <span className="text-sm font-bold">{effortAvgDaily.toFixed(1)}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">Missed Days</span>
+                      <span className="text-sm font-bold">{60 - effortDailyStats.length}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Effort Chart */}
+            {effortDailyStats.length > 0 ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Daily Effort Trends</CardTitle>
+                  <CardDescription>Effort recorded over the last 60 days</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-12 text-muted-foreground">
+                    Chart visualization coming soon
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardContent className="py-12 text-center text-muted-foreground">
+                  No effort data available for the last 60 days
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );
