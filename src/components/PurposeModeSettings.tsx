@@ -310,7 +310,7 @@ const PurposeModeSettings: React.FC<PurposeModeSettingsProps> = ({
       <PopoverContent className="w-80" align="end">
         <div className="space-y-4">
           <div className="space-y-2">
-            <h4 className="font-medium text-sm">Purpose Mode</h4>
+            <h4 className="font-medium text-sm">Progress Mode</h4>
             <div className="flex items-center space-x-2">
               <Checkbox
                 id="purpose-mode"

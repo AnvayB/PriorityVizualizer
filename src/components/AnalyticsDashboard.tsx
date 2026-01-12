@@ -67,10 +67,10 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
   useEffect(() => {
     if (isOpen && userId) {
       if (activeTab === 'completion') {
-        loadAnalyticsData();
+      loadAnalyticsData();
       } else {
         loadEffortAnalyticsData();
-      }
+    }
     }
   }, [isOpen, userId, activeTab]);
 
