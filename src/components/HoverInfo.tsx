@@ -16,7 +16,6 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import EffortButton from '@/components/EffortButton';
-import EffortAnimation from '@/components/EffortAnimation';
 
 interface HoverInfoProps {
   slice: ChartSlice | null;
@@ -57,7 +56,6 @@ const HoverInfo: React.FC<HoverInfoProps> = ({
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isColorOpen, setIsColorOpen] = useState(false);
   const [isTasksOpen, setIsTasksOpen] = useState(false);
-  const [animationState, setAnimationState] = useState<{ start: { x: number; y: number } | null; show: boolean }>({ start: null, show: false });
   
 
   const colors = [
@@ -563,55 +561,37 @@ const HoverInfo: React.FC<HoverInfoProps> = ({
         )}
         
         <div className="space-y-3 pt-4 border-t border-border/50">
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="high-priority"
-              checked={getCurrentPriority()}
-              onCheckedChange={handlePriorityChange}
-            />
-            <label
-              htmlFor="high-priority"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2"
-            >
-              <AlertTriangle className="w-4 h-4 text-red-500" />
-              High Priority
-            </label>
+          <div className="flex items-center space-x-2 flex-wrap gap-2">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="high-priority"
+                checked={getCurrentPriority()}
+                onCheckedChange={handlePriorityChange}
+              />
+              <label
+                htmlFor="high-priority"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2"
+              >
+                <AlertTriangle className="w-4 h-4 text-red-500" />
+                High Priority
+              </label>
+            </div>
+            {/* Effort Button - only for tasks */}
+            {slice?.level === 'task' && slice.task && userId && (
+              <EffortButton
+                taskId={slice.task.id}
+                userId={userId}
+                animationIcon={animationIcon}
+                onEffortRecorded={onEffortRecorded}
+              />
+            )}
           </div>
           {getCurrentPriority() && (
             <p className="text-xs text-muted-foreground ml-6">
               This {slice.level} will display with a {theme === 'dark' ? 'white' : 'black'} border in the chart
             </p>
           )}
-          
-          {/* Effort Button - only for tasks */}
-          {slice?.level === 'task' && slice.task && userId && (
-            <div className="flex items-center space-x-2 mt-3">
-              <EffortButton
-                taskId={slice.task.id}
-                userId={userId}
-                animationIcon={animationIcon}
-                onEffortRecorded={onEffortRecorded}
-                onAnimationTrigger={(startPos) => {
-                  if (purposeModeEnabled && purposeAnchorPosition) {
-                    setAnimationState({ start: startPos, show: true });
-                  }
-                }}
-              />
-            </div>
-          )}
         </div>
-        
-        {/* Effort Animation */}
-        {animationState.show && animationState.start && purposeAnchorPosition && (
-          <EffortAnimation
-            startPosition={animationState.start}
-            endPosition={purposeAnchorPosition}
-            icon={animationIcon}
-            onComplete={() => {
-              setAnimationState({ start: null, show: false });
-            }}
-          />
-        )}
       </CardContent>
     </Card>
   );

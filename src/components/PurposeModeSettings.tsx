@@ -6,7 +6,9 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Settings, Upload, X, Flower, Star, Sparkles } from 'lucide-react';
+import { toZonedTime } from 'date-fns-tz';
+import { format } from 'date-fns';
+import { Settings, Upload, X, Flower, Star, Sparkles, Trash2 } from 'lucide-react';
 
 interface PurposeModeSettingsProps {
   userId: string;
@@ -14,6 +16,7 @@ interface PurposeModeSettingsProps {
   purposeImageUrl: string | null;
   animationIcon: 'flower' | 'star' | 'sparkle';
   onSettingsUpdate: () => void;
+  onEffortCleared?: () => void;
 }
 
 const PurposeModeSettings: React.FC<PurposeModeSettingsProps> = ({
@@ -22,6 +25,7 @@ const PurposeModeSettings: React.FC<PurposeModeSettingsProps> = ({
   purposeImageUrl,
   animationIcon,
   onSettingsUpdate,
+  onEffortCleared,
 }) => {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
@@ -262,6 +266,40 @@ const PurposeModeSettings: React.FC<PurposeModeSettingsProps> = ({
     }
   };
 
+  const handleClearAllIcons = async () => {
+    try {
+      // Get today's date in PST
+      const now = new Date();
+      const pstNow = toZonedTime(now, 'America/Los_Angeles');
+      const today = format(pstNow, 'yyyy-MM-dd');
+
+      // Delete all effort records for today
+      const { error } = await supabase
+        .from('task_effort')
+        .delete()
+        .eq('user_id', userId)
+        .eq('date', today);
+
+      if (error) throw error;
+
+      toast({
+        title: "Icons cleared",
+        description: "All effort icons have been removed from the purpose anchor.",
+      });
+
+      if (onEffortCleared) {
+        onEffortCleared();
+      }
+    } catch (error) {
+      console.error('Error clearing effort icons:', error);
+      toast({
+        title: "Error",
+        description: "Failed to clear icons. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
@@ -287,7 +325,7 @@ const PurposeModeSettings: React.FC<PurposeModeSettingsProps> = ({
               </Label>
             </div>
             <p className="text-xs text-muted-foreground">
-              Display a purpose anchor in the header. When you mark effort on tasks, an animation will move toward this anchor.
+              Display a purpose anchor in the header. When you mark effort on tasks, your selected icon will appear around this anchor.
             </p>
           </div>
 
@@ -342,7 +380,7 @@ const PurposeModeSettings: React.FC<PurposeModeSettingsProps> = ({
               </div>
 
               <div className="space-y-2">
-                <Label className="text-sm font-medium">Animation Icon</Label>
+                <Label className="text-sm font-medium">Icon</Label>
                 <Select value={animationIcon} onValueChange={handleAnimationIconChange}>
                   <SelectTrigger>
                     <SelectValue />
@@ -369,7 +407,22 @@ const PurposeModeSettings: React.FC<PurposeModeSettingsProps> = ({
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
-                  Choose the icon that animates when you mark effort on tasks.
+                  Choose the icon that appears around the anchor when you mark effort on tasks.
+                </p>
+              </div>
+
+              <div className="space-y-2 pt-2 border-t border-border">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleClearAllIcons}
+                  className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Clear All Icons
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  Remove all effort icons from the purpose anchor for today.
                 </p>
               </div>
             </>

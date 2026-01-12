@@ -5,8 +5,8 @@ create:
 	git checkout -b trials
 
 check:
-	git status
 	git branch
+	git status
 
 start:
 	npm run dev

@@ -9,7 +9,6 @@ import PieChart from '@/components/PieChart';
 import PriorityForm from '@/components/PriorityForm';
 import HoverInfo from '@/components/HoverInfo';
 import CompletionCounter from '@/components/CompletionCounter';
-import EffortCounter from '@/components/EffortCounter';
 import DeadlineEditor from '@/components/DeadlineEditor';
 import MobileNavigation from '@/components/MobileNavigation';
 import ThemeToggle from '@/components/ThemeToggle';
@@ -44,6 +43,7 @@ const Index = () => {
   const [animationIcon, setAnimationIcon] = useState<'flower' | 'star' | 'sparkle'>('flower');
   const [purposeAnchorRef, setPurposeAnchorRef] = useState<HTMLDivElement | null>(null);
   const [purposeAnchorPosition, setPurposeAnchorPosition] = useState<{ x: number; y: number } | null>(null);
+  const [todayEffortCount, setTodayEffortCount] = useState(0);
   
   // Form prefill state
   const [formPrefilledSectionId, setFormPrefilledSectionId] = useState('');
@@ -179,6 +179,33 @@ const Index = () => {
   }, [toast]);
 
 
+  // Load today's effort count
+  const loadTodayEffortCount = useCallback(async () => {
+    try {
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) return;
+
+      const now = new Date();
+      const pstNow = toZonedTime(now, 'America/Los_Angeles');
+      const today = format(pstNow, 'yyyy-MM-dd');
+
+      const { data, error } = await supabase
+        .from('task_effort')
+        .select('id', { count: 'exact' })
+        .eq('user_id', currentUser.id)
+        .eq('date', today);
+
+      if (error) {
+        console.error('Error loading today effort count:', error);
+        return;
+      }
+
+      setTodayEffortCount(data?.length || 0);
+    } catch (error) {
+      console.error('Error loading today effort count:', error);
+    }
+  }, []);
+
   // Load user settings (purpose mode)
   const loadUserSettings = useCallback(async () => {
     try {
@@ -237,10 +264,18 @@ const Index = () => {
       if (user) {
         await loadFromSupabase();
         await loadUserSettings();
+        await loadTodayEffortCount();
       }
     };
     getUser();
-  }, [loadFromSupabase, loadUserSettings]);
+  }, [loadFromSupabase, loadUserSettings, loadTodayEffortCount]);
+
+  // Reload effort count when effort is recorded
+  useEffect(() => {
+    if (user && effortRefresh > 0) {
+      loadTodayEffortCount();
+    }
+  }, [effortRefresh, user, loadTodayEffortCount]);
 
   const generateId = () => {
     return Math.random().toString(36).substr(2, 9);
@@ -1417,7 +1452,7 @@ const Index = () => {
             {purposeModeEnabled && purposeImageUrl && (
               <div 
                 ref={setPurposeAnchorRef}
-                className="flex items-center justify-center"
+                className="flex items-center justify-center relative"
               >
                 <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-primary/30 shadow-lg">
                   <img 
@@ -1426,6 +1461,34 @@ const Index = () => {
                     className="w-full h-full object-cover"
                   />
                 </div>
+                {/* Effort indicators - emojis positioned around the circle, outside the bounds */}
+                {todayEffortCount > 0 && (
+                  <div className="absolute inset-0 pointer-events-none flex items-center justify-center" style={{ width: '80px', height: '80px', left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}>
+                    {Array.from({ length: Math.min(todayEffortCount, 20) }).map((_, index) => {
+                      // Position emojis in a circle around the anchor
+                      const angle = (index * 360) / Math.min(todayEffortCount, 20);
+                      const radius = 36; // Distance from center (slightly larger to fit more icons)
+                      const x = Math.cos((angle * Math.PI) / 180) * radius;
+                      const y = Math.sin((angle * Math.PI) / 180) * radius;
+                      const emoji = animationIcon === 'star' ? '⭐' : animationIcon === 'sparkle' ? '✨' : '🌸';
+                      
+                      return (
+                        <div
+                          key={index}
+                          className="absolute z-10"
+                          style={{
+                            left: `calc(50% + ${x}px)`,
+                            top: `calc(50% + ${y}px)`,
+                            transform: 'translate(-50%, -50%)',
+                            fontSize: '0.625rem', // text-xs equivalent (10px) - making it even smaller
+                          }}
+                        >
+                          {emoji}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
             
@@ -1458,6 +1521,10 @@ const Index = () => {
                     purposeImageUrl={purposeImageUrl}
                     animationIcon={animationIcon}
                     onSettingsUpdate={loadUserSettings}
+                    onEffortCleared={() => {
+                      setEffortRefresh(prev => prev + 1);
+                      loadTodayEffortCount();
+                    }}
                   />
                 )}
                 <ThemeToggle />
@@ -1797,7 +1864,6 @@ const Index = () => {
           </Dialog>
 
           {user && <CompletionCounter userId={user.id} refreshTrigger={completionRefresh} />}
-          {user && <EffortCounter userId={user.id} refreshTrigger={effortRefresh} />}
         </div>
 
         {/* Announcement Dialog */}
@@ -1867,7 +1933,10 @@ const Index = () => {
               userId={user?.id}
               purposeModeEnabled={purposeModeEnabled}
               animationIcon={animationIcon}
-              onEffortRecorded={() => setEffortRefresh(prev => prev + 1)}
+              onEffortRecorded={() => {
+                setEffortRefresh(prev => prev + 1);
+                // Effort count will be reloaded via useEffect
+              }}
               purposeAnchorPosition={purposeAnchorPosition}
             />
 
