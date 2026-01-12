@@ -66,7 +66,7 @@ export SUPABASE_SERVICE_KEY="your-service-role-key-here"
 The easiest way to create announcements is using the included CLI tool:
 
 ```bash
-node create-announcement.mjs
+node scripts/create-announcement.mjs
 ```
 
 This will guide you through an interactive process:
@@ -110,7 +110,7 @@ Create this announcement? (yes/no): yes
 ### List Active Announcements
 
 ```bash
-node create-announcement.mjs
+node scripts/create-announcement.mjs
 # Select option 2
 ```
 
@@ -119,7 +119,7 @@ This shows all currently active announcements with their IDs.
 ### Deactivate an Announcement
 
 ```bash
-node create-announcement.mjs
+node scripts/create-announcement.mjs
 # Select option 3
 # Enter the announcement ID to deactivate
 ```

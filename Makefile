@@ -46,7 +46,7 @@ user-check:
 # CRUD Announcements
 announcement:
 	export SUPABASE_SERVICE_KEY=$(SUPABASE_SERVICE_KEY)
-	node create-announcement.mjs
+	node scripts/create-announcement.mjs
 
 
 # =============================================================================
@@ -106,7 +106,7 @@ backup-stop:
 backup-now:
 	@echo "▶️  Running backup NOW..."
 	@echo ""
-	@./run-backup.sh
+	@./scripts/run-backup.sh
 	@echo ""
 	@echo "✅ Backup complete!"
 	@make backup-list
@@ -150,15 +150,15 @@ backup-check:
 	else \
 		echo "   ❌ launchd plist missing"; \
 	fi
-	@if [ -f run-backup.sh ]; then \
-		echo "   ✅ run-backup.sh exists"; \
+	@if [ -f scripts/run-backup.sh ]; then \
+		echo "   ✅ scripts/run-backup.sh exists"; \
 	else \
-		echo "   ❌ run-backup.sh missing"; \
+		echo "   ❌ scripts/run-backup.sh missing"; \
 	fi
-	@if [ -f export-all-users.mjs ]; then \
-		echo "   ✅ export-all-users.mjs exists"; \
+	@if [ -f scripts/export-all-users.mjs ]; then \
+		echo "   ✅ scripts/export-all-users.mjs exists"; \
 	else \
-		echo "   ❌ export-all-users.mjs missing"; \
+		echo "   ❌ scripts/export-all-users.mjs missing"; \
 	fi
 	@echo ""
 	@echo "3. Recent Activity:"

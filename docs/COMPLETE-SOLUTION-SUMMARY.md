@@ -129,8 +129,8 @@ Continue?
 ### Automated Backup System
 - ✅ `setup-automated-backups.sh` - Setup script (macOS/Linux)
 - ✅ `setup-windows-backup.ps1` - Setup script (Windows)
-- ✅ `run-backup.sh` - Daily backup runner
-- ✅ `export-all-users.mjs` - Node.js export script
+- ✅ `scripts/run-backup.sh` - Daily backup runner
+- ✅ `scripts/export-all-users.mjs` - Node.js export script
 - ✅ `~/Library/LaunchAgents/com.prioritymanager.backup.plist` - launchd job
 
 ### Data Protection
@@ -144,8 +144,8 @@ Continue?
 - ✅ `COMPLETE-SOLUTION-SUMMARY.md` - This file
 
 ### Export Tools
-- ✅ `browser-export-script.js` - Browser console export
-- ✅ `supabase-export-queries.sql` - SQL queries
+- ✅ `scripts/browser-export-script.js` - Browser console export
+- ✅ `scripts/supabase-export-queries.sql` - SQL queries
 
 ## 🚀 Deploy Checklist
 
@@ -162,7 +162,7 @@ npm run dev
 ### 2. Test Backup ✅
 ```bash
 cd /Users/anvaybhanap/Desktop/Projects/PriorityManager
-./run-backup.sh
+./scripts/run-backup.sh
 # Check backups/ folder for new files
 # Check logs/ folder for backup log
 ```
@@ -241,7 +241,7 @@ launchctl list | grep prioritymanager
 ### Run Backup Manually
 ```bash
 cd /Users/anvaybhanap/Desktop/Projects/PriorityManager
-./run-backup.sh
+./scripts/run-backup.sh
 ```
 
 ### View Recent Backups
@@ -319,7 +319,7 @@ launchctl list | grep prioritymanager
 tail -f ~/Library/Logs/com.prioritymanager.backup.log
 
 # Test manually
-./run-backup.sh
+./scripts/run-backup.sh
 ```
 
 ### Data Still Not Loading

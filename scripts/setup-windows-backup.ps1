@@ -6,9 +6,10 @@
 Write-Host "🔄 Setting up automated daily backups for Priority Manager (Windows)" -ForegroundColor Cyan
 Write-Host ""
 
-# Get the project directory
-$ProjectDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$BackupScript = Join-Path $ProjectDir "export-all-users.mjs"
+# Get the scripts directory and project root
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$ProjectDir = Split-Path -Parent $ScriptDir
+$BackupScript = Join-Path $ScriptDir "export-all-users.mjs"
 
 Write-Host "📁 Project directory: $ProjectDir" -ForegroundColor Green
 Write-Host "📄 Backup script: $BackupScript" -ForegroundColor Green
@@ -16,7 +17,7 @@ Write-Host ""
 
 # Check if the export script exists
 if (-not (Test-Path $BackupScript)) {
-    Write-Host "❌ Error: export-all-users.mjs not found!" -ForegroundColor Red
+    Write-Host "❌ Error: scripts/export-all-users.mjs not found!" -ForegroundColor Red
     exit 1
 }
 
@@ -28,10 +29,11 @@ if (-not (Test-Path $LogsDir)) {
 }
 
 # Create a PowerShell runner script
-$RunnerScript = Join-Path $ProjectDir "run-backup.ps1"
+$RunnerScript = Join-Path $ScriptDir "run-backup.ps1"
 @'
 # Daily backup runner with logging
-$ProjectDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$ProjectDir = Split-Path -Parent $ScriptDir
 Set-Location $ProjectDir
 
 # Create logs directory if needed
@@ -50,7 +52,7 @@ $LogFile = Join-Path $LogsDir "backup-$(Get-Date -Format 'yyyy-MM-dd').log"
 
 # Run the Node.js export script
 try {
-    node export-all-users.mjs *>> $LogFile
+    node scripts/export-all-users.mjs *>> $LogFile
     "✅ Backup completed successfully at $(Get-Date)" | Out-File -FilePath $LogFile -Append
     Write-Host "✅ Backup completed successfully" -ForegroundColor Green
 } catch {
@@ -103,7 +105,7 @@ Write-Host "Logs saved to: $ProjectDir\logs\" -ForegroundColor Yellow
 Write-Host ""
 Write-Host "To test the backup manually, run:" -ForegroundColor White
 Write-Host "  cd $ProjectDir" -ForegroundColor Gray
-Write-Host "  .\run-backup.ps1" -ForegroundColor Gray
+Write-Host "  .\scripts\run-backup.ps1" -ForegroundColor Gray
 Write-Host ""
 Write-Host "To view the task in Task Scheduler:" -ForegroundColor White
 Write-Host "  taskschd.msc" -ForegroundColor Gray

@@ -40,7 +40,7 @@ The `loadFromSupabase()` function was relying solely on Row Level Security (RLS)
 Copy and paste this into the browser console while logged in:
 
 ```javascript
-// See: browser-export-script.js
+// See: scripts/browser-export-script.js
 ```
 
 This will:
@@ -60,7 +60,7 @@ Open browser console (F12) and look for:
 
 1. Go to your Supabase project dashboard
 2. Click **SQL Editor** in the left sidebar
-3. Run these queries from `supabase-export-queries.sql`:
+3. Run these queries from `scripts/supabase-export-queries.sql`:
 
 **Check all users and their data:**
 ```sql
@@ -79,7 +79,7 @@ ORDER BY section_count DESC;
 ```
 
 **Export specific user data:**
-Replace `YOUR_USER_ID_HERE` with the actual user UUID from the query above, then run query #3 from `supabase-export-queries.sql`.
+Replace `YOUR_USER_ID_HERE` with the actual user UUID from the query above, then run query #3 from `scripts/supabase-export-queries.sql`.
 
 ### Method 2: Using Supabase Dashboard
 
@@ -112,7 +112,7 @@ Verify all these policies exist:
 - ✅ Users can view tasks in their subsections
 - ✅ Users can create/update/delete their data
 
-If policies are missing, run the repair queries from `supabase-export-queries.sql` (section 9).
+If policies are missing, run the repair queries from `scripts/supabase-export-queries.sql` (section 9).
 
 ## 📧 Communicate with Users
 
@@ -159,9 +159,9 @@ Thanks for your patience!
 
 ## 📁 Files Created for You
 
-1. **`browser-export-script.js`** - Run in browser console to export user's data
-2. **`export-user-data.js`** - Node.js script for bulk exports (needs adaptation)
-3. **`supabase-export-queries.sql`** - SQL queries for Supabase dashboard
+1. **`scripts/browser-export-script.js`** - Run in browser console to export user's data
+2. **`export-user-data.js`** - Node.js script for bulk exports (needs adaptation - obsolete)
+3. **`scripts/supabase-export-queries.sql`** - SQL queries for Supabase dashboard
 4. **`src/components/DataDiagnostic.tsx`** - React component for debugging (optional to add to UI)
 
 ## ❓ Still Having Issues?
@@ -170,7 +170,7 @@ Thanks for your patience!
 2. Verify RLS policies in Supabase
 3. Check if users can see data in Supabase Table Editor
 4. Look for orphaned data (subsections without parent sections)
-5. Run diagnostic queries from `supabase-export-queries.sql`
+5. Run diagnostic queries from `scripts/supabase-export-queries.sql`
 
 ## 📞 Quick Checklist
 

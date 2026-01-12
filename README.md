@@ -1,4 +1,4 @@
-# PriorityManager
+# PriorityViz
 
 <!-- Additions:
 
@@ -7,11 +7,13 @@ EASY --------------------------------------------
     user_id = 'fcca47ad-56ff-48fe-a6d6-5baec2db2bf0';
     user_id = '7836f34c-275b-46fa-aa92-7d18edf1fcc2';
 
-karma yoga toggle
+karma yoga toggle - set up complete
+- 10-20 working tasks
+- remove homepage tab? consolidate
 
 MEDIUM --------------------------------------------
 * In Add Priorities, replace section/subsection tabs with dropdowns (to reduce form length?) - in progress
-* Password Recovery - nvery difficult, needs Lovable
+* Password Recovery - very difficult, needs Lovable
 * perform analytics on completed tasks from Supabase -- use full data for better stats
     * d3.js
     - how many days been using, total tasks completed, grouped bar chart of monthly tasks added and completed
@@ -322,11 +324,11 @@ The app includes a built-in announcement system for communicating with users:
 - **Smart tracking**: Each user sees announcements only once
 - **Easy management**: CLI tool for creating and managing announcements
 
-**For administrators**: See [`ANNOUNCEMENTS-GUIDE.md`](./ANNOUNCEMENTS-GUIDE.md) for detailed documentation or [`QUICK-ANNOUNCEMENTS.md`](./QUICK-ANNOUNCEMENTS.md) for quick reference.
+**For administrators**: See [`docs/ANNOUNCEMENTS-GUIDE.md`](./docs/ANNOUNCEMENTS-GUIDE.md) for detailed documentation or [`docs/QUICK-ANNOUNCEMENTS.md`](./docs/QUICK-ANNOUNCEMENTS.md) for quick reference.
 
 **Quick example**:
 ```bash
-node create-announcement.mjs
+node scripts/create-announcement.mjs
 # Follow prompts to create announcements
 ```
 

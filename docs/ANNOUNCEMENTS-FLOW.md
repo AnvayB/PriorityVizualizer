@@ -282,7 +282,7 @@ Your App Directory
 │           └── Integrates AnnouncementDialog
 │               └── Shows announcements when user logs in
 │
-├── create-announcement.mjs
+├── scripts/create-announcement.mjs
 │   └── CLI tool for creating/managing announcements
 │
 ├── package.json (modified)
@@ -309,7 +309,7 @@ export SUPABASE_SERVICE_KEY="..."     # Set service key
 npm run announcement                   # Launch CLI
 
 # Direct Node (alternative)
-node create-announcement.mjs           # Same as above
+node scripts/create-announcement.mjs           # Same as above
 
 # Testing
 # 1. Create announcement via CLI

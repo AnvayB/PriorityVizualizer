@@ -1,8 +1,10 @@
 #!/bin/bash
 # Daily backup runner with logging
 
-# Change to project directory
-cd "$(dirname "$0")"
+# Change to project root directory (parent of scripts/)
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+PROJECT_DIR="$( cd "$SCRIPT_DIR/.." && pwd )"
+cd "$PROJECT_DIR"
 
 # Create logs directory if it doesn't exist
 mkdir -p logs
@@ -14,7 +16,7 @@ echo "Backup started at $(date)" >> "$LOG_FILE"
 echo "========================================" >> "$LOG_FILE"
 
 # Run the Node.js export script
-node export-all-users.mjs >> "$LOG_FILE" 2>&1
+node scripts/export-all-users.mjs >> "$LOG_FILE" 2>&1
 
 # Check if backup was successful
 if [ $? -eq 0 ]; then
