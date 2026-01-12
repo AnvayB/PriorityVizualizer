@@ -11,7 +11,6 @@ interface EffortButtonProps {
   userId: string;
   animationIcon?: 'flower' | 'star' | 'sparkle';
   onEffortRecorded?: () => void;
-  onAnimationTrigger?: (startPosition: { x: number; y: number }) => void;
 }
 
 const EffortButton: React.FC<EffortButtonProps> = ({
@@ -19,7 +18,6 @@ const EffortButton: React.FC<EffortButtonProps> = ({
   userId,
   animationIcon = 'flower',
   onEffortRecorded,
-  onAnimationTrigger,
 }) => {
   const { toast } = useToast();
   const [hasWorkedToday, setHasWorkedToday] = useState(false);
@@ -95,19 +93,6 @@ const EffortButton: React.FC<EffortButtonProps> = ({
       if (error) throw error;
 
       setHasWorkedToday(true);
-      
-      // Trigger animation if callback provided
-      if (onAnimationTrigger) {
-        // Get button position for animation
-        const button = document.getElementById(`effort-button-${taskId}`);
-        if (button) {
-          const rect = button.getBoundingClientRect();
-          onAnimationTrigger({
-            x: rect.left + rect.width / 2,
-            y: rect.top + rect.height / 2,
-          });
-        }
-      }
 
       toast({
         title: "Effort recorded",
