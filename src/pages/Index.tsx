@@ -1533,7 +1533,7 @@ const Index = () => {
                   onClick={handleSignOut} 
                   variant="outline" 
                   size="sm" 
-                  className="h-9 w-9 p-0"
+                  className="h-9 w-9 p-0 border-gray-400 dark:border-border"
                   title="Sign Out"
                 >
                   <LogOut className="w-4 h-4" />

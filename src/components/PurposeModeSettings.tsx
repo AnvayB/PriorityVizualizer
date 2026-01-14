@@ -303,7 +303,7 @@ const PurposeModeSettings: React.FC<PurposeModeSettingsProps> = ({
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="h-9 w-9 p-0" title="Purpose Mode Settings">
+        <Button variant="outline" size="sm" className="h-9 w-9 p-0 border-gray-400 dark:border-border" title="Purpose Mode Settings">
           <Settings className="w-4 h-4" />
         </Button>
       </PopoverTrigger>

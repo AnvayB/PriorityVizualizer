@@ -143,10 +143,10 @@ const AnnouncementHistory: React.FC<AnnouncementHistoryProps> = ({ userId }) => 
         <Button 
           variant="outline" 
           size="sm"
-          className="gap-2 border-gray-400 dark:border-border"
+          className="h-9 w-9 p-0 border-gray-400 dark:border-border"
+          title="Updates"
         >
           <Bell className="w-4 h-4" />
-          <span className="hidden sm:inline">Updates</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[80vh]">
