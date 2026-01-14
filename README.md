@@ -7,8 +7,10 @@ EASY --------------------------------------------
     user_id = 'fcca47ad-56ff-48fe-a6d6-5baec2db2bf0';
     user_id = '7836f34c-275b-46fa-aa92-7d18edf1fcc2';
 
-karma yoga toggle - set up complete
-- 10-20 working tasks
+- reset gear icon to Menu
+- move Updates to be inside Menu such that clicking Menu opens a dropdown with items Updates and Progress Mode
+    - clicking Updates opens the Update History modal [use image reference]
+    - clicking Progress Mode open the Progress Mode bar [use image reference]
 - remove homepage tab? consolidate
 
 MEDIUM --------------------------------------------

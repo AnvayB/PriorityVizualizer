@@ -1452,7 +1452,8 @@ const Index = () => {
             {purposeModeEnabled && purposeImageUrl && (
               <div 
                 ref={setPurposeAnchorRef}
-                className="flex items-center justify-center relative"
+                className="flex items-center justify-center relative ml-[10.5%]"
+
               >
                 <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-primary/30 shadow-lg">
                   <img 
