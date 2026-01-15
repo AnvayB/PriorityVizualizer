@@ -11,6 +11,9 @@ EASY --------------------------------------------
 - move Updates to be inside Menu such that clicking Menu opens a dropdown with items Updates and Progress Mode
     - clicking Updates opens the Update History modal [use image reference]
     - clicking Progress Mode open the Progress Mode bar [use image reference]
+
+Until then, find a way to properly display the 4 menu buttons
+
 - remove homepage tab? consolidate
 
 MEDIUM --------------------------------------------
