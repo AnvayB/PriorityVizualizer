@@ -44,6 +44,7 @@ const Index = () => {
   const [purposeAnchorRef, setPurposeAnchorRef] = useState<HTMLDivElement | null>(null);
   const [purposeAnchorPosition, setPurposeAnchorPosition] = useState<{ x: number; y: number } | null>(null);
   const [todayEffortCount, setTodayEffortCount] = useState(0);
+  const [currentEffortDate, setCurrentEffortDate] = useState<string | null>(null);
   
   // Form prefill state
   const [formPrefilledSectionId, setFormPrefilledSectionId] = useState('');
@@ -201,6 +202,7 @@ const Index = () => {
       }
 
       setTodayEffortCount(data?.length || 0);
+      setCurrentEffortDate(today);
     } catch (error) {
       console.error('Error loading today effort count:', error);
     }
@@ -276,6 +278,25 @@ const Index = () => {
       loadTodayEffortCount();
     }
   }, [effortRefresh, user, loadTodayEffortCount]);
+
+  // Ensure effort-based purpose icons reset at the end of each PST day
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = new Date();
+      const pstNow = toZonedTime(now, 'America/Los_Angeles');
+      const today = format(pstNow, 'yyyy-MM-dd');
+
+      setCurrentEffortDate((prev) => {
+        if (prev && prev !== today) {
+          // Day has rolled over in PST; reload today's effort count so icons reset
+          loadTodayEffortCount();
+        }
+        return today;
+      });
+    }, 60 * 1000); // Check once per minute
+
+    return () => clearInterval(interval);
+  }, [loadTodayEffortCount]);
 
   const generateId = () => {
     return Math.random().toString(36).substr(2, 9);
