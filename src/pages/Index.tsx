@@ -964,6 +964,8 @@ const Index = () => {
       }))
     )
   );
+  const recentOverdueTasks = overdueTasks.filter(task => Math.abs(getDaysUntilDue(task.dueDate)) <= 30);
+  const oldOverdueTasks = overdueTasks.filter(task => Math.abs(getDaysUntilDue(task.dueDate)) > 30);
 
   const handleSaveToDatabase = async () => {
     try {
@@ -1553,57 +1555,119 @@ const Index = () => {
                     <p className="text-muted-foreground">Great job! All your tasks are up to date.</p>
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     <p className="text-sm text-muted-foreground">
                       You have {overdueTasks.length} overdue task{overdueTasks.length !== 1 ? 's' : ''}.
                     </p>
                     <div className="space-y-3">
-                      {overdueTasks
-                        .sort((a, b) => parseLocalDate(b.dueDate).getTime() - parseLocalDate(a.dueDate).getTime())
-                        .map((task) => {
-                          const daysOverdue = Math.abs(getDaysUntilDue(task.dueDate));
-                          
-                          return (
-                            <div 
-                              key={`${task.sectionId}-${task.subsectionId}-${task.id}`} 
-                              className="flex items-start gap-3 p-4 bg-muted/30 rounded-lg border-l-4 border-purple-500 cursor-pointer hover:bg-muted/50 transition-colors"
-                              onClick={() => handleTaskClick(task.id, task.sectionId, task.subsectionId)}
-                            >
-                              <div className="p-2 bg-background rounded-lg">
-                                <AlertTriangle className="w-4 h-4 text-purple-500" />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-start justify-between gap-2">
-                                  <div className="flex-1 min-w-0">
-                                    <h4 className="font-medium text-foreground truncate">{task.title}</h4>
-                                    <p className="text-sm text-muted-foreground">
-                                      {task.sectionTitle} → {task.subsectionTitle}
-                                    </p>
-                                  </div>
-                                  <div className="flex flex-col items-end gap-1">
-                                    <Badge 
-                                      variant="secondary"
-                                      className="text-xs whitespace-nowrap bg-purple-500 text-white"
-                                    >
-                                      {daysOverdue === 1 ? '1 day overdue' : `${daysOverdue} days overdue`}
-                                    </Badge>
-                                    {task.high_priority && (
-                                      <Badge variant="destructive" className="text-xs">
-                                        High Priority
+                      <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Recent (last 30 days) ({recentOverdueTasks.length})
+                      </div>
+                      {recentOverdueTasks.length === 0 ? (
+                        <div className="text-sm text-muted-foreground">No recent overdue tasks.</div>
+                      ) : (
+                        recentOverdueTasks
+                          .sort((a, b) => parseLocalDate(b.dueDate).getTime() - parseLocalDate(a.dueDate).getTime())
+                          .map((task) => {
+                            const daysOverdue = Math.abs(getDaysUntilDue(task.dueDate));
+                            
+                            return (
+                              <div 
+                                key={`${task.sectionId}-${task.subsectionId}-${task.id}`} 
+                                className="flex items-start gap-3 p-4 bg-muted/30 rounded-lg border-l-4 border-purple-500 cursor-pointer hover:bg-muted/50 transition-colors"
+                                onClick={() => handleTaskClick(task.id, task.sectionId, task.subsectionId)}
+                              >
+                                <div className="p-2 bg-background rounded-lg">
+                                  <AlertTriangle className="w-4 h-4 text-purple-500" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div className="flex-1 min-w-0">
+                                      <h4 className="font-medium text-foreground truncate">{task.title}</h4>
+                                      <p className="text-sm text-muted-foreground">
+                                        {task.sectionTitle} → {task.subsectionTitle}
+                                      </p>
+                                    </div>
+                                    <div className="flex flex-col items-end gap-1">
+                                      <Badge 
+                                        variant="secondary"
+                                        className="text-xs whitespace-nowrap bg-purple-500 text-white"
+                                      >
+                                        {daysOverdue === 1 ? '1 day overdue' : `${daysOverdue} days overdue`}
                                       </Badge>
-                                    )}
+                                      {task.high_priority && (
+                                        <Badge variant="destructive" className="text-xs">
+                                          High Priority
+                                        </Badge>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-1 mt-2">
+                                    <Calendar className="w-3 h-3 text-muted-foreground" />
+                                    <span className="text-xs text-muted-foreground">
+                                      Due: {formatDate(task.dueDate)}
+                                    </span>
                                   </div>
                                 </div>
-                                <div className="flex items-center gap-1 mt-2">
-                                  <Calendar className="w-3 h-3 text-muted-foreground" />
-                                  <span className="text-xs text-muted-foreground">
-                                    Due: {formatDate(task.dueDate)}
-                                  </span>
+                              </div>
+                            );
+                          })
+                      )}
+                    </div>
+                    <div className="space-y-3 pt-2 border-t border-border/60">
+                      <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Old (over 30 days) ({oldOverdueTasks.length})
+                      </div>
+                      {oldOverdueTasks.length === 0 ? (
+                        <div className="text-sm text-muted-foreground">No old overdue tasks.</div>
+                      ) : (
+                        oldOverdueTasks
+                          .sort((a, b) => parseLocalDate(b.dueDate).getTime() - parseLocalDate(a.dueDate).getTime())
+                          .map((task) => {
+                            const daysOverdue = Math.abs(getDaysUntilDue(task.dueDate));
+                            
+                            return (
+                              <div 
+                                key={`${task.sectionId}-${task.subsectionId}-${task.id}`} 
+                                className="flex items-start gap-3 p-4 bg-muted/30 rounded-lg border-l-4 border-purple-500 cursor-pointer hover:bg-muted/50 transition-colors"
+                                onClick={() => handleTaskClick(task.id, task.sectionId, task.subsectionId)}
+                              >
+                                <div className="p-2 bg-background rounded-lg">
+                                  <AlertTriangle className="w-4 h-4 text-purple-500" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div className="flex-1 min-w-0">
+                                      <h4 className="font-medium text-foreground truncate">{task.title}</h4>
+                                      <p className="text-sm text-muted-foreground">
+                                        {task.sectionTitle} → {task.subsectionTitle}
+                                      </p>
+                                    </div>
+                                    <div className="flex flex-col items-end gap-1">
+                                      <Badge 
+                                        variant="secondary"
+                                        className="text-xs whitespace-nowrap bg-purple-500 text-white"
+                                      >
+                                        {daysOverdue === 1 ? '1 day overdue' : `${daysOverdue} days overdue`}
+                                      </Badge>
+                                      {task.high_priority && (
+                                        <Badge variant="destructive" className="text-xs">
+                                          High Priority
+                                        </Badge>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-1 mt-2">
+                                    <Calendar className="w-3 h-3 text-muted-foreground" />
+                                    <span className="text-xs text-muted-foreground">
+                                      Due: {formatDate(task.dueDate)}
+                                    </span>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          );
-                        })}
+                            );
+                          })
+                      )}
                     </div>
                   </div>
                 )}
