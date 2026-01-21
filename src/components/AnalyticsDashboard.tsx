@@ -459,15 +459,17 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
       .append('g')
       .attr('transform', `translate(${margin.left},${margin.top})`);
 
-    // Get top 3 sections for stacking, rest go to "other"
-    const topSections = sectionStats.slice(0, 3).map(s => s.section);
-    const sectionKeys = [...topSections, 'other'];
+    // Get top 5 sections for stacking
+    const topSections = sectionStats.slice(0, 5).map(s => s.section);
+    const sectionKeys = [...topSections];
     
     // Default colors
     const defaultColors = [
       'hsl(var(--chart-1))',
       'hsl(var(--chart-2))',
       'hsl(var(--chart-3))',
+      'hsl(var(--chart-4))',
+      'hsl(var(--chart-5))',
       'hsl(var(--muted-foreground))',
     ];
     
@@ -500,20 +502,11 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
     
     const stackedDataPoints: StackedDataPoint[] = dailySectionStats.map((d) => {
       const result: StackedDataPoint = { date: d.date };
-      let otherCount = 0;
       
       topSections.forEach((section) => {
         result[section] = d.sections[section] || 0;
       });
-      
-      // Calculate "other" as everything not in top 3
-      Object.keys(d.sections).forEach((section) => {
-        if (!topSections.includes(section)) {
-          otherCount += d.sections[section];
-        }
-      });
-      result['other'] = otherCount;
-      
+
       return result;
     });
 
@@ -808,13 +801,14 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
                       {/* Merged legend with color pickers */}
                       <div className="absolute right-4 top-5 space-y-2 bg-card/95 backdrop-blur-sm p-3 rounded-lg border border-border shadow-sm">
                         {(() => {
-                          const topSections = sectionStats.slice(0, 3).map(s => s.section);
-                          const sectionKeys = [...topSections, 'other'];
+                          const topSections = sectionStats.slice(0, 5).map(s => s.section);
+                          const sectionKeys = [...topSections];
                           const defaultColors = [
                             'hsl(var(--chart-1))',
                             'hsl(var(--chart-2))',
                             'hsl(var(--chart-3))',
-                            'hsl(var(--muted-foreground))',
+                            'hsl(var(--chart-4))',
+                            'hsl(var(--chart-5))',
                           ];
                           
                           const hslToHex = (hsl: string): string => {
@@ -823,7 +817,8 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
                               'hsl(var(--chart-1))': '#3b82f6',
                               'hsl(var(--chart-2))': '#ec4899',
                               'hsl(var(--chart-3))': '#10b981',
-                              'hsl(var(--muted-foreground))': '#6b7280',
+                              'hsl(var(--chart-4))': '#f97316',
+                              'hsl(var(--chart-5))': '#8b5cf6',
                             };
                             return colorMap[hsl] || '#3b82f6';
                           };
