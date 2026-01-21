@@ -3,23 +3,23 @@
 <!-- Additions:
 
 EASY --------------------------------------------
-- delete Baba's old data
+[ ] delete Baba's old data
     user_id = 'fcca47ad-56ff-48fe-a6d6-5baec2db2bf0';
     user_id = '7836f34c-275b-46fa-aa92-7d18edf1fcc2';
 
-- rename gear icon to Menu, but keep the gear icon for now
-- move Updates to be inside Menu such that clicking Menu opens a dropdown with items Updates and Progress Mode
+[ ] rename gear icon to Menu, but keep the gear icon for now
+[ ] move Updates to be inside Menu such that clicking Menu opens a dropdown with items Updates and Progress Mode
     - clicking Updates opens the Update History modal [use image reference]
     - clicking Progress Mode open the Progress Mode bar [use image reference]
 
-Until then, find a way to properly display the 4 menu buttons
+[ ] Until then, find a way to properly display the 4 menu buttons
 
 - remove homepage tab? consolidate
 
 MEDIUM --------------------------------------------
-* In Add Priorities, replace section/subsection tabs with dropdowns (to reduce form length?) - in progress
-* Password Recovery - very difficult, needs Lovable
-* perform analytics on completed tasks from Supabase -- use full data for better stats
+[ ] In Add Priorities, replace section/subsection tabs with dropdowns (to reduce form length?) - in progress
+[ ] Password Recovery - very difficult, needs Lovable
+[x] perform analytics on completed tasks from Supabase -- use full data for better stats
     * d3.js
     - how many days been using, total tasks completed, grouped bar chart of monthly tasks added and completed
 * add text/email reminders 
@@ -27,7 +27,14 @@ MEDIUM --------------------------------------------
     * may need to charge for key usage
 
 HARD --------------------------------------------
-* How should I add a tutorial? Ideally, I want it to be an interactive "follow-along" tutorial where differnt parts of the website are highlighted and explained, but I'm open to making a tutorial video as a backup.
+
+[ ] PRELIMINARY TUTORIAL:
+	- just make a Google doc with screenshots and circles/arrows drawn on the images with Steps and Descriptions written below
+	- create public Google Drive link of the PDF and post that as Docs/Tutorial in the website
+	- make it as a default popup on load (always shows up) and add a "Don't show again" checkbox -> "Sure! You can access the Tutorial anytime from here"
+
+
+* How should I add a tutorial? Ideally, I want it to be an interactive "follow-along" tutorial where different parts of the website are highlighted and explained, but I'm open to making a tutorial video as a backup.
 --:
 Here’s a single Cursor prompt you can copy-paste and run in your codebase to set up the tutorial with **React Joyride**.
 
