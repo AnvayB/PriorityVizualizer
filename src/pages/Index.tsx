@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import PieChart from '@/components/PieChart';
@@ -16,7 +17,7 @@ import AnnouncementDialog from '@/components/AnnouncementDialog';
 import AnnouncementHistory from '@/components/AnnouncementHistory';
 import PurposeModeSettings from '@/components/PurposeModeSettings';
 import { Section, Subsection, Task, ChartSlice } from '@/types/priorities';
-import { PieChart as PieChartIcon, Target, Calendar, Save, Upload, ChevronDown, LogOut, User, Clock, AlertTriangle, CheckCircle, Info } from 'lucide-react';
+import { PieChart as PieChartIcon, Target, Calendar, Save, Upload, ChevronDown, LogOut, User, Clock, AlertTriangle, CheckCircle, Info, BookOpen } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { storeLocalBackup, detectDataLoss, downloadAutoBackup } from '@/utils/dataProtection';
@@ -36,6 +37,9 @@ const Index = () => {
   const [isDueTodayModalOpen, setIsDueTodayModalOpen] = useState(false);
   const [isDueSoonModalOpen, setIsDueSoonModalOpen] = useState(false);
   const [isOverdueModalOpen, setIsOverdueModalOpen] = useState(false);
+  const [showTutorialModal, setShowTutorialModal] = useState(false);
+  const [dontShowTutorial, setDontShowTutorial] = useState(false);
+  const [isNewUser, setIsNewUser] = useState<boolean | null>(null);
   
   // Purpose mode state
   const [purposeModeEnabled, setPurposeModeEnabled] = useState(false);
@@ -79,6 +83,7 @@ const Index = () => {
 
       if (!sectionsData || sectionsData.length === 0) {
         console.log('[loadFromSupabase] No sections found, setting empty array');
+        setIsNewUser(true);
         setSections([]);
         toast({
           title: "No data found",
@@ -86,6 +91,7 @@ const Index = () => {
         });
         return;
       }
+      setIsNewUser(false);
 
       // Get all section IDs for filtering
       const sectionIds = sectionsData.map(s => s.id);
@@ -271,6 +277,24 @@ const Index = () => {
     };
     getUser();
   }, [loadFromSupabase, loadUserSettings, loadTodayEffortCount]);
+
+  useEffect(() => {
+    if (!user?.id) {
+      setIsNewUser(null);
+      setShowTutorialModal(false);
+      return;
+    }
+
+    if (!isNewUser) {
+      setShowTutorialModal(false);
+      return;
+    }
+
+    const storageKey = `pv-hide-tutorial-${user.id}`;
+    const hideTutorial = localStorage.getItem(storageKey) === 'true';
+    setDontShowTutorial(false);
+    setShowTutorialModal(!hideTutorial);
+  }, [user?.id, isNewUser]);
 
   // Reload effort count when effort is recorded
   useEffect(() => {
@@ -1451,6 +1475,45 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-bg">
+      <Dialog
+        open={showTutorialModal}
+        onOpenChange={(open) => {
+          if (!open && user?.id && dontShowTutorial) {
+            localStorage.setItem(`pv-hide-tutorial-${user.id}`, 'true');
+          }
+          setShowTutorialModal(open);
+        }}
+      >
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Welcome to Priority Visualizer!</DialogTitle>
+          </DialogHeader>
+          <div className="whitespace-pre-line text-sm text-muted-foreground">
+            {`How to get started:
+
+1. Build your priority hierarchy: add Sections (big categories), then Subsections, then specific Tasks using the "Add Priorities" panel on the right.
+2. Click on any Task or Section to view and update its details.
+3. Track your progress visually in the sunburst chart at the center.
+4. Use the metrics at the top to see what's most urgent or coming up soon.
+
+Tip: Hover over elements for tooltips and explore the Menu for more features.
+
+Click the 📖 icon in the top right corner for the tutorial/docs how to best use this application
+
+Ready? Start organizing your life!`}
+          </div>
+          <div className="flex items-center justify-between pt-2">
+            <label className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Checkbox
+                checked={dontShowTutorial}
+                onCheckedChange={(checked) => setDontShowTutorial(checked === true)}
+              />
+              Don't Show Again
+            </label>
+            <Button onClick={() => setShowTutorialModal(false)}>Got it</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
       {/* Header */}
       <header className="relative bg-card/30 backdrop-blur-sm border-b border-border/50">
         {/* Top bar gradient overlay */}
@@ -1551,6 +1614,21 @@ const Index = () => {
                     }}
                   />
                 )}
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  className="h-9 w-9 p-0 border-gray-400 dark:border-border"
+                  title="Open tutorial"
+                >
+                  <a
+                    href="https://docsify-this.net/?basePath=https://raw.githubusercontent.com/AnvayB/PriorityVizualizer/main/docs&homepage=USER-TUTORIAL.md&edit-link=https://github.com/AnvayB/PriorityVizualizer/blob/main/docs/USER-TUTORIAL.md&sidebar=true&dark-mode=auto#/?id=table-of-contents"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <BookOpen className="w-4 h-4" />
+                  </a>
+                </Button>
                 <ThemeToggle />
                 <Button 
                   onClick={handleSignOut} 

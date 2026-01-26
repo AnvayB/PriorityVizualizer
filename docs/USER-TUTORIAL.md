@@ -3,26 +3,6 @@
 Welcome to Priority Visualizer! This comprehensive guide will help you get started and make the most of all the features available in this powerful priority management application.
 
 
-<!-- 
-
-main page:
-
-
- -->
-
-
-Welcome to Priority Visualizer!
-
-To get started:
-1. Build your priority hierarchy: add Sections (big categories), then Subsections, then specific Tasks using the "Add Priorities" panel on the right.
-2. Click on any Task or Section to view and update its details.
-3. Track your progress visually in the sunburst chart at the center.
-4. Use the metrics at the top to see what's most urgent or coming up soon.
-
-Tip: Hover over elements for tooltips and explore the Menu for more features.
-
-Ready? Start organizing your priorities!
-
 ## Table of Contents
 
 1. [Getting Started](#getting-started)
@@ -80,11 +60,13 @@ Once you're signed in, you'll see the main dashboard. Here's what to do first:
 The Priority Visualizer interface consists of several key areas:
 
 #### 1. Header Bar
-Located at the top of the screen, the header contains 4 toggle buttons:
+Located at the top right of the screen, the header contains 4 toggle buttons:
 - **Announcement History**: View past announcements from the app
 - **Progress Mode Settings**: Configure your [Purpose Anchor](#progress-mode-purpose-anchor)
 - **Theme Toggle**: Switch between Light, Dark, and System themes
 - **Sign Out**: Log out of your account
+- **Target Completion Bar**: A progress bar that tracks your journey toward your chosen goal deadline
+
 
 #### 2. Statistics Dashboard
 A row of cards showing key metrics:
