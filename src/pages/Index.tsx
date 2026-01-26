@@ -1467,7 +1467,7 @@ const Index = () => {
                 <Target className="w-5 h-5 md:w-6 md:h-6 text-white" />
               </div>
               <h1 className="text-xl md:text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                Priority Vizualizer
+                Priority Viz
               </h1>
             </div>
             

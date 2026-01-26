@@ -11,6 +11,18 @@ main page:
  -->
 
 
+Welcome to Priority Visualizer!
+
+To get started:
+1. Build your priority hierarchy: add Sections (big categories), then Subsections, then specific Tasks using the "Add Priorities" panel on the right.
+2. Click on any Task or Section to view and update its details.
+3. Track your progress visually in the sunburst chart at the center.
+4. Use the metrics at the top to see what's most urgent or coming up soon.
+
+Tip: Hover over elements for tooltips and explore the Menu for more features.
+
+Ready? Start organizing your priorities!
+
 ## Table of Contents
 
 1. [Getting Started](#getting-started)

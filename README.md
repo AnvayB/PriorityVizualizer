@@ -16,6 +16,8 @@ EASY --------------------------------------------
 
 - remove homepage tab? consolidate
 
+[ ] change Purpose Anchor verbiage to Progress Mode
+
 MEDIUM --------------------------------------------
 [ ] In Add Priorities, replace section/subsection tabs with dropdowns (to reduce form length?) - in progress
 [ ] Password Recovery - very difficult, needs Lovable

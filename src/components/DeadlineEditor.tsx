@@ -43,14 +43,14 @@ const DeadlineEditor: React.FC<DeadlineEditorProps> = ({ userId }) => {
       if (data && data.deadline_date) {
         setDeadline(parseLocalDate(data.deadline_date));
       } else {
-        // Default to December 31st of current year
-        const defaultDeadline = new Date(new Date().getFullYear(), 11, 31);
+        // Default to December 31st, 2026
+        const defaultDeadline = new Date(2026, 11, 31);
         setDeadline(defaultDeadline);
       }
     } catch (error) {
       console.error('Error loading deadline:', error);
       // Set default deadline on error
-      const defaultDeadline = new Date(new Date().getFullYear(), 11, 31);
+      const defaultDeadline = new Date(2026, 11, 31);
       setDeadline(defaultDeadline);
     } finally {
       setIsLoading(false);
