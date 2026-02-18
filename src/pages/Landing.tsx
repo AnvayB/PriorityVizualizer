@@ -58,10 +58,10 @@ export default function Landing() {
   const goToAuth = () => navigate('/auth');
 
   return (
-    <div className="h-screen flex flex-col bg-gradient-bg overflow-hidden">
+    <div className="min-h-screen md:h-screen flex flex-col bg-gradient-bg overflow-y-auto md:overflow-hidden">
       {/* Navbar */}
       <nav className="h-14 flex-shrink-0 bg-background/80 backdrop-blur-sm border-b border-border/30 z-10">
-        <div className="max-w-6xl mx-auto px-8 h-full flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 md:px-8 h-full flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="p-1.5 bg-gradient-primary rounded-lg">
               <Target className="w-4 h-4 text-white" />
@@ -80,13 +80,13 @@ export default function Landing() {
       </nav>
 
       {/* Body: hero + how it works row, features full-width strip */}
-      <main className="flex-1 flex flex-col max-w-6xl mx-auto w-full px-8 py-8 gap-8">
+      <main className="flex-1 flex flex-col max-w-6xl mx-auto w-full px-4 md:px-8 py-6 md:py-8 gap-8">
 
         {/* ── Row: Hero + How it works ── */}
-        <div className="flex">
+        <div className="flex flex-col md:flex-row gap-8 md:gap-0">
 
           {/* Left: Hero + CTA */}
-          <div className="w-1/2 flex flex-col justify-center gap-8 pr-12 border-r border-border/30">
+          <div className="w-full md:w-1/2 flex flex-col justify-center gap-6 md:gap-8 md:pr-12 md:border-r border-border/30">
 
           {/* Top: badge */}
           <div className="inline-flex w-fit items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-semibold tracking-wide">
@@ -96,23 +96,23 @@ export default function Landing() {
 
           {/* Middle: logo + headline + description */}
           <div className="space-y-5">
-            <div className="flex items-center gap-5">
-              <div className="p-3.5 bg-gradient-primary rounded-2xl shadow-lg flex-shrink-0">
-                <Target className="w-11 h-11 text-white" />
+            <div className="flex items-center gap-4 md:gap-5">
+              <div className="p-3 md:p-3.5 bg-gradient-primary rounded-2xl shadow-lg flex-shrink-0">
+                <Target className="w-9 h-9 md:w-11 md:h-11 text-white" />
               </div>
-              <h1 className="text-5xl font-bold tracking-tight text-foreground leading-tight">
+              <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground leading-tight">
                 Priority Viz
               </h1>
             </div>
 
             <div className="space-y-2">
-              <p className="text-3xl font-semibold text-foreground leading-snug">
+              <p className="text-2xl md:text-3xl font-semibold text-foreground leading-snug">
                 Visualize your priorities.{' '}
                 <span className="bg-gradient-primary bg-clip-text text-transparent">
                   Track your effort.
                 </span>
               </p>
-              <p className="text-lg text-muted-foreground leading-relaxed max-w-md">
+              <p className="text-base md:text-lg text-muted-foreground leading-relaxed max-w-md">
                 Organize the areas of your life — Work, Health, Family, Growth — into an
                 interactive sunburst chart so you always know where your time and energy is going.
               </p>
@@ -146,7 +146,7 @@ export default function Landing() {
           </div>
 
           {/* Right: How it works */}
-          <div className="w-1/2 flex flex-col justify-center gap-6 pl-12">
+          <div className="w-full md:w-1/2 flex flex-col justify-center gap-6 pt-6 md:pt-0 md:pl-12 border-t md:border-t-0 border-border/30">
             <div className="space-y-5">
               <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
                 How it works
@@ -175,7 +175,7 @@ export default function Landing() {
             <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
               Features
             </p>
-            <div className="grid grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
               {features.map(({ icon: Icon, headline, body, iconBg, iconColor, border }) => (
                 <div
                   key={headline}
