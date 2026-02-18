@@ -8,7 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { toZonedTime } from 'date-fns-tz';
 import { format } from 'date-fns';
-import { Settings, Upload, X, Flower, Star, Sparkles, Trash2 } from 'lucide-react';
+import { TrendingUp, Upload, X, Flower, Star, Sparkles, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const SAMPLE_IMAGES = [
@@ -326,7 +326,7 @@ const PurposeModeSettings: React.FC<PurposeModeSettingsProps> = ({
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         <Button variant="outline" size="sm" className="h-9 w-9 p-0 border-gray-400 dark:border-border" title="Progress Mode Settings">
-          <Settings className="w-4 h-4" />
+          <TrendingUp className="w-4 h-4" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-80" align="end">

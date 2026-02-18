@@ -18,7 +18,7 @@ import AnnouncementHistory from '@/components/AnnouncementHistory';
 import PurposeModeSettings from '@/components/PurposeModeSettings';
 import OnboardingModal from '@/components/OnboardingModal';
 import { Section, Subsection, Task, ChartSlice } from '@/types/priorities';
-import { PieChart as PieChartIcon, Target, Calendar, Save, Upload, ChevronDown, LogOut, User, Clock, AlertTriangle, CheckCircle, Info, BookOpen } from 'lucide-react';
+import { PieChart as PieChartIcon, Target, Calendar, Save, Upload, ChevronDown, LogOut, User, Clock, AlertTriangle, CheckCircle, Info, BookOpen, TrendingUp } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { storeLocalBackup, detectDataLoss, downloadAutoBackup } from '@/utils/dataProtection';
@@ -1529,12 +1529,12 @@ const Index = () => {
 
             <div className="flex items-start gap-3">
               <div className="mt-0.5 p-1.5 rounded-md bg-primary/10 shrink-0">
-                <Target className="w-4 h-4 text-primary" />
+                <TrendingUp className="w-4 h-4 text-primary" />
               </div>
               <div>
                 <p className="text-sm font-medium text-foreground">Track your progress</p>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  The sunburst chart updates live. Log effort daily to grow your Goal Image.
+                  The sunburst chart updates live as you organize. Log effort on tasks to work towards your Goal.
                 </p>
               </div>
             </div>

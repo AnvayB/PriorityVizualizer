@@ -1,0 +1,196 @@
+import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Target, PieChart, TrendingUp, Calendar, ArrowRight } from 'lucide-react';
+
+const features = [
+  {
+    icon: PieChart,
+    headline: 'Visualize your hierarchy',
+    body: 'Build Sections → Subsections → Tasks in a live sunburst chart.',
+    iconBg: 'bg-[hsl(227,82%,41%)]/10',
+    iconColor: 'text-[hsl(227,82%,41%)]',
+    border: 'border-[hsl(227,82%,41%)]/20',
+  },
+  {
+    icon: TrendingUp,
+    headline: 'Track effort, not just completion',
+    body: 'Log daily effort with Progress Mode and work towards your Goals.',
+    iconBg: 'bg-[hsl(142,76%,36%)]/10',
+    iconColor: 'text-[hsl(142,76%,36%)]',
+    border: 'border-[hsl(142,76%,36%)]/20',
+  },
+  {
+    icon: Calendar,
+    headline: 'Never miss a deadline',
+    body: 'See overdue, due-today, and upcoming tasks at a glance.',
+    iconBg: 'bg-[hsl(38,92%,50%)]/10',
+    iconColor: 'text-[hsl(38,92%,50%)]',
+    border: 'border-[hsl(38,92%,50%)]/20',
+  },
+];
+
+const stepColors = [
+  'bg-[hsl(227,82%,41%)]',
+  'bg-[hsl(340,75%,55%)]',
+  'bg-[hsl(142,76%,36%)]',
+];
+
+const steps = [
+  {
+    number: '1',
+    title: 'Add your priorities',
+    body: 'Create Sections for the key areas of your life — Work, Health, Family, or anything that matters.',
+  },
+  {
+    number: '2',
+    title: 'Break them down',
+    body: 'Add Subsections and Tasks to get specific. The more detail, the clearer your picture.',
+  },
+  {
+    number: '3',
+    title: 'Log your effort',
+    body: 'Hit "Worked on today" on any task. Over time, your consistency becomes visible.',
+  },
+];
+
+export default function Landing() {
+  const navigate = useNavigate();
+  const goToAuth = () => navigate('/auth');
+
+  return (
+    <div className="h-screen flex flex-col bg-gradient-bg overflow-hidden">
+      {/* Navbar */}
+      <nav className="h-14 flex-shrink-0 bg-background/80 backdrop-blur-sm border-b border-border/30 z-10">
+        <div className="max-w-6xl mx-auto px-8 h-full flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="p-1.5 bg-gradient-primary rounded-lg">
+              <Target className="w-4 h-4 text-white" />
+            </div>
+            <span className="font-semibold text-base text-foreground">Priority Viz</span>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={goToAuth}
+            className="border-gray-400 dark:border-border"
+          >
+            Sign In
+          </Button>
+        </div>
+      </nav>
+
+      {/* Body: two equal columns filling remaining height */}
+      <main className="flex-1 flex overflow-hidden max-w-6xl mx-auto w-full px-8">
+
+        {/* ── Left: Hero + CTA ── */}
+        <div className="w-1/2 flex flex-col justify-between py-10 pr-12 border-r border-border/30">
+
+          {/* Top: badge */}
+          <div className="inline-flex w-fit items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold tracking-wide">
+            <Target className="w-3 h-3" />
+            Your life, organized
+          </div>
+
+          {/* Middle: logo + headline + description */}
+          <div className="space-y-5">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-gradient-primary rounded-2xl shadow-lg flex-shrink-0">
+                <Target className="w-10 h-10 text-white" />
+              </div>
+              <h1 className="text-4xl font-bold tracking-tight text-foreground leading-tight">
+                Priority Viz
+              </h1>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-2xl font-semibold text-foreground leading-snug">
+                Visualize your priorities.{' '}
+                <span className="bg-gradient-primary bg-clip-text text-transparent">
+                  Track your effort.
+                </span>
+              </p>
+              <p className="text-base text-muted-foreground leading-relaxed max-w-sm">
+                Organize the areas of your life — Work, Health, Family, Growth — into an
+                interactive sunburst chart so you always know where your time and energy is going.
+              </p>
+            </div>
+          </div>
+
+          {/* Bottom: CTAs + footnote */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <Button
+                size="lg"
+                onClick={goToAuth}
+                className="bg-gradient-primary text-white border-0 hover:opacity-90 gap-2 text-base"
+              >
+                Get Started
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={goToAuth}
+                className="border-gray-400 dark:border-border text-base"
+              >
+                Sign In
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">Free to use · No credit card required</p>
+          </div>
+        </div>
+
+        {/* ── Right: How it works + Features ── */}
+        <div className="w-1/2 flex flex-col justify-between py-10 pl-12">
+
+          {/* How it works */}
+          <div className="space-y-4">
+            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+              How it works
+            </p>
+            <div className="flex gap-5">
+              {steps.map(({ number, title, body }, i) => (
+                <div key={number} className="flex-1 flex items-start gap-3">
+                  <div className={`w-8 h-8 rounded-full ${stepColors[i]} flex items-center justify-center text-white text-sm font-bold flex-shrink-0 mt-0.5 shadow-md`}>
+                    {number}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{title}</p>
+                    <p className="text-sm text-muted-foreground leading-snug mt-1">{body}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="border-t border-border/40" />
+
+          {/* Features */}
+          <div className="space-y-4">
+            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+              Features
+            </p>
+            <div className="grid grid-cols-3 gap-4">
+              {features.map(({ icon: Icon, headline, body, iconBg, iconColor, border }) => (
+                <div
+                  key={headline}
+                  className={`bg-card/70 backdrop-blur-sm border ${border} rounded-xl p-4 space-y-3`}
+                >
+                  <div className={`p-2 w-fit rounded-lg ${iconBg}`}>
+                    <Icon className={`w-5 h-5 ${iconColor}`} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground leading-snug">{headline}</p>
+                    <p className="text-sm text-muted-foreground leading-snug mt-1">{body}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+        </div>
+      </main>
+    </div>
+  );
+}
