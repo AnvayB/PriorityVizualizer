@@ -16,6 +16,7 @@ import ThemeToggle from '@/components/ThemeToggle';
 import AnnouncementDialog from '@/components/AnnouncementDialog';
 import AnnouncementHistory from '@/components/AnnouncementHistory';
 import PurposeModeSettings from '@/components/PurposeModeSettings';
+import OnboardingModal from '@/components/OnboardingModal';
 import { Section, Subsection, Task, ChartSlice } from '@/types/priorities';
 import { PieChart as PieChartIcon, Target, Calendar, Save, Upload, ChevronDown, LogOut, User, Clock, AlertTriangle, CheckCircle, Info, BookOpen } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -40,6 +41,7 @@ const Index = () => {
   const [showTutorialModal, setShowTutorialModal] = useState(false);
   const [dontShowTutorial, setDontShowTutorial] = useState(false);
   const [isNewUser, setIsNewUser] = useState<boolean | null>(null);
+  const [showOnboardingModal, setShowOnboardingModal] = useState(false);
   
   // Purpose mode state
   const [purposeModeEnabled, setPurposeModeEnabled] = useState(false);
@@ -85,10 +87,6 @@ const Index = () => {
         console.log('[loadFromSupabase] No sections found, setting empty array');
         setIsNewUser(true);
         setSections([]);
-        toast({
-          title: "No data found",
-          description: "Start by adding a section using the form on the right, or load data from a file.",
-        });
         return;
       }
       setIsNewUser(false);
@@ -282,18 +280,25 @@ const Index = () => {
     if (!user?.id) {
       setIsNewUser(null);
       setShowTutorialModal(false);
+      setShowOnboardingModal(false);
       return;
     }
 
-    if (!isNewUser) {
+    if (isNewUser === true) {
+      // Brand-new user: show the guided onboarding modal instead of the plain tutorial
+      setShowOnboardingModal(true);
       setShowTutorialModal(false);
       return;
     }
 
-    const storageKey = `pv-hide-tutorial-${user.id}`;
-    const hideTutorial = localStorage.getItem(storageKey) === 'true';
-    setDontShowTutorial(false);
-    setShowTutorialModal(!hideTutorial);
+    if (isNewUser === false) {
+      setShowOnboardingModal(false);
+      // Returning user: show the existing welcome tips modal (respects "Don't Show Again")
+      const storageKey = `pv-hide-tutorial-${user.id}`;
+      const hideTutorial = localStorage.getItem(storageKey) === 'true';
+      setDontShowTutorial(false);
+      setShowTutorialModal(!hideTutorial);
+    }
   }, [user?.id, isNewUser]);
 
   // Reload effort count when effort is recorded
@@ -326,16 +331,17 @@ const Index = () => {
     return Math.random().toString(36).substr(2, 9);
   };
 
-  const handleAddSection = async (title: string) => {
+  const handleAddSection = async (title: string, color?: string): Promise<Section> => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) throw new Error('No user');
 
       const { data, error } = await supabase
         .from('sections')
         .insert({
           user_id: user.id,
           title,
+          ...(color ? { color } : {}),
         })
         .select()
         .single();
@@ -345,9 +351,11 @@ const Index = () => {
       const newSection: Section = {
         id: data.id,
         title: data.title,
+        color: data.color || undefined,
         subsections: []
       };
       setSections(prev => [...prev, newSection]);
+      return newSection;
     } catch (error) {
       console.error('Error adding section:', error);
       toast({
@@ -355,10 +363,11 @@ const Index = () => {
         description: "Failed to add section. Please try again.",
         variant: "destructive",
       });
+      throw error;
     }
   };
 
-  const handleAddSubsection = async (sectionId: string, title: string) => {
+  const handleAddSubsection = async (sectionId: string, title: string): Promise<Subsection> => {
     try {
       const { data, error } = await supabase
         .from('subsections')
@@ -371,13 +380,13 @@ const Index = () => {
 
       if (error) throw error;
 
+      const newSubsection: Subsection = {
+        id: data.id,
+        title: data.title,
+        tasks: []
+      };
       setSections(prev => prev.map(section => {
         if (section.id === sectionId) {
-          const newSubsection: Subsection = {
-            id: data.id,
-            title: data.title,
-            tasks: []
-          };
           return {
             ...section,
             subsections: [...section.subsections, newSubsection]
@@ -385,6 +394,7 @@ const Index = () => {
         }
         return section;
       }));
+      return newSubsection;
     } catch (error) {
       console.error('Error adding subsection:', error);
       toast({
@@ -392,6 +402,7 @@ const Index = () => {
         description: "Failed to add subsection. Please try again.",
         variant: "destructive",
       });
+      throw error;
     }
   };
 
@@ -1484,36 +1495,97 @@ const Index = () => {
           setShowTutorialModal(open);
         }}
       >
-        <DialogContent className="max-w-xl">
+        <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Welcome to Priority Visualizer!</DialogTitle>
+            <DialogTitle className="text-xl">Welcome to Priority Visualizer! 🎯</DialogTitle>
+            <p className="text-sm text-muted-foreground">Here's how to get the most out of it:</p>
           </DialogHeader>
-          <div className="whitespace-pre-line text-sm text-muted-foreground">
-            {`How to get started:
 
-1. Build your priority hierarchy: add Sections (big categories), then Subsections, then specific Tasks using the "Add Priorities" panel on the right.
-2. Click on any Task or Section to view and update its details.
-3. Track your progress visually in the sunburst chart at the center.
-4. Use the metrics at the top to see what's most urgent or coming up soon.
+          {/* Step rows */}
+          <div className="space-y-3 py-1">
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 p-1.5 rounded-md bg-primary/10 shrink-0">
+                <PieChartIcon className="w-4 h-4 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-foreground">Build your hierarchy</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Add <span className="font-medium">Sections</span> → <span className="font-medium">Subsections</span> → <span className="font-medium">Tasks</span> using the "Add Priorities" panel on the right.
+                </p>
+              </div>
+            </div>
 
-Tip: Hover over elements for tooltips and explore the Menu for more features.
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 p-1.5 rounded-md bg-primary/10 shrink-0">
+                <CheckCircle className="w-4 h-4 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-foreground">Click to explore & edit</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Click any slice in the chart to pin its details, then edit, complete, or delete it from the side panel.
+                </p>
+              </div>
+            </div>
 
-Click the 📖 icon in the top right corner for the tutorial/docs how to best use this application
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 p-1.5 rounded-md bg-primary/10 shrink-0">
+                <Target className="w-4 h-4 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-foreground">Track your progress</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  The sunburst chart updates live. Log effort daily to grow your Purpose Anchor.
+                </p>
+              </div>
+            </div>
 
-Ready? Start organizing your life!`}
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 p-1.5 rounded-md bg-primary/10 shrink-0">
+                <Calendar className="w-4 h-4 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-foreground">Stay on top of deadlines</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  The metrics cards at the top show what's overdue, due today, and coming up soon.
+                </p>
+              </div>
+            </div>
           </div>
-          <div className="flex items-center justify-between pt-2">
-            <label className="flex items-center gap-2 text-sm text-muted-foreground">
+
+          {/* Tip block */}
+          <div className="flex items-start gap-2 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 px-3 py-2.5">
+            <Info className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+            <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
+              Hover over elements for tooltips. Click the <BookOpen className="inline w-3 h-3 mx-0.5 align-text-top" /> icon in the top-right corner for the full tutorial docs.
+            </p>
+          </div>
+
+          {/* Footer */}
+          <div className="flex items-center justify-between pt-1">
+            <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
               <Checkbox
                 checked={dontShowTutorial}
                 onCheckedChange={(checked) => setDontShowTutorial(checked === true)}
               />
               Don't Show Again
             </label>
-            <Button onClick={() => setShowTutorialModal(false)}>Got it</Button>
+            <Button onClick={() => setShowTutorialModal(false)}>
+              Let's go →
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
+
+      <OnboardingModal
+        open={showOnboardingModal}
+        onSectionAdded={handleAddSection}
+        onSubsectionAdded={handleAddSubsection}
+        onTaskAdded={handleAddTask}
+        onComplete={() => {
+          setShowOnboardingModal(false);
+          setIsNewUser(false);
+        }}
+      />
       {/* Header */}
       <header className="relative bg-card/30 backdrop-blur-sm border-b border-border/50">
         {/* Top bar gradient overlay */}
