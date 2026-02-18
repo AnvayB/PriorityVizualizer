@@ -8,6 +8,7 @@ import { User, Session } from "@supabase/supabase-js";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import Landing from "./pages/Landing";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -52,13 +53,14 @@ function App() {
           <Toaster />
           <BrowserRouter>
             <Routes>
-              <Route 
-                path="/" 
-                element={user ? <Index /> : <Navigate to="/auth" replace />} 
+              <Route
+                path="/"
+                element={user ? <Index /> : <Landing />}
               />
-              <Route 
-                path="/auth" 
-                element={!user ? <Auth /> : <Navigate to="/" replace />} 
+              <Route path="/home" element={<Landing />} />
+              <Route
+                path="/auth"
+                element={!user ? <Auth /> : <Navigate to="/" replace />}
               />
               <Route path="*" element={<NotFound />} />
             </Routes>
