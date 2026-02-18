@@ -1534,7 +1534,7 @@ const Index = () => {
               <div>
                 <p className="text-sm font-medium text-foreground">Track your progress</p>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  The sunburst chart updates live. Log effort daily to grow your Purpose Anchor.
+                  The sunburst chart updates live. Log effort daily to grow your Goal Image.
                 </p>
               </div>
             </div>
