@@ -79,37 +79,40 @@ export default function Landing() {
         </div>
       </nav>
 
-      {/* Body: two equal columns filling remaining height */}
-      <main className="flex-1 flex overflow-hidden max-w-6xl mx-auto w-full px-8">
+      {/* Body: hero + how it works row, features full-width strip */}
+      <main className="flex-1 flex flex-col max-w-6xl mx-auto w-full px-8 py-8 gap-8">
 
-        {/* ── Left: Hero + CTA ── */}
-        <div className="w-1/2 flex flex-col justify-between py-10 pr-12 border-r border-border/30">
+        {/* ── Row: Hero + How it works ── */}
+        <div className="flex">
+
+          {/* Left: Hero + CTA */}
+          <div className="w-1/2 flex flex-col justify-center gap-8 pr-12 border-r border-border/30">
 
           {/* Top: badge */}
-          <div className="inline-flex w-fit items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold tracking-wide">
+          <div className="inline-flex w-fit items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-semibold tracking-wide">
             <Target className="w-3 h-3" />
             Your life, organized
           </div>
 
           {/* Middle: logo + headline + description */}
           <div className="space-y-5">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-gradient-primary rounded-2xl shadow-lg flex-shrink-0">
-                <Target className="w-10 h-10 text-white" />
+            <div className="flex items-center gap-5">
+              <div className="p-3.5 bg-gradient-primary rounded-2xl shadow-lg flex-shrink-0">
+                <Target className="w-11 h-11 text-white" />
               </div>
-              <h1 className="text-4xl font-bold tracking-tight text-foreground leading-tight">
+              <h1 className="text-5xl font-bold tracking-tight text-foreground leading-tight">
                 Priority Viz
               </h1>
             </div>
 
             <div className="space-y-2">
-              <p className="text-2xl font-semibold text-foreground leading-snug">
+              <p className="text-3xl font-semibold text-foreground leading-snug">
                 Visualize your priorities.{' '}
                 <span className="bg-gradient-primary bg-clip-text text-transparent">
                   Track your effort.
                 </span>
               </p>
-              <p className="text-base text-muted-foreground leading-relaxed max-w-sm">
+              <p className="text-lg text-muted-foreground leading-relaxed max-w-md">
                 Organize the areas of your life — Work, Health, Family, Growth — into an
                 interactive sunburst chart so you always know where your time and energy is going.
               </p>
@@ -117,7 +120,7 @@ export default function Landing() {
           </div>
 
           {/* Bottom: CTAs + footnote */}
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div className="flex items-center gap-3">
               <Button
                 size="lg"
@@ -127,51 +130,52 @@ export default function Landing() {
                 Get Started
                 <ArrowRight className="w-4 h-4" />
               </Button>
-              <Button
+              {/* <Button
                 size="lg"
                 variant="outline"
                 onClick={goToAuth}
                 className="border-gray-400 dark:border-border text-base"
               >
                 Sign In
-              </Button>
+              </Button> */}
             </div>
-            <p className="text-xs text-muted-foreground">Free to use · No credit card required</p>
+            <p className="text-sm text-muted-foreground">Free to use · No credit card required</p>
           </div>
+
+          {/* Close left hero column */}
+          </div>
+
+          {/* Right: How it works */}
+          <div className="w-1/2 flex flex-col justify-center gap-6 pl-12">
+            <div className="space-y-5">
+              <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
+                How it works
+              </p>
+              <div className="space-y-4">
+                {steps.map(({ number, title, body }, i) => (
+                  <div key={number} className="flex items-start gap-4">
+                    <div className={`w-9 h-9 rounded-full ${stepColors[i]} flex items-center justify-center text-white text-sm font-bold flex-shrink-0 mt-0.5 shadow-md`}>
+                      {number}
+                    </div>
+                    <div>
+                      <p className="text-base font-semibold text-foreground">{title}</p>
+                      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{body}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
         </div>
 
-        {/* ── Right: How it works + Features ── */}
-        <div className="w-1/2 flex flex-col justify-between py-10 pl-12">
-
-          {/* How it works */}
-          <div className="space-y-4">
-            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-              How it works
-            </p>
-            <div className="flex gap-5">
-              {steps.map(({ number, title, body }, i) => (
-                <div key={number} className="flex-1 flex items-start gap-3">
-                  <div className={`w-8 h-8 rounded-full ${stepColors[i]} flex items-center justify-center text-white text-sm font-bold flex-shrink-0 mt-0.5 shadow-md`}>
-                    {number}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">{title}</p>
-                    <p className="text-sm text-muted-foreground leading-snug mt-1">{body}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Divider */}
-          <div className="border-t border-border/40" />
-
-          {/* Features */}
-          <div className="space-y-4">
-            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+        {/* ── Full-width Features strip ── */}
+        <section className="border-t border-border/40">
+          <div className="space-y-5">
+            <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
               Features
             </p>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 gap-5">
               {features.map(({ icon: Icon, headline, body, iconBg, iconColor, border }) => (
                 <div
                   key={headline}
@@ -181,15 +185,14 @@ export default function Landing() {
                     <Icon className={`w-5 h-5 ${iconColor}`} />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-foreground leading-snug">{headline}</p>
-                    <p className="text-sm text-muted-foreground leading-snug mt-1">{body}</p>
+                    <p className="text-base font-semibold text-foreground leading-snug">{headline}</p>
+                    <p className="text-sm text-muted-foreground leading-relaxed mt-1">{body}</p>
                   </div>
                 </div>
               ))}
             </div>
           </div>
-
-        </div>
+        </section>
       </main>
     </div>
   );
