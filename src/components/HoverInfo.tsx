@@ -373,7 +373,7 @@ const HoverInfo: React.FC<HoverInfoProps> = ({
                   {colors.map((color) => (
                     <button
                       key={color}
-                      className="w-12 h-12 rounded-lg border-2 border-black dark:border-white hover:opacity-80 transition-colors"
+                      className="w-12 h-12 rounded-lg border-2 border-black dark:border-white hover:opacity-80 transition-colors cursor-pointer"
                       style={{ backgroundColor: color }}
                       onClick={() => handleColorChange(color)}
                     />

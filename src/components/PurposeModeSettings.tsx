@@ -9,6 +9,14 @@ import { useToast } from '@/hooks/use-toast';
 import { toZonedTime } from 'date-fns-tz';
 import { format } from 'date-fns';
 import { Settings, Upload, X, Flower, Star, Sparkles, Trash2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+const SAMPLE_IMAGES = [
+  { src: '/purpose-samples/compass.svg',  label: 'Compass – find your direction' },
+  { src: '/purpose-samples/seedling.svg', label: 'Seedling – growth over time' },
+  { src: '/purpose-samples/mountain.svg', label: 'Mountain – reach your peak' },
+  { src: '/purpose-samples/sunrise.svg',  label: 'Sunrise – your future self' },
+];
 
 interface PurposeModeSettingsProps {
   userId: string;
@@ -61,16 +69,16 @@ const PurposeModeSettings: React.FC<PurposeModeSettingsProps> = ({
 
       onSettingsUpdate();
       toast({
-        title: enabled ? "Purpose mode enabled" : "Purpose mode disabled",
-        description: enabled 
-          ? "Your purpose anchor is now visible. Upload an image to customize it."
-          : "Purpose mode has been disabled.",
+        title: enabled ? "Progress Mode enabled" : "Progress Mode disabled",
+        description: enabled
+          ? "Your goal image is now visible in the header. Choose or upload an image."
+          : "Progress Mode has been disabled.",
       });
     } catch (error) {
       console.error('Error toggling purpose mode:', error);
       toast({
         title: "Error",
-        description: "Failed to update purpose mode settings.",
+        description: "Failed to update Progress Mode settings.",
         variant: "destructive",
       });
     }
@@ -166,7 +174,7 @@ const PurposeModeSettings: React.FC<PurposeModeSettingsProps> = ({
         onSettingsUpdate();
         toast({
           title: "Image uploaded",
-          description: "Your purpose anchor image has been updated.",
+          description: "Your goal image has been updated.",
         });
       } catch (error) {
         console.error('Error uploading image:', error);
@@ -217,7 +225,7 @@ const PurposeModeSettings: React.FC<PurposeModeSettingsProps> = ({
       onSettingsUpdate();
       toast({
         title: "Image removed",
-        description: "Purpose anchor image has been removed.",
+        description: "Goal image has been removed.",
       });
     } catch (error) {
       console.error('Error removing image:', error);
@@ -226,6 +234,20 @@ const PurposeModeSettings: React.FC<PurposeModeSettingsProps> = ({
         description: "Failed to remove image.",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleSelectSampleImage = async (src: string) => {
+    try {
+      const { error } = await supabase
+        .from('user_settings')
+        .upsert({ user_id: userId, purpose_image_url: src }, { onConflict: 'user_id' });
+      if (error) throw error;
+      onSettingsUpdate();
+      toast({ title: 'Goal image updated' });
+    } catch (error) {
+      console.error('Error selecting sample image:', error);
+      toast({ title: 'Error', description: 'Failed to set goal image.', variant: 'destructive' });
     }
   };
 
@@ -284,7 +306,7 @@ const PurposeModeSettings: React.FC<PurposeModeSettingsProps> = ({
 
       toast({
         title: "Icons cleared",
-        description: "All effort icons have been removed from the purpose anchor.",
+        description: "All effort icons have been cleared.",
       });
 
       if (onEffortCleared) {
@@ -303,7 +325,7 @@ const PurposeModeSettings: React.FC<PurposeModeSettingsProps> = ({
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="h-9 w-9 p-0 border-gray-400 dark:border-border" title="Purpose Mode Settings">
+        <Button variant="outline" size="sm" className="h-9 w-9 p-0 border-gray-400 dark:border-border" title="Progress Mode Settings">
           <Settings className="w-4 h-4" />
         </Button>
       </PopoverTrigger>
@@ -321,21 +343,45 @@ const PurposeModeSettings: React.FC<PurposeModeSettingsProps> = ({
                 htmlFor="purpose-mode"
                 className="text-sm font-normal cursor-pointer"
               >
-                Enable purpose anchor
+                Enable Progress Mode
               </Label>
             </div>
             <p className="text-xs text-muted-foreground">
-              Display a purpose anchor in the header. When you mark effort on tasks, your selected icon will appear around this anchor.
+              Choose a goal image that represents what you're working towards. Each time you log effort on a task, your chosen icon appears around it — a visual reminder of your progress and intent.
             </p>
           </div>
 
           {purposeModeEnabled && (
             <>
               <div className="space-y-2">
-                <Label className="text-sm font-medium">Purpose Image</Label>
+                <Label className="text-sm font-medium">Goal Image</Label>
                 <p className="text-xs text-muted-foreground">
-                  Upload a square image (recommended: 256x256px) for your purpose anchor.
+                  Choose a built-in image or upload your own (recommended: 256×256px square).
                 </p>
+                {/* Sample image grid */}
+                <div className="grid grid-cols-4 gap-2">
+                  {SAMPLE_IMAGES.map(({ src, label }) => (
+                    <button
+                      key={src}
+                      title={label}
+                      onClick={() => handleSelectSampleImage(src)}
+                      className={cn(
+                        "rounded-full overflow-hidden border-2 cursor-pointer transition-all focus:outline-none",
+                        purposeImageUrl === src
+                          ? "border-primary ring-2 ring-primary/30"
+                          : "border-border hover:border-primary/50"
+                      )}
+                    >
+                      <img src={src} alt={label} className="w-14 h-14 object-cover" />
+                    </button>
+                  ))}
+                </div>
+                {/* Divider */}
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <div className="flex-1 border-t border-border" />
+                  <span>or upload your own</span>
+                  <div className="flex-1 border-t border-border" />
+                </div>
                 <div className="flex items-center gap-2">
                   <input
                     ref={fileInputRef}
@@ -372,7 +418,7 @@ const PurposeModeSettings: React.FC<PurposeModeSettingsProps> = ({
                   <div className="mt-2">
                     <img
                       src={purposeImageUrl}
-                      alt="Purpose anchor preview"
+                      alt="Goal image preview"
                       className="w-16 h-16 rounded-full object-cover border border-border"
                     />
                   </div>

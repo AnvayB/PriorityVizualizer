@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
+  <!-- Background circle (sky) -->
+  <circle cx="128" cy="128" r="128" fill="#eff6ff"/>
+  <!-- Clip to circle -->
+  <defs>
+    <clipPath id="circle-clip">
+      <circle cx="128" cy="128" r="124"/>
+    </clipPath>
+  </defs>
+  <g clip-path="url(#circle-clip)">
+    <!-- Back mountain (lighter) -->
+    <polygon points="178,220 230,220 178,80 126,220" fill="#93c5fd" opacity="0.6"/>
+    <!-- Main mountain -->
+    <polygon points="68,220 188,220 128,52" fill="#3b82f6"/>
+    <!-- Snow cap -->
+    <polygon points="128,52 108,105 128,95 148,105" fill="white" opacity="0.9"/>
+    <!-- Ground fill -->
+    <rect x="0" y="220" width="256" height="36" fill="#bfdbfe" opacity="0.5"/>
+    <!-- Star / flag at peak -->
+    <circle cx="128" cy="46" r="7" fill="#fbbf24"/>
+  </g>
+</svg>
