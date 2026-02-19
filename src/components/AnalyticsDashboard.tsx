@@ -9,6 +9,16 @@ import * as d3 from 'd3';
 import { BarChart3, TrendingUp, Calendar, Flame, Trophy, Target, ArrowUp, ArrowDown } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 
 interface AnalyticsDashboardProps {
   userId: string;
@@ -30,6 +40,25 @@ interface DailySectionStats {
   date: string;
   sections: { [section: string]: number };
   total: number;
+}
+
+interface CompletedTaskRow {
+  id: string;
+  task_title: string;
+  section_title: string;
+  subsection_title: string | null;
+  completed_at: string;
+}
+
+function buildPageNumbers(current: number, total: number): (number | '...')[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const pages: (number | '...')[] = [];
+  pages.push(1);
+  if (current > 3) pages.push('...');
+  for (let p = Math.max(2, current - 1); p <= Math.min(total - 1, current + 1); p++) pages.push(p);
+  if (current < total - 2) pages.push('...');
+  pages.push(total);
+  return pages;
 }
 
 const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen, onOpenChange }) => {
@@ -58,7 +87,16 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
   const [effortCurrentStreak, setEffortCurrentStreak] = useState(0);
   const [effortLongestStreak, setEffortLongestStreak] = useState(0);
   const [effortConsistencyScore, setEffortConsistencyScore] = useState(0);
-  
+
+  // All tasks modal state
+  const TASKS_PER_PAGE = 10;
+  const [isTasksModalOpen, setIsTasksModalOpen] = useState(false);
+  const [tasksPage, setTasksPage] = useState(1);
+  const [tasksData, setTasksData] = useState<CompletedTaskRow[]>([]);
+  const [tasksTotalCount, setTasksTotalCount] = useState(0);
+  const [isTasksLoading, setIsTasksLoading] = useState(false);
+  const [tasksModalSectionColors, setTasksModalSectionColors] = useState<{ [key: string]: string }>({});
+
   const lineChartRef = useRef<SVGSVGElement>(null);
   const effortChartRef = useRef<SVGSVGElement>(null);
 
@@ -604,15 +642,65 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
       .style('font-size', '12px');
   };
 
+  const loadCompletedTasksPage = async (page: number) => {
+    setIsTasksLoading(true);
+    const now = new Date();
+    const startDate = subDays(startOfDay(toZonedTime(now, PST_TZ)), 59);
+    const startDateUTC = fromZonedTime(startDate, PST_TZ).toISOString();
+    const from = (page - 1) * TASKS_PER_PAGE;
+    const to = from + TASKS_PER_PAGE - 1;
+
+    const [{ data, count, error }, { data: sectionsData }] = await Promise.all([
+      supabase
+        .from('completed_tasks')
+        .select('id, task_title, section_title, subsection_title, completed_at', { count: 'exact' })
+        .eq('user_id', userId)
+        .gte('completed_at', startDateUTC)
+        .order('completed_at', { ascending: false })
+        .range(from, to),
+      supabase
+        .from('sections')
+        .select('title, color')
+        .eq('user_id', userId),
+    ]);
+
+    if (!error) {
+      setTasksData(data ?? []);
+      setTasksTotalCount(count ?? 0);
+    }
+    if (sectionsData) {
+      const colorMap: { [key: string]: string } = {};
+      sectionsData.forEach((section) => {
+        if (section.color) colorMap[section.title] = section.color;
+      });
+      setTasksModalSectionColors(colorMap);
+      setSupabaseSectionColors((prev) => ({ ...prev, ...colorMap }));
+    }
+    setIsTasksLoading(false);
+  };
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <BarChart3 className="w-5 h-5" />
-            Analytics <span className="text-sm text-muted-foreground font-normal">(in the last 60 days)</span>
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2">
+              <BarChart3 className="w-5 h-5" />
+              Analytics <span className="text-sm text-muted-foreground font-normal">(in the last 60 days)</span>
+            </DialogTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setTasksPage(1);
+                setIsTasksModalOpen(true);
+                loadCompletedTasksPage(1);
+              }}
+            >
+              View All Tasks
+            </Button>
+          </div>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'completion' | 'effort')} className="w-full">
@@ -984,6 +1072,139 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
         </Tabs>
       </DialogContent>
     </Dialog>
+
+    {/* All Completed Tasks Modal */}
+    <Dialog open={isTasksModalOpen} onOpenChange={setIsTasksModalOpen}>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Completed Tasks (Last 60 Days)</DialogTitle>
+        </DialogHeader>
+
+        {isTasksLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+          </div>
+        ) : tasksData.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">No tasks completed in the last 60 days</div>
+        ) : (
+          <>
+            <div className="space-y-3">
+              {(() => {
+                const defaultColors = [
+                  'hsl(var(--chart-1))',
+                  'hsl(var(--chart-2))',
+                  'hsl(var(--chart-3))',
+                  'hsl(var(--chart-4))',
+                  'hsl(var(--chart-5))',
+                  'hsl(var(--muted-foreground))',
+                ];
+                const hslMap: { [key: string]: string } = {
+                  'hsl(var(--chart-1))': '#3b82f6',
+                  'hsl(var(--chart-2))': '#ec4899',
+                  'hsl(var(--chart-3))': '#10b981',
+                  'hsl(var(--chart-4))': '#f97316',
+                  'hsl(var(--chart-5))': '#8b5cf6',
+                  'hsl(var(--muted-foreground))': '#6b7280',
+                };
+                const colorToRgba = (color: string, alpha: number): string => {
+                  const hex = color.startsWith('#') ? color : (hslMap[color] ?? '#6b7280');
+                  const r = parseInt(hex.slice(1, 3), 16);
+                  const g = parseInt(hex.slice(3, 5), 16);
+                  const b = parseInt(hex.slice(5, 7), 16);
+                  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                };
+                const getSectionColor = (sectionTitle: string) => {
+                  if (sectionColors[sectionTitle]) return sectionColors[sectionTitle];
+                  if (tasksModalSectionColors[sectionTitle]) return tasksModalSectionColors[sectionTitle];
+                  if (supabaseSectionColors[sectionTitle]) return supabaseSectionColors[sectionTitle];
+                  const idx = sectionStats.findIndex((s) => s.section === sectionTitle);
+                  return defaultColors[idx >= 0 ? idx % defaultColors.length : 0];
+                };
+                return tasksData.map((task) => {
+                  const sectionColor = getSectionColor(task.section_title);
+                  return (
+                    <div
+                      key={task.id}
+                      className="pl-3 py-2 rounded-r-md bg-card border border-border border-l-4 border-l-success"
+                    >
+                      <p className="text-sm font-medium">{task.task_title}</p>
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        <span
+                          className="text-xs px-1.5 py-0.5 rounded border"
+                          style={{
+                            color: sectionColor,
+                            borderColor: colorToRgba(sectionColor, 0.4),
+                            backgroundColor: colorToRgba(sectionColor, 0.08),
+                          }}
+                        >
+                          {task.section_title}{task.subsection_title ? ` › ${task.subsection_title}` : ''}
+                        </span>
+                        <span className="text-xs text-muted-foreground">·</span>
+                        <span className="text-xs text-muted-foreground">
+                          {format(toZonedTime(parseISO(task.completed_at), PST_TZ), 'MMM d, yyyy h:mm a')}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+
+            {Math.ceil(tasksTotalCount / TASKS_PER_PAGE) > 1 && (
+              <Pagination className="mt-4">
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={() => {
+                        const p = tasksPage - 1;
+                        setTasksPage(p);
+                        loadCompletedTasksPage(p);
+                      }}
+                      className={tasksPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                    />
+                  </PaginationItem>
+                  {buildPageNumbers(tasksPage, Math.ceil(tasksTotalCount / TASKS_PER_PAGE)).map((item, i) =>
+                    item === '...' ? (
+                      <PaginationItem key={`ellipsis-${i}`}>
+                        <PaginationEllipsis />
+                      </PaginationItem>
+                    ) : (
+                      <PaginationItem key={item}>
+                        <PaginationLink
+                          isActive={item === tasksPage}
+                          onClick={() => {
+                            setTasksPage(item as number);
+                            loadCompletedTasksPage(item as number);
+                          }}
+                          className="cursor-pointer"
+                        >
+                          {item}
+                        </PaginationLink>
+                      </PaginationItem>
+                    )
+                  )}
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() => {
+                        const p = tasksPage + 1;
+                        setTasksPage(p);
+                        loadCompletedTasksPage(p);
+                      }}
+                      className={tasksPage === Math.ceil(tasksTotalCount / TASKS_PER_PAGE) ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            )}
+
+            <p className="text-xs text-muted-foreground text-center mt-1">
+              Showing {(tasksPage - 1) * TASKS_PER_PAGE + 1}–{Math.min(tasksPage * TASKS_PER_PAGE, tasksTotalCount)} of {tasksTotalCount} tasks
+            </p>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
+    </>
   );
 };
 
