@@ -677,6 +677,25 @@ const Index = () => {
           .update({ high_priority: highPriority })
           .eq('id', id);
         if (error) throw error;
+
+        // Cascade to all subsections and their tasks
+        const sectionSubsectionIds = sections
+          .find(s => s.id === id)
+          ?.subsections.map(sub => sub.id) ?? [];
+
+        if (sectionSubsectionIds.length > 0) {
+          const { error: subError } = await supabase
+            .from('subsections')
+            .update({ high_priority: highPriority })
+            .in('id', sectionSubsectionIds);
+          if (subError) throw subError;
+
+          const { error: tasksError } = await supabase
+            .from('tasks')
+            .update({ high_priority: highPriority })
+            .in('subsection_id', sectionSubsectionIds);
+          if (tasksError) throw tasksError;
+        }
       } else if (type === 'subsection') {
         // Update the subsection priority
         const { error: subsectionError } = await supabase
@@ -742,7 +761,15 @@ const Index = () => {
       // Calculate updated sections
       const updatedSections = sections.map(section => {
         if (type === 'section' && section.id === id) {
-          return { ...section, high_priority: highPriority };
+          return {
+            ...section,
+            high_priority: highPriority,
+            subsections: section.subsections.map(sub => ({
+              ...sub,
+              high_priority: highPriority,
+              tasks: sub.tasks.map(task => ({ ...task, high_priority: highPriority }))
+            }))
+          };
         }
         
         return {

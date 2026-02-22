@@ -97,30 +97,35 @@ const DeadlineEditor: React.FC<DeadlineEditorProps> = ({ userId }) => {
       return { progress: 100, months: [], totalDays: 0, remainingDays: 0 };
     }
 
-    // Calculate total days from start of January to deadline
+    // Calculate total days from start of January to end of deadline month (bar's full span)
     const startOfYear = new Date(now.getFullYear(), 0, 1); // January 1st
     const endOfDeadlineMonth = endOfMonth(deadlineDate);
     const totalDays = differenceInDays(endOfDeadlineMonth, startOfYear);
     const remainingDays = differenceInDays(deadlineDate, now);
-    
-    // Generate dynamic month markers: Jan, Jul, current month, Dec
-    const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const july = new Date(now.getFullYear(), 6, 1); // July (month 6)
-    const december = new Date(now.getFullYear(), 11, 1); // December (month 11)
-    
-    const months = [
-      new Date(now.getFullYear(), 0, 1), // January
-      july,
-      currentMonth,
-      december
-    ].filter((month, index, array) => {
-      // Remove duplicates and ensure months are in chronological order
-      return array.indexOf(month) === index;
-    }).sort((a, b) => a.getTime() - b.getTime());
+
+    // Generate month markers spanning Jan → deadline month only
+    const jan = new Date(now.getFullYear(), 0, 1);
+    const deadlineMonth = new Date(deadlineDate.getFullYear(), deadlineDate.getMonth(), 1);
+    // Number of months between Jan (0) and deadline month (0-indexed)
+    const totalMonths = deadlineDate.getMonth(); // e.g. May = 4
+
+    const intermediates: Date[] = [];
+    if (totalMonths >= 6) {
+      // Show quarter and three-quarter markers
+      intermediates.push(new Date(now.getFullYear(), Math.round(totalMonths / 4), 1));
+      intermediates.push(new Date(now.getFullYear(), Math.round(totalMonths * 3 / 4), 1));
+    } else if (totalMonths >= 3) {
+      // Show midpoint marker only
+      intermediates.push(new Date(now.getFullYear(), Math.round(totalMonths / 2), 1));
+    }
+
+    const months = [jan, ...intermediates, deadlineMonth]
+      .filter((m, i, arr) => arr.findIndex(x => x.getTime() === m.getTime()) === i)
+      .sort((a, b) => a.getTime() - b.getTime());
 
     const progress = Math.max(0, Math.min(100, ((totalDays - remainingDays) / totalDays) * 100));
 
-    return { progress, months, totalDays, remainingDays };
+    return { progress, months, totalDays, remainingDays, startOfYear };
   };
 
   const progressData = getProgressData();
@@ -207,12 +212,9 @@ const DeadlineEditor: React.FC<DeadlineEditorProps> = ({ userId }) => {
             {/* Month tick markers positioned proportionally */}
             <div className="relative mt-1">
               {progressData.months.map((month, index) => {
-                // Calculate the position as a percentage of the year
-                const startOfYear = new Date(month.getFullYear(), 0, 1);
-                const endOfYear = new Date(month.getFullYear(), 11, 31);
-                const totalDaysInYear = differenceInDays(endOfYear, startOfYear);
-                const daysFromStart = differenceInDays(month, startOfYear);
-                const positionPercent = (daysFromStart / totalDaysInYear) * 100;
+                // Position relative to the bar's span (Jan 1 → end of deadline month)
+                const daysFromStart = differenceInDays(month, progressData.startOfYear);
+                const positionPercent = (daysFromStart / progressData.totalDays) * 100;
                 
                 return (
                   <div 
