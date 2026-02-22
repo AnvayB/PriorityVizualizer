@@ -78,6 +78,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
   const [consistencyScore, setConsistencyScore] = useState(0);
   const [sectionColors, setSectionColors] = useState<{ [key: string]: string }>({});
   const [supabaseSectionColors, setSupabaseSectionColors] = useState<{ [key: string]: string }>({});
+  const [currentSectionTitles, setCurrentSectionTitles] = useState<Set<string>>(new Set());
   
   // Effort analytics state
   const [isEffortLoading, setIsEffortLoading] = useState(true);
@@ -254,6 +255,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
           }
         });
         setSupabaseSectionColors(colorMap);
+        setCurrentSectionTitles(new Set(sectionsData?.map(s => s.title) ?? []));
       }
 
       // Process daily stats with section breakdown
@@ -497,8 +499,11 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
       .append('g')
       .attr('transform', `translate(${margin.left},${margin.top})`);
 
-    // Get top 5 sections for stacking
-    const topSections = sectionStats.slice(0, 5).map(s => s.section);
+    // Get top 5 currently-existing sections for stacking
+    const topSections = sectionStats
+      .filter(s => currentSectionTitles.size === 0 || currentSectionTitles.has(s.section))
+      .slice(0, 5)
+      .map(s => s.section);
     const sectionKeys = [...topSections];
     
     // Default colors
@@ -889,7 +894,10 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
                       {/* Merged legend with color pickers */}
                       <div className="absolute right-4 top-5 space-y-2 bg-card/95 backdrop-blur-sm p-3 rounded-lg border border-border shadow-sm">
                         {(() => {
-                          const topSections = sectionStats.slice(0, 5).map(s => s.section);
+                          const topSections = sectionStats
+                            .filter(s => currentSectionTitles.size === 0 || currentSectionTitles.has(s.section))
+                            .slice(0, 5)
+                            .map(s => s.section);
                           const sectionKeys = [...topSections];
                           const defaultColors = [
                             'hsl(var(--chart-1))',
