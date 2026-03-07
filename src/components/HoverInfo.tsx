@@ -576,8 +576,8 @@ const HoverInfo: React.FC<HoverInfoProps> = ({
                 High Priority
               </label>
             </div>
-            {/* Effort Button - only for tasks */}
-            {slice?.level === 'task' && slice.task && userId && (
+            {/* Effort Button - only for tasks, only when Progress Mode is enabled */}
+            {slice?.level === 'task' && slice.task && userId && purposeModeEnabled && (
               <EffortButton
                 taskId={slice.task.id}
                 userId={userId}

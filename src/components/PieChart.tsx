@@ -137,6 +137,11 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover, onSliceClick }) 
   const chartSize = 650 * scaleFactor;
   const centerPoint = chartSize / 2;
 
+  // Scale font size down for sparse charts (few sections/items).
+  // sqrt(n/25) grows gradually: 7 slices → 0.53 → clamped to 0.70x;
+  // 25 slices → 1.0x; dense charts are unchanged.
+  const fontScale = Math.min(1.0, Math.max(0.70, Math.sqrt(chartData.length / 25)));
+
   const createPath = (startAngle: number, endAngle: number, innerRadius: number, outerRadius: number, centerX: number, centerY: number) => {
     const startAngleRad = (startAngle * Math.PI) / 180;
     const endAngleRad = (endAngle * Math.PI) / 180;
@@ -290,7 +295,11 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover, onSliceClick }) 
                 className="font-semibold pointer-events-none"
                 fill="#000000"
                 style={{
-                  fontSize: slice.level === 'section' ? '18px' : slice.level === 'subsection' ? '16px' : '14px',
+                  fontSize: slice.level === 'section'
+                    ? `${Math.round(18 * fontScale)}px`
+                    : slice.level === 'subsection'
+                    ? `${Math.round(16 * fontScale)}px`
+                    : `${Math.round(14 * fontScale)}px`,
                 }}
               >
                 {getSliceText(slice)}

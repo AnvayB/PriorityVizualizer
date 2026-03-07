@@ -1559,9 +1559,9 @@ const Index = () => {
                 <TrendingUp className="w-4 h-4 text-primary" />
               </div>
               <div>
-                <p className="text-sm font-medium text-foreground">Track your progress</p>
+                <p className="text-sm font-medium text-foreground">Set up Progress Mode</p>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  The sunburst chart updates live as you organize. Log effort on tasks to work towards your Goal.
+                  Click the <TrendingUp className="inline w-3 h-3 mx-0.5 align-text-top" /> icon in the top-right corner to measure progress by effort, not just completion.
                 </p>
               </div>
             </div>
@@ -1573,7 +1573,7 @@ const Index = () => {
               <div>
                 <p className="text-sm font-medium text-foreground">Stay on top of deadlines</p>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  The metrics cards at the top show what's overdue, due today, and coming up soon.
+                  The metrics cards show what's due today, overdue, and coming up soon. Click the Completed Today card to explore your completion stats and usage history.
                 </p>
               </div>
             </div>
@@ -1699,7 +1699,6 @@ const Index = () => {
               
               {/* Keep Theme Toggle and Sign Out */}
               <div className="flex gap-2">
-                {user && <AnnouncementHistory userId={user.id} />}
                 {user && (
                   <PurposeModeSettings
                     userId={user.id}
@@ -1713,12 +1712,13 @@ const Index = () => {
                     }}
                   />
                 )}
+                {user && <AnnouncementHistory userId={user.id} />}
                 <Button
                   asChild
                   variant="outline"
                   size="sm"
                   className="h-9 w-9 p-0 border-gray-400 dark:border-border"
-                  title="Open tutorial"
+                  title="Documentation"
                 >
                   <a
                     href="https://docsify-this.net/?basePath=https://raw.githubusercontent.com/AnvayB/PriorityVizualizer/main/docs&homepage=USER-TUTORIAL.md&edit-link=https://github.com/AnvayB/PriorityVizualizer/blob/main/docs/USER-TUTORIAL.md&sidebar=true&dark-mode=auto#/?id=table-of-contents"

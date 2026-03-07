@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
-import { AlertCircle, CheckCircle, Info, AlertTriangle, Bell, Clock } from 'lucide-react';
+import { AlertCircle, CheckCircle, Info, AlertTriangle, Megaphone, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface Announcement {
@@ -146,13 +146,13 @@ const AnnouncementHistory: React.FC<AnnouncementHistoryProps> = ({ userId }) => 
           className="h-9 w-9 p-0 border-gray-400 dark:border-border"
           title="Updates"
         >
-          <Bell className="w-4 h-4" />
+          <Megaphone className="w-4 h-4" />
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[80vh]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Bell className="w-5 h-5" />
+            <Megaphone className="w-5 h-5" />
             Update History
           </DialogTitle>
         </DialogHeader>
@@ -164,7 +164,7 @@ const AnnouncementHistory: React.FC<AnnouncementHistoryProps> = ({ userId }) => 
           ) : announcements.length === 0 ? (
             <div className="text-center py-8">
               <div className="p-4 bg-muted/50 rounded-full w-fit mx-auto mb-4">
-                <Bell className="w-12 h-12 text-muted-foreground" />
+                <Megaphone className="w-12 h-12 text-muted-foreground" />
               </div>
               <h3 className="text-lg font-semibold text-foreground mb-2">No Updates Yet</h3>
               <p className="text-muted-foreground">No announcements have been published yet.</p>

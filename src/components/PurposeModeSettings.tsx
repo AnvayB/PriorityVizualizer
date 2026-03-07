@@ -347,7 +347,7 @@ const PurposeModeSettings: React.FC<PurposeModeSettingsProps> = ({
               </Label>
             </div>
             <p className="text-xs text-muted-foreground">
-              Choose a goal image that represents what you're working towards. Each time you log effort on a task, your chosen icon appears around it — a visual reminder of your progress and intent.
+              Click <span className="font-medium text-foreground">Worked on Today</span> on any task slice to log effort. When enabled, your goal image appears as a visual marker around slices you've worked on.
             </p>
           </div>
 
