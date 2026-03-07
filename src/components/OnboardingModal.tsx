@@ -570,6 +570,25 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
           />
         )}
 
+        {/* ── Finish Tutorial button (shown as soon as minimum is met) ── */}
+        {canFinish && (
+          <div className="flex flex-col gap-2">
+            <Button
+              type="button"
+              className="w-full bg-green-600 hover:bg-green-700 text-white"
+              onClick={onComplete}
+            >
+              Finish Tutorial
+              <CheckCircle className="w-4 h-4 ml-2 shrink-0" />
+            </Button>
+            <div className="relative flex items-center py-1">
+              <div className="flex-1 border-t border-border/40" />
+              <span className="px-2 text-xs text-muted-foreground">or keep adding</span>
+              <div className="flex-1 border-t border-border/40" />
+            </div>
+          </div>
+        )}
+
         {/* ── Suggestion chips ── */}
         <SuggestionChips
           suggestions={content.suggestions}
@@ -688,42 +707,32 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
           </Button>
         </form>
 
-        {/* ── Flexible phase action buttons (shown once minimum is met) ── */}
+        {/* ── Secondary flexible actions (add more subsections / tasks) ── */}
         {canFinish && (
-          <div className="flex flex-col gap-2 pt-2 border-t border-border/40">
+          <div className="flex gap-2 pt-1">
             <Button
               type="button"
-              className="w-full bg-green-600 hover:bg-green-700 text-white"
-              onClick={onComplete}
+              variant="outline"
+              size="sm"
+              className="flex-1"
+              onClick={handleAddAnotherSubsection}
             >
-              Finish Tutorial
-              <CheckCircle className="w-4 h-4 ml-2 shrink-0" />
+              + Add Subsection
             </Button>
-            <div className="flex gap-2">
+            {step.phase === 'flexible' && step.mode === 'task' && (
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 className="flex-1"
-                onClick={handleAddAnotherSubsection}
+                onClick={() => {
+                  setInputValue('');
+                  setError(null);
+                }}
               >
-                + Add Subsection
+                + Add Task
               </Button>
-              {step.phase === 'flexible' && step.mode === 'task' && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => {
-                    setInputValue('');
-                    setError(null);
-                  }}
-                >
-                  + Add Task
-                </Button>
-              )}
-            </div>
+            )}
           </div>
         )}
       </DialogContent>
