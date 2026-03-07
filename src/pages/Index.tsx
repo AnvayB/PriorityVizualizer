@@ -1573,7 +1573,7 @@ const Index = () => {
               <div>
                 <p className="text-sm font-medium text-foreground">Stay on top of deadlines</p>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  The metrics cards at the top show what's overdue, due today, and coming up soon.
+                  The metrics cards show what's due today, overdue, and coming up soon. Click the Completed Today card to explore your completion stats and usage history.
                 </p>
               </div>
             </div>

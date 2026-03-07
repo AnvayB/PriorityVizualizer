@@ -524,7 +524,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
         {/* ── Disclaimer banner ── */}
         <div className="flex items-start gap-2 rounded-md bg-muted/50 border border-border/40 px-3 py-2 text-xs text-muted-foreground">
           <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-          <span>Just a tutorial — everything you create here can be renamed, recolored, or removed at any time.</span>
+          <span>TUTORIAL: Everything you create here can be changed or deleted from the Edit menu after completing the tutorial.</span>
         </div>
 
         {/* ── Progress header ── */}
