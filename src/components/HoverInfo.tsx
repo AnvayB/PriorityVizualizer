@@ -56,6 +56,7 @@ const HoverInfo: React.FC<HoverInfoProps> = ({
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isColorOpen, setIsColorOpen] = useState(false);
   const [isTasksOpen, setIsTasksOpen] = useState(false);
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   
 
   const colors = [
@@ -499,61 +500,70 @@ const HoverInfo: React.FC<HoverInfoProps> = ({
             </div>
             
             {slice.task.dueDate && (
-              <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg">
-                <Calendar className="w-4 h-4 text-primary" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium">Due Date</p>
-                  <p className="text-xs text-muted-foreground">{formatDate(slice.task.dueDate)}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  {(() => {
-                    const daysUntil = getDaysUntilDue(slice.task.dueDate);
-                    const overdue = isOverdue(slice.task.dueDate);
-                    
-                    return (
-                      <Badge 
-                        variant={overdue ? 'destructive' : daysUntil <= 3 ? 'secondary' : 'outline'}
-                        className="flex items-center gap-1"
-                      >
-                        {overdue ? (
-                          <>
-                            <Clock className="w-3 h-3" />
-                            Overdue
-                          </>
-                        ) : daysUntil === 0 ? (
-                          <>
-                            <CheckCircle className="w-3 h-3" />
-                            Today
-                          </>
-                        ) : daysUntil === 1 ? (
-                          <>
-                            <Clock className="w-3 h-3" />
-                            Tomorrow
-                          </>
-                        ) : (
-                          <>
-                            <Clock className="w-3 h-3" />
-                            {`${daysUntil} days`}
-                          </>
-                        )}
-                      </Badge>
-                    );
-                  })()}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 w-7 p-0 hover:bg-destructive/10 hover:text-destructive"
-                    onClick={() => {
-                      if (onEdit && slice.task) {
-                        onEdit('task', slice.task.id, slice.task.title, '', slice.task.description);
-                      }
-                    }}
-                    title="Remove due date"
+              <Popover open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
+                <PopoverTrigger asChild>
+                  <div
+                    className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                    role="button"
+                    title="Click to change due date"
                   >
-                    <X className="w-3 h-3" />
-                  </Button>
-                </div>
-              </div>
+                    <Calendar className="w-4 h-4 text-primary shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">Due Date</p>
+                      <p className="text-xs text-muted-foreground">{formatDate(slice.task.dueDate)}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {(() => {
+                        const daysUntil = getDaysUntilDue(slice.task.dueDate);
+                        const overdue = isOverdue(slice.task.dueDate);
+                        return (
+                          <Badge
+                            variant={overdue ? 'destructive' : daysUntil <= 3 ? 'secondary' : 'outline'}
+                            className="flex items-center gap-1"
+                          >
+                            {overdue ? (
+                              <><Clock className="w-3 h-3" />Overdue</>
+                            ) : daysUntil === 0 ? (
+                              <><CheckCircle className="w-3 h-3" />Today</>
+                            ) : daysUntil === 1 ? (
+                              <><Clock className="w-3 h-3" />Tomorrow</>
+                            ) : (
+                              <><Clock className="w-3 h-3" />{`${daysUntil} days`}</>
+                            )}
+                          </Badge>
+                        );
+                      })()}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0 hover:bg-destructive/10 hover:text-destructive"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (onEdit && slice.task) {
+                            onEdit('task', slice.task.id, slice.task.title, '', slice.task.description);
+                          }
+                        }}
+                        title="Remove due date"
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  </div>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarComponent
+                    mode="single"
+                    selected={parseLocalDate(slice.task.dueDate)}
+                    onSelect={(date) => {
+                      if (date && onEdit && slice.task) {
+                        onEdit('task', slice.task.id, slice.task.title, format(date, 'yyyy-MM-dd'), slice.task.description);
+                      }
+                      setIsDatePickerOpen(false);
+                    }}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
             )}
 
             
