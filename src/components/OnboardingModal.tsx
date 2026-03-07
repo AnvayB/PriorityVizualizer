@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { format } from 'date-fns';
-import { CheckCircle, ChevronRight, CalendarIcon } from 'lucide-react';
+import { CheckCircle, ChevronRight, CalendarIcon, Info } from 'lucide-react';
 
 import {
   Dialog,
@@ -22,43 +22,23 @@ import { Section, Subsection } from '@/types/priorities';
 
 /**
  * Flow overview:
- *   Phase 'sections'   → add 3 sections (each with a color)
- *   Phase 'subsection' → add subsection(s) to current section
- *                         sectionIndex 0: requires 1 subsection (then moves to task)
- *                         sectionIndex 1: requires 2 subsections (then moves to task for each)
- *                         sectionIndex 2: requires 1 subsection (then moves to task phase that needs 3 tasks)
- *   Phase 'task'       → add task(s) to the most-recently-added subsection
- *                         sectionIndex 0: requires 1 task
- *                         sectionIndex 1: requires 1 task per subsection (handled by looping back to subsection)
- *                         sectionIndex 2: requires 3 tasks in the single subsection
+ *   Phase 'sections'  → add 3 sections (each with a color)
+ *   Phase 'flexible'  → add subsections and tasks to Section 0 (the first
+ *                        section created). Minimum: 1 subsection + 1 task.
+ *                        After minimum met, user can add more or finish.
+ *                        Sections 1 & 2 are left for the user to fill later.
  */
 type OnboardingPhase =
   | { phase: 'sections' }
   | {
-      phase: 'subsection';
-      sectionIndex: number;
-      /** how many subsections have been added to this section so far */
-      subsectionsAddedCount: number;
-    }
-  | {
-      phase: 'task';
-      sectionIndex: number;
-      subsectionId: string;
-      subsectionTitle: string;
-      /** how many tasks have been added to this subsection so far */
-      tasksAddedCount: number;
-      /** which subsection within the section (0-based) — used for sec 1 multi-sub loop */
-      subsectionIndexWithinSection: number;
-      /** total subsections added to this section — needed to know when to advance */
-      totalSubsectionsInSection: number;
+      phase: 'flexible';
+      /** Whether we're currently collecting a subsection title or a task title */
+      mode: 'subsection' | 'task';
+      currentSubsectionId: string | null;
+      currentSubsectionTitle: string | null;
+      /** All subsections added so far under Section 0 */
+      subsections: Array<{ id: string; title: string; taskCount: number }>;
     };
-
-// Per-section requirements
-// Section 0: 1 sub → 1 task  (simple intro)
-// Section 1: sub→task→sub→task  (shows multiple subsections; 1 task each)
-// Section 2: 1 sub → 3 tasks  (shows multiple tasks per subsection)
-const SUBSECTION_REQUIREMENTS = [1, 2, 1]; // total subs needed per section
-const TASK_REQUIREMENTS       = [1, 1, 3]; // tasks needed per subsection
 
 interface OnboardingModalProps {
   open: boolean;
@@ -80,6 +60,9 @@ const SECTION_SUGGESTIONS    = ['Work', 'Personal', 'Health', 'School', 'Finance
 const SUBSECTION_SUGGESTIONS = ['Goals', 'Projects', 'To-Do', 'Habits', 'Weekly Review', 'Ideas'];
 const TASK_SUGGESTIONS       = ['Set a goal', 'Make a plan', 'Schedule a check-in', 'Start something small', 'Do a weekly review'];
 
+/** Labels ≥ 15 chars are hidden in PieChart.tsx — hint users to stay under this. */
+const TITLE_CHAR_LIMIT = 15;
+
 // Same 16-color palette as HoverInfo.tsx color picker
 const COLOR_PALETTE = [
   '#0ea5e9', // Sky blue
@@ -100,51 +83,14 @@ const COLOR_PALETTE = [
   '#a855f7', // Violet
 ];
 
-// Total progress steps (used for the progress bar):
-// 3 sections + (1 sub + 1 task) + (2 sub + 2 task) + (1 sub + 3 task) = 3+2+4+4 = 13
-const TOTAL_STEPS = 13;
-
 // ── Helpers ────────────────────────────────────────────────────────────────────
-
-/**
- * Returns a sequential step number 1–13 for the progress bar.
- *
- * Sections:          1, 2, 3
- * Section 0:         4 (sub0), 5 (task0)
- * Section 1:         6 (sub0), 7 (task0), 8 (sub1), 9 (task1)   ← interleaved sub→task→sub→task
- * Section 2:         10 (sub0), 11 (task0), 12 (task1), 13 (task2)
- */
-const computeOverallStep = (step: OnboardingPhase, sectionsAdded: number): number => {
-  if (step.phase === 'sections') return sectionsAdded + 1; // 1–3
-
-  const { sectionIndex } = step;
-
-  if (sectionIndex === 0) {
-    if (step.phase === 'subsection') return 4;
-    return 5 + step.tasksAddedCount; // 5
-  }
-
-  if (sectionIndex === 1) {
-    // sub0=6, task0=7, sub1=8, task1=9
-    if (step.phase === 'subsection') {
-      return 6 + step.subsectionsAddedCount * 2; // 6 (before sub0) or 8 (before sub1)
-    }
-    return 7 + step.subsectionIndexWithinSection * 2 + step.tasksAddedCount; // 7 or 9
-  }
-
-  // sectionIndex === 2: sub0=10, task0=11, task1=12, task2=13
-  if (step.phase === 'subsection') return 10;
-  return 11 + step.tasksAddedCount; // 11, 12, 13
-};
 
 /** Pick the next auto-default color that isn't the same as the last used color. */
 const pickNextAutoColor = (lastColor: string | null, usedColors: string[]): string => {
-  // First try: a color that differs from lastColor AND hasn't been used yet
   const fresh = COLOR_PALETTE.find((c) => c !== lastColor && !usedColors.includes(c));
   if (fresh) return fresh;
-  // Fallback: any color that just differs from lastColor
   const differsFromLast = COLOR_PALETTE.find((c) => c !== lastColor);
-  return differsFromLast ?? COLOR_PALETTE[1]; // should never reach last fallback
+  return differsFromLast ?? COLOR_PALETTE[1];
 };
 
 // ── SuggestionChips ────────────────────────────────────────────────────────────
@@ -185,7 +131,7 @@ const SuggestionChips: React.FC<SuggestionChipsProps> = ({
 
 interface SectionColorPickerProps {
   selectedColor: string;
-  adjacentColor: string | null; /** the color of the previously added section */
+  adjacentColor: string | null;
   onSelect: (color: string, manual: boolean) => void;
 }
 
@@ -219,7 +165,6 @@ const SectionColorPicker: React.FC<SectionColorPickerProps> = ({
               style={{ backgroundColor: color }}
               aria-label={color}
             >
-              {/* Subtle warning dot for same-as-adjacent (manual override still allowed) */}
               {isSameAsAdjacent && !isSelected && (
                 <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-yellow-400 border border-background" />
               )}
@@ -248,13 +193,9 @@ const SectionBreadcrumb: React.FC<SectionBreadcrumbProps> = ({ addedSections, st
     <div className="flex items-center gap-2 justify-center flex-wrap">
       {[0, 1, 2].map((i) => {
         const hasSection = addedSections.length > i;
-        const isComplete =
-          hasSection &&
-          (step.phase !== 'sections' || addedSections.length > i);
+        const isComplete = hasSection;
         const isActive =
-          step.phase !== 'sections' &&
-          ((step.phase === 'subsection' && step.sectionIndex === i) ||
-           (step.phase === 'task' && step.sectionIndex === i));
+          step.phase === 'flexible' && i === 0; // Section 0 is active during flexible phase
         const sectionColor = addedSections[i]?.color;
 
         return (
@@ -262,10 +203,10 @@ const SectionBreadcrumb: React.FC<SectionBreadcrumbProps> = ({ addedSections, st
             key={i}
             className={cn(
               'flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-colors duration-200 max-w-[130px]',
-              isComplete
-                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                : isActive
+              isActive
                 ? 'bg-primary/10 text-primary border border-primary/30'
+                : isComplete
+                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                 : 'bg-muted text-muted-foreground'
             )}
           >
@@ -285,57 +226,60 @@ const SectionBreadcrumb: React.FC<SectionBreadcrumbProps> = ({ addedSections, st
   );
 };
 
-// ── AddedItemsList ─────────────────────────────────────────────────────────────
+// ── FlexibleItemsTree ──────────────────────────────────────────────────────────
 
-/** Shows subsections or tasks added so far within the current phase, with checkmarks. */
-interface AddedItemsListProps {
-  items: string[];
+/** Shows the nested subsection → tasks tree for the flexible phase. */
+interface FlexibleItemsTreeProps {
+  subsections: Array<{ id: string; title: string; taskCount: number }>;
+  currentSubsectionId: string | null;
+  currentTaskTitles: string[]; // tasks added to the current subsection this session
   accentColor?: string;
 }
 
-const AddedItemsList: React.FC<AddedItemsListProps> = ({ items, accentColor }) => {
-  if (items.length === 0) return null;
+const FlexibleItemsTree: React.FC<FlexibleItemsTreeProps> = ({
+  subsections,
+  currentSubsectionId,
+  currentTaskTitles,
+  accentColor,
+}) => {
+  if (subsections.length === 0) return null;
+
   return (
-    <div className="space-y-1">
-      {items.map((item, i) => (
-        <div key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
-          <CheckCircle
-            className="w-3.5 h-3.5 shrink-0"
-            style={{ color: accentColor ?? undefined }}
-          />
-          <span className="truncate">{item}</span>
-        </div>
-      ))}
-    </div>
-  );
-};
-
-// ── MinimumRequirementBadge ────────────────────────────────────────────────────
-
-/** Shows "X of Y added" with a subtle progress indicator. */
-interface RequirementBadgeProps {
-  current: number;
-  required: number;
-  label: string; /** e.g. "subsection" */
-}
-
-const RequirementBadge: React.FC<RequirementBadgeProps> = ({ current, required, label }) => {
-  const met = current >= required;
-  return (
-    <div
-      className={cn(
-        'flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full w-fit',
-        met
-          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-          : 'bg-muted text-muted-foreground'
-      )}
-    >
-      {met ? (
-        <CheckCircle className="w-3 h-3 shrink-0" />
-      ) : (
-        <span className="w-3 h-3 rounded-full border border-current shrink-0" />
-      )}
-      {current} of {required} {label}{required !== 1 ? 's' : ''} added
+    <div className="space-y-2">
+      {subsections.map((sub) => {
+        const isCurrent = sub.id === currentSubsectionId;
+        return (
+          <div key={sub.id} className="space-y-1">
+            {/* Subsection row */}
+            <div className="flex items-center gap-2 text-sm">
+              <CheckCircle
+                className="w-3.5 h-3.5 shrink-0"
+                style={{ color: accentColor ?? undefined }}
+              />
+              <span className="font-medium truncate">{sub.title}</span>
+              {!isCurrent && sub.taskCount > 0 && (
+                <span className="text-xs text-muted-foreground ml-1">
+                  ({sub.taskCount} task{sub.taskCount !== 1 ? 's' : ''})
+                </span>
+              )}
+            </div>
+            {/* Tasks under this subsection */}
+            {isCurrent && currentTaskTitles.length > 0 && (
+              <div className="ml-5 space-y-1">
+                {currentTaskTitles.map((t, i) => (
+                  <div key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <CheckCircle
+                      className="w-3 h-3 shrink-0"
+                      style={{ color: accentColor ?? undefined }}
+                    />
+                    <span className="truncate">{t}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 };
@@ -352,16 +296,14 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
   const [step, setStep] = useState<OnboardingPhase>({ phase: 'sections' });
   const [addedSections, setAddedSections] = useState<Array<{ title: string; id: string; color: string }>>([]);
 
-  // Subsections & tasks added within the *current* section/subsection (reset per section/subsection)
-  const [addedSubsectionTitles, setAddedSubsectionTitles] = useState<string[]>([]);
+  // Task titles added to the *current* subsection (reset when switching subsections)
   const [addedTaskTitles, setAddedTaskTitles] = useState<string[]>([]);
 
   // Shared input for section/subsection/task title
   const [inputValue, setInputValue] = useState('');
 
-  // Section-phase: selected color + whether user manually picked it
+  // Section-phase: selected color
   const [selectedColor, setSelectedColor] = useState(COLOR_PALETTE[0]);
-  const [colorManuallyChosen, setColorManuallyChosen] = useState(false);
 
   // Task-phase optional fields
   const [taskDueDate, setTaskDueDate] = useState<Date | undefined>(undefined);
@@ -372,18 +314,32 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
 
   // ── Derived values ───────────────────────────────────────────────────────────
 
-  const overallStep = computeOverallStep(step, addedSections.length);
-  const progressPercent = Math.min(((overallStep - 1) / TOTAL_STEPS) * 100, 100);
-
   const lastSectionColor = addedSections.length > 0
     ? addedSections[addedSections.length - 1].color
     : null;
 
-  // Current section's color for the breadcrumb accent (subsection/task phases)
-  const currentSectionColor =
-    step.phase !== 'sections'
-      ? addedSections[step.sectionIndex]?.color
-      : undefined;
+  const currentSectionColor = addedSections[0]?.color; // flexible phase always works on section 0
+
+  // canFinish: minimum 1 subsection with at least 1 task added
+  const canFinish =
+    step.phase === 'flexible' &&
+    step.subsections.some((s) => s.taskCount >= 1);
+
+  // Total tasks across all subsections (for progress label)
+  const totalTasksAdded =
+    step.phase === 'flexible'
+      ? step.subsections.reduce((acc, s) => acc + s.taskCount, 0) + addedTaskTitles.length
+      : 0;
+
+  // Progress percentage
+  const progressPercent =
+    step.phase === 'sections'
+      ? (addedSections.length / 3) * 60
+      : canFinish
+      ? 90
+      : step.mode === 'task'
+      ? 80
+      : 70;
 
   // ── Phase-specific content ───────────────────────────────────────────────────
 
@@ -398,65 +354,46 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
         placeholder: 'e.g., Work, Health, Personal',
         buttonLabel: 'Add Section',
         progressLabel: `${addedSections.length} of 3 sections added`,
-        requiredCount: null,
-        addedCount: null,
-        requirementLabel: '',
+        isTask: false,
+        isSubsection: false,
       };
     }
 
-    if (step.phase === 'subsection') {
-      const { sectionIndex, subsectionsAddedCount } = step;
-      const sectionTitle = addedSections[sectionIndex]?.title ?? '';
-      const required = SUBSECTION_REQUIREMENTS[sectionIndex];
+    // flexible phase
+    const { mode, currentSubsectionTitle, subsections } = step;
 
-      // Section 1 interleaves sub→task, so subtitle varies by which sub we're on
-      const isSecondSubOfSec1 = sectionIndex === 1 && subsectionsAddedCount === 1;
-      const subtitle =
-        sectionIndex === 0
-          ? `Add a subsection to organize items within "${sectionTitle}"`
-          : isSecondSubOfSec1
-          ? `Great! Now add a second subsection to "${sectionTitle}" — sections can hold multiple areas`
-          : `Add a subsection to "${sectionTitle}" — showing how one section holds multiple areas`; // sec1 first sub or sec2
-
+    if (mode === 'subsection') {
+      const sectionTitle = addedSections[0]?.title ?? '';
       return {
-        title: `Break down "${sectionTitle}"`,
-        subtitle,
+        title: subsections.length === 0
+          ? `Break down "${sectionTitle}"`
+          : `Add another subsection to "${sectionTitle}"`,
+        subtitle: subsections.length === 0
+          ? `Add a subsection to organize items within "${sectionTitle}"`
+          : `You can keep adding subsections, or finish the tutorial when you're ready`,
         suggestions: SUBSECTION_SUGGESTIONS,
-        usedValues: addedSubsectionTitles,
+        usedValues: subsections.map((s) => s.title),
         placeholder: 'e.g., Goals, Projects, Habits',
         buttonLabel: 'Add Subsection',
-        progressLabel: `Section ${sectionIndex + 1} of 3 — subsection ${subsectionsAddedCount + 1}${required > 1 ? ` of ${required}` : ''}`,
-        requiredCount: required,
-        addedCount: subsectionsAddedCount,
-        requirementLabel: 'subsection',
+        progressLabel: `${addedSections.length} of 3 sections · ${subsections.length} subsection${subsections.length !== 1 ? 's' : ''}`,
+        isTask: false,
+        isSubsection: true,
       };
     }
 
-    // task phase
-    const { sectionIndex, subsectionTitle, tasksAddedCount } = step;
-    const required = TASK_REQUIREMENTS[sectionIndex];
-    const remaining = required - tasksAddedCount;
-
-    const subtitleMap: Record<number, string> = {
-      0: `What's one thing you want to accomplish in "${subsectionTitle}"?`,
-      1: `Add a task to "${subsectionTitle}"`,
-      2: `Add ${required} tasks to "${subsectionTitle}" — showing how a subsection holds multiple actions`,
-    };
-
+    // task mode
     return {
-      title: `Add task${required > 1 ? 's' : ''} to "${subsectionTitle}"`,
-      subtitle: subtitleMap[sectionIndex] ?? subtitleMap[0],
+      title: `Add tasks to "${currentSubsectionTitle}"`,
+      subtitle: canFinish
+        ? `Keep adding tasks, or finish the tutorial when you're ready`
+        : `What's one thing you want to accomplish in "${currentSubsectionTitle}"?`,
       suggestions: TASK_SUGGESTIONS,
       usedValues: addedTaskTitles,
       placeholder: 'e.g., Set a goal, Make a plan',
-      buttonLabel:
-        tasksAddedCount >= required - 1
-          ? 'Add Task & Continue'
-          : `Add Task (${remaining - 1 > 0 ? `${remaining - 1} more needed` : 'last one!'})`,
-      progressLabel: `Section ${sectionIndex + 1} of 3 — adding task`,
-      requiredCount: required,
-      addedCount: tasksAddedCount,
-      requirementLabel: 'task',
+      buttonLabel: 'Add Task',
+      progressLabel: `${addedSections.length} of 3 sections · ${step.subsections.length} subsection${step.subsections.length !== 1 ? 's' : ''} · ${totalTasksAdded} task${totalTasksAdded !== 1 ? 's' : ''}`,
+      isTask: true,
+      isSubsection: false,
     };
   };
 
@@ -464,9 +401,8 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
 
   // ── Color picker handler ─────────────────────────────────────────────────────
 
-  const handleColorSelect = (color: string, manual: boolean) => {
+  const handleColorSelect = (color: string, _manual: boolean) => {
     setSelectedColor(color);
-    setColorManuallyChosen(manual);
     setError(null);
   };
 
@@ -490,55 +426,48 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
         ];
         setAddedSections(updated);
         setInputValue('');
-        setColorManuallyChosen(false);
 
-        // Auto-pick next color: must differ from the color just used (adjacency rule)
         const justUsedColor = selectedColor;
         const usedSoFar = updated.map((s) => s.color);
         const nextAutoColor = pickNextAutoColor(justUsedColor, usedSoFar);
         setSelectedColor(nextAutoColor);
 
         if (updated.length >= 3) {
-          setStep({ phase: 'subsection', sectionIndex: 0, subsectionsAddedCount: 0 });
-          setAddedSubsectionTitles([]);
+          setStep({
+            phase: 'flexible',
+            mode: 'subsection',
+            currentSubsectionId: null,
+            currentSubsectionTitle: null,
+            subsections: [],
+          });
         }
 
-      // ── Subsection phase ──────────────────────────────────────────────────────
-      } else if (step.phase === 'subsection') {
-        const { sectionIndex, subsectionsAddedCount } = step;
-        const sectionId = addedSections[sectionIndex].id;
-
+      // ── Flexible / subsection mode ────────────────────────────────────────────
+      } else if (step.phase === 'flexible' && step.mode === 'subsection') {
+        const sectionId = addedSections[0].id;
         const newSub = await onSubsectionAdded(sectionId, trimmed);
-        const newCount = subsectionsAddedCount + 1;
-        const newTitles = [...addedSubsectionTitles, trimmed];
-        setAddedSubsectionTitles(newTitles);
+        setStep((prev) =>
+          prev.phase === 'flexible'
+            ? {
+                ...prev,
+                mode: 'task',
+                currentSubsectionId: newSub.id,
+                currentSubsectionTitle: newSub.title,
+                subsections: [
+                  ...prev.subsections,
+                  { id: newSub.id, title: newSub.title, taskCount: 0 },
+                ],
+              }
+            : prev
+        );
         setInputValue('');
-
-        // Always move to task phase immediately after adding a subsection.
-        // For section 1 (needs 2 subsections): after tasks for sub1 are done,
-        // the task handler loops back to subsection phase for sub2.
-        setStep({
-          phase: 'task',
-          sectionIndex,
-          subsectionId: newSub.id,
-          subsectionTitle: newSub.title,
-          tasksAddedCount: 0,
-          subsectionIndexWithinSection: newCount - 1, // 0-based index of this sub
-          totalSubsectionsInSection: newCount,        // running total (will update if loop returns)
-        });
         setAddedTaskTitles([]);
 
-      // ── Task phase ────────────────────────────────────────────────────────────
-      } else if (step.phase === 'task') {
-        const {
-          sectionIndex,
-          subsectionId,
-          tasksAddedCount,
-          subsectionIndexWithinSection,
-        } = step;
-        const sectionId = addedSections[sectionIndex].id;
+      // ── Flexible / task mode ──────────────────────────────────────────────────
+      } else if (step.phase === 'flexible' && step.mode === 'task') {
+        const sectionId = addedSections[0].id;
+        const subsectionId = step.currentSubsectionId!;
         const formattedDueDate = taskDueDate ? format(taskDueDate, 'yyyy-MM-dd') : '';
-        const required = TASK_REQUIREMENTS[sectionIndex];
 
         await onTaskAdded(
           sectionId,
@@ -548,58 +477,21 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
           taskDescription.trim() || undefined
         );
 
-        const newTaskCount = tasksAddedCount + 1;
-        const newTaskTitles = [...addedTaskTitles, trimmed];
+        setStep((prev) =>
+          prev.phase === 'flexible'
+            ? {
+                ...prev,
+                subsections: prev.subsections.map((s) =>
+                  s.id === subsectionId ? { ...s, taskCount: s.taskCount + 1 } : s
+                ),
+              }
+            : prev
+        );
 
-        // Reset task-specific fields
         setTaskDueDate(undefined);
         setTaskDescription('');
         setInputValue('');
-        setAddedTaskTitles(newTaskTitles);
-
-        if (newTaskCount >= required) {
-          // Done with tasks for this subsection.
-          // For section 1: if we've only completed sub 0's tasks, loop back to
-          // add sub 1, then do sub 1's tasks, then advance to section 2.
-          const subsectionsRequired = SUBSECTION_REQUIREMENTS[sectionIndex];
-          const nextSubsectionIndex = subsectionIndexWithinSection + 1;
-
-          if (nextSubsectionIndex < subsectionsRequired) {
-            // More subsections needed in this section — go back to subsection phase
-            setStep({
-              phase: 'subsection',
-              sectionIndex,
-              subsectionsAddedCount: nextSubsectionIndex, // subs already added
-            });
-            // Keep addedSubsectionTitles so the list shows all subs added so far
-            setAddedTaskTitles([]);
-          } else {
-            // All subsections and their tasks done — move to next section
-            const nextSectionIndex = sectionIndex + 1;
-            if (nextSectionIndex < 3) {
-              setStep({
-                phase: 'subsection',
-                sectionIndex: nextSectionIndex,
-                subsectionsAddedCount: 0,
-              });
-              setAddedSubsectionTitles([]);
-              setAddedTaskTitles([]);
-            } else {
-              onComplete();
-            }
-          }
-        } else {
-          // More tasks needed — stay in task phase
-          setStep({
-            phase: 'task',
-            sectionIndex,
-            subsectionId,
-            subsectionTitle: step.subsectionTitle,
-            tasksAddedCount: newTaskCount,
-            subsectionIndexWithinSection,
-            totalSubsectionsInSection: step.totalSubsectionsInSection,
-          });
-        }
+        setAddedTaskTitles((prev) => [...prev, trimmed]);
       }
     } catch (err) {
       console.error('[OnboardingModal] submit error:', err);
@@ -607,6 +499,17 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // ── "Add Another Subsection" handler ─────────────────────────────────────────
+
+  const handleAddAnotherSubsection = () => {
+    setStep((prev) =>
+      prev.phase === 'flexible' ? { ...prev, mode: 'subsection' } : prev
+    );
+    setInputValue('');
+    setAddedTaskTitles([]);
+    setError(null);
   };
 
   // ── Render ───────────────────────────────────────────────────────────────────
@@ -618,12 +521,16 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
+        {/* ── Disclaimer banner ── */}
+        <div className="flex items-start gap-2 rounded-md bg-muted/50 border border-border/40 px-3 py-2 text-xs text-muted-foreground">
+          <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+          <span>Just a tutorial — everything you create here can be renamed, recolored, or removed at any time.</span>
+        </div>
+
         {/* ── Progress header ── */}
         <div className="space-y-2 mb-1">
           <div className="flex justify-between items-center text-xs text-muted-foreground">
-            <span className="font-medium uppercase tracking-wide">
-              Step {overallStep} of {TOTAL_STEPS}
-            </span>
+            <span className="font-medium uppercase tracking-wide">Getting started</span>
             <span>{content.progressLabel}</span>
           </div>
           <Progress value={progressPercent} className="h-1.5" />
@@ -637,15 +544,6 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
           <DialogTitle className="text-xl leading-snug">{content.title}</DialogTitle>
           <DialogDescription className="text-sm">{content.subtitle}</DialogDescription>
         </DialogHeader>
-
-        {/* ── Requirement badge (subsection / task phases) ── */}
-        {content.requiredCount !== null && content.addedCount !== null && content.requiredCount > 1 && (
-          <RequirementBadge
-            current={content.addedCount}
-            required={content.requiredCount}
-            label={content.requirementLabel}
-          />
-        )}
 
         {/* ── Section checklist (sections phase only) ── */}
         {step.phase === 'sections' && addedSections.length > 0 && (
@@ -662,18 +560,12 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
           </div>
         )}
 
-        {/* ── Added subsections list (subsection phase) ── */}
-        {step.phase === 'subsection' && (
-          <AddedItemsList
-            items={addedSubsectionTitles}
-            accentColor={currentSectionColor}
-          />
-        )}
-
-        {/* ── Added tasks list (task phase) ── */}
-        {step.phase === 'task' && (
-          <AddedItemsList
-            items={addedTaskTitles}
+        {/* ── Flexible phase items tree ── */}
+        {step.phase === 'flexible' && (
+          <FlexibleItemsTree
+            subsections={step.subsections}
+            currentSubsectionId={step.currentSubsectionId}
+            currentTaskTitles={addedTaskTitles}
             accentColor={currentSectionColor}
           />
         )}
@@ -690,25 +582,38 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
 
         {/* ── Input form ── */}
         <form onSubmit={handleSubmit} className="space-y-3">
-          {/* Title input — always shown */}
-          <Input
-            autoFocus
-            value={inputValue}
-            onChange={(e) => {
-              setInputValue(e.target.value);
-              setError(null);
-            }}
-            placeholder={content.placeholder}
-            className="bg-background/80"
-            disabled={isSubmitting}
-            style={
-              step.phase === 'sections'
-                ? { borderLeftColor: selectedColor, borderLeftWidth: '3px' }
-                : currentSectionColor
-                ? { borderLeftColor: currentSectionColor, borderLeftWidth: '3px' }
-                : undefined
-            }
-          />
+          {/* Title input */}
+          <div className="space-y-1">
+            <Input
+              autoFocus
+              value={inputValue}
+              onChange={(e) => {
+                setInputValue(e.target.value);
+                setError(null);
+              }}
+              placeholder={content.placeholder}
+              className="bg-background/80"
+              disabled={isSubmitting}
+              style={
+                step.phase === 'sections'
+                  ? { borderLeftColor: selectedColor, borderLeftWidth: '3px' }
+                  : currentSectionColor
+                  ? { borderLeftColor: currentSectionColor, borderLeftWidth: '3px' }
+                  : undefined
+              }
+            />
+            {/* Character limit hint */}
+            {!content.isTask && (
+              <p className="text-xs text-muted-foreground">
+                Tip: Keep titles under {TITLE_CHAR_LIMIT} characters for best display in the chart.
+              </p>
+            )}
+            {content.isTask && (
+              <p className="text-xs text-muted-foreground">
+                Tip: Keep the title brief — add extra details in the description below.
+              </p>
+            )}
+          </div>
 
           {/* Color picker — sections phase only */}
           {step.phase === 'sections' && (
@@ -720,7 +625,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
           )}
 
           {/* Task-phase optional fields */}
-          {step.phase === 'task' && (
+          {step.phase === 'flexible' && step.mode === 'task' && (
             <>
               {/* Due Date picker */}
               <div className="space-y-1">
@@ -782,6 +687,45 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
             {!isSubmitting && <ChevronRight className="w-4 h-4 ml-1 shrink-0" />}
           </Button>
         </form>
+
+        {/* ── Flexible phase action buttons (shown once minimum is met) ── */}
+        {canFinish && (
+          <div className="flex flex-col gap-2 pt-2 border-t border-border/40">
+            <Button
+              type="button"
+              className="w-full bg-green-600 hover:bg-green-700 text-white"
+              onClick={onComplete}
+            >
+              Finish Tutorial
+              <CheckCircle className="w-4 h-4 ml-2 shrink-0" />
+            </Button>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="flex-1"
+                onClick={handleAddAnotherSubsection}
+              >
+                + Add Subsection
+              </Button>
+              {step.phase === 'flexible' && step.mode === 'task' && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => {
+                    setInputValue('');
+                    setError(null);
+                  }}
+                >
+                  + Add Task
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
