@@ -555,8 +555,8 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
                 accentColor={currentSectionColor}
               />
             </div>
-            {/* Right: action buttons stacked */}
-            <div className="flex flex-col gap-2 w-36 shrink-0 pt-0.5">
+            {/* Right: action buttons */}
+            <div className="flex flex-col gap-2 shrink-0 pt-0.5">
               <Button
                 type="button"
                 className="w-full bg-green-600 hover:bg-green-700 text-white text-sm"
@@ -565,26 +565,28 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
                 Finish Tutorial
                 <CheckCircle className="w-4 h-4 ml-1.5 shrink-0" />
               </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="w-full"
-                onClick={handleAddAnotherSubsection}
-              >
-                + Add Subsection
-              </Button>
-              {step.phase === 'flexible' && step.mode === 'task' && (
+              <div className="flex flex-row gap-2">
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="w-full"
-                  onClick={() => { setInputValue(''); setError(null); }}
+                  className="flex-1"
+                  onClick={handleAddAnotherSubsection}
                 >
-                  + Add Task
+                  + Subsection
                 </Button>
-              )}
+                {step.phase === 'flexible' && step.mode === 'task' && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => { setInputValue(''); setError(null); }}
+                  >
+                    + Task
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         ) : (
