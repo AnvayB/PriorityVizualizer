@@ -539,54 +539,87 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
         {/* ── Section breadcrumb pills ── */}
         <SectionBreadcrumb addedSections={addedSections} step={step} />
 
-        {/* ── Title & subtitle ── */}
-        <DialogHeader>
-          <DialogTitle className="text-xl leading-snug">{content.title}</DialogTitle>
-          <DialogDescription className="text-sm">{content.subtitle}</DialogDescription>
-        </DialogHeader>
-
-        {/* ── Section checklist (sections phase only) ── */}
-        {step.phase === 'sections' && addedSections.length > 0 && (
-          <div className="space-y-1.5">
-            {addedSections.map((s) => (
-              <div key={s.id} className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span
-                  className="w-3 h-3 rounded-full shrink-0"
-                  style={{ backgroundColor: s.color }}
-                />
-                <span className="truncate">{s.title}</span>
+        {/* ── Title / subtitle / tree — two-column when canFinish, stacked otherwise ── */}
+        {canFinish ? (
+          <div className="flex gap-4 items-start">
+            {/* Left: title, subtitle, items tree */}
+            <div className="flex-1 min-w-0 space-y-2">
+              <div>
+                <h3 className="text-xl font-semibold leading-snug">{content.title}</h3>
+                <p className="text-sm text-muted-foreground mt-1">{content.subtitle}</p>
               </div>
-            ))}
-          </div>
-        )}
-
-        {/* ── Flexible phase items tree ── */}
-        {step.phase === 'flexible' && (
-          <FlexibleItemsTree
-            subsections={step.subsections}
-            currentSubsectionId={step.currentSubsectionId}
-            currentTaskTitles={addedTaskTitles}
-            accentColor={currentSectionColor}
-          />
-        )}
-
-        {/* ── Finish Tutorial button (shown as soon as minimum is met) ── */}
-        {canFinish && (
-          <div className="flex flex-col gap-2">
-            <Button
-              type="button"
-              className="w-full bg-green-600 hover:bg-green-700 text-white"
-              onClick={onComplete}
-            >
-              Finish Tutorial
-              <CheckCircle className="w-4 h-4 ml-2 shrink-0" />
-            </Button>
-            <div className="relative flex items-center py-1">
-              <div className="flex-1 border-t border-border/40" />
-              <span className="px-2 text-xs text-muted-foreground">or keep adding</span>
-              <div className="flex-1 border-t border-border/40" />
+              <FlexibleItemsTree
+                subsections={step.subsections}
+                currentSubsectionId={step.currentSubsectionId}
+                currentTaskTitles={addedTaskTitles}
+                accentColor={currentSectionColor}
+              />
+            </div>
+            {/* Right: action buttons stacked */}
+            <div className="flex flex-col gap-2 w-36 shrink-0 pt-0.5">
+              <Button
+                type="button"
+                className="w-full bg-green-600 hover:bg-green-700 text-white text-sm"
+                onClick={onComplete}
+              >
+                Finish Tutorial
+                <CheckCircle className="w-4 h-4 ml-1.5 shrink-0" />
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={handleAddAnotherSubsection}
+              >
+                + Add Subsection
+              </Button>
+              {step.phase === 'flexible' && step.mode === 'task' && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => { setInputValue(''); setError(null); }}
+                >
+                  + Add Task
+                </Button>
+              )}
             </div>
           </div>
+        ) : (
+          <>
+            {/* ── Title & subtitle (normal stacked layout) ── */}
+            <DialogHeader>
+              <DialogTitle className="text-xl leading-snug">{content.title}</DialogTitle>
+              <DialogDescription className="text-sm">{content.subtitle}</DialogDescription>
+            </DialogHeader>
+
+            {/* ── Section checklist (sections phase only) ── */}
+            {step.phase === 'sections' && addedSections.length > 0 && (
+              <div className="space-y-1.5">
+                {addedSections.map((s) => (
+                  <div key={s.id} className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span
+                      className="w-3 h-3 rounded-full shrink-0"
+                      style={{ backgroundColor: s.color }}
+                    />
+                    <span className="truncate">{s.title}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* ── Flexible phase items tree ── */}
+            {step.phase === 'flexible' && (
+              <FlexibleItemsTree
+                subsections={step.subsections}
+                currentSubsectionId={step.currentSubsectionId}
+                currentTaskTitles={addedTaskTitles}
+                accentColor={currentSectionColor}
+              />
+            )}
+          </>
         )}
 
         {/* ── Suggestion chips ── */}
@@ -707,34 +740,6 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
           </Button>
         </form>
 
-        {/* ── Secondary flexible actions (add more subsections / tasks) ── */}
-        {canFinish && (
-          <div className="flex gap-2 pt-1">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="flex-1"
-              onClick={handleAddAnotherSubsection}
-            >
-              + Add Subsection
-            </Button>
-            {step.phase === 'flexible' && step.mode === 'task' && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="flex-1"
-                onClick={() => {
-                  setInputValue('');
-                  setError(null);
-                }}
-              >
-                + Add Task
-              </Button>
-            )}
-          </div>
-        )}
       </DialogContent>
     </Dialog>
   );
