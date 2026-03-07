@@ -58,7 +58,7 @@ interface OnboardingModalProps {
 
 const SECTION_SUGGESTIONS    = ['Work', 'Personal', 'Health', 'School', 'Finance', 'Family', 'Growth', 'Social'];
 const SUBSECTION_SUGGESTIONS = ['Goals', 'Projects', 'To-Do', 'Habits', 'Weekly Review', 'Ideas'];
-const TASK_SUGGESTIONS       = ['Set a goal', 'Make a plan', 'Schedule a check-in', 'Start something small', 'Do a weekly review'];
+const TASK_SUGGESTIONS       = ['Set a goal', 'Make a plan', 'Add a check-in', 'Start small', 'Weekly review'];
 
 /** Labels ≥ 15 chars are hidden in PieChart.tsx — hint users to stay under this. */
 const TITLE_CHAR_LIMIT = 15;
