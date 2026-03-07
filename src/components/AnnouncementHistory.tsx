@@ -164,7 +164,7 @@ const AnnouncementHistory: React.FC<AnnouncementHistoryProps> = ({ userId }) => 
           ) : announcements.length === 0 ? (
             <div className="text-center py-8">
               <div className="p-4 bg-muted/50 rounded-full w-fit mx-auto mb-4">
-                <Bell className="w-12 h-12 text-muted-foreground" />
+                <Megaphone className="w-12 h-12 text-muted-foreground" />
               </div>
               <h3 className="text-lg font-semibold text-foreground mb-2">No Updates Yet</h3>
               <p className="text-muted-foreground">No announcements have been published yet.</p>
