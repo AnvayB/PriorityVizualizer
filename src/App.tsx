@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Landing from "./pages/Landing";
 import NotFound from "./pages/NotFound";
+import Dev from "./pages/Dev";
 
 const queryClient = new QueryClient();
 
@@ -62,6 +63,7 @@ function App() {
                 path="/auth"
                 element={!user ? <Auth /> : <Navigate to="/" replace />}
               />
+              <Route path="/dev" element={<Dev />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
