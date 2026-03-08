@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
+
 const DEV_PASSWORD = import.meta.env.VITE_DEV_PASSWORD;
 
 const Dev = () => {
@@ -14,14 +15,13 @@ const Dev = () => {
   const [status, setStatus] = useState('');
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) { navigate('/auth'); return; }
-      setUserId(data.user.id);
+    supabase.auth.getSession().then(({ data }) => {
+      setUserId(data.session?.user.id ?? null);
     });
     if (localStorage.getItem('pv-dev-auth') === 'true') {
       setAuthenticated(true);
     }
-  }, [navigate]);
+  }, []);
 
   const handlePasswordSubmit = (e: React.FormEvent) => {
     e.preventDefault();
