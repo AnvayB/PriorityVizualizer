@@ -4,20 +4,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
-
 const DEV_PASSWORD = import.meta.env.VITE_DEV_PASSWORD;
 
 const Dev = () => {
   const navigate = useNavigate();
-  const [userId, setUserId] = useState<string | null>(null);
   const [password, setPassword] = useState('');
   const [authenticated, setAuthenticated] = useState(false);
   const [status, setStatus] = useState('');
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setUserId(data.session?.user.id ?? null);
-    });
     if (localStorage.getItem('pv-dev-auth') === 'true') {
       setAuthenticated(true);
     }
@@ -33,14 +28,14 @@ const Dev = () => {
     }
   };
 
-  const handleResetTutorial = async () => {
-    if (!userId) return;
-    setStatus('Deleting data...');
-    await supabase.from('tasks').delete().eq('user_id', userId);
-    await supabase.from('subsections').delete().eq('user_id', userId);
-    await supabase.from('sections').delete().eq('user_id', userId);
-    setStatus('Done — reloading app...');
-    setTimeout(() => navigate('/'), 800);
+  const handleTestSignIn = async () => {
+    const email = import.meta.env.VITE_TEST_EMAIL;
+    const password = import.meta.env.VITE_TEST_PASSWORD;
+    if (!email || !password) { setStatus('Test credentials not configured in .env'); return; }
+    setStatus('Signing in...');
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) { setStatus(error.message); return; }
+    navigate('/');
   };
 
   if (!authenticated) {
@@ -66,12 +61,8 @@ const Dev = () => {
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="space-y-4 w-72">
         <p className="text-sm font-semibold text-center">Dev Tools</p>
-        <Button
-          variant="destructive"
-          className="w-full"
-          onClick={handleResetTutorial}
-        >
-          Reset Tutorial
+        <Button className="w-full" onClick={handleTestSignIn}>
+          Sign in as Test Account
         </Button>
         {status && <p className="text-xs text-muted-foreground text-center">{status}</p>}
         <Button variant="outline" className="w-full" onClick={() => navigate('/')}>

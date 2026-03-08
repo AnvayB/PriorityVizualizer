@@ -1428,6 +1428,15 @@ const Index = () => {
     }
   };
 
+  const handleDevReset = async () => {
+    if (!user) return;
+    await supabase.from('tasks').delete().eq('user_id', user.id);
+    await supabase.from('subsections').delete().eq('user_id', user.id);
+    await supabase.from('sections').delete().eq('user_id', user.id);
+    setSections([]);
+    setIsNewUser(true);
+  };
+
   const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
@@ -2217,6 +2226,17 @@ const Index = () => {
           </div>
         </div>
       </div>
+
+      {/* Dev-only reset button — only visible when signed in as test account */}
+      {user?.email === import.meta.env.VITE_TEST_EMAIL && (
+        <button
+          onClick={handleDevReset}
+          className="fixed bottom-4 right-4 z-50 px-3 py-1.5 text-xs font-bold rounded-full bg-orange-500/90 text-white hover:bg-orange-600 shadow-lg transition-colors"
+          title="Reset test account and re-run tutorial"
+        >
+          Reset Account
+        </button>
+      )}
     </div>
   );
 };
