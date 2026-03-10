@@ -644,6 +644,92 @@ const Index = () => {
     }
   };
 
+  const handleMoveSubsection = async (subsectionId: string, fromSectionId: string, toSectionId: string) => {
+    try {
+      const { error } = await supabase
+        .from('subsections')
+        .update({ section_id: toSectionId })
+        .eq('id', subsectionId);
+      if (error) throw error;
+
+      setSections(prev => {
+        let movedSubsection: typeof prev[0]['subsections'][0] | null = null;
+
+        const intermediate = prev.map(section => {
+          if (section.id === fromSectionId) {
+            const sub = section.subsections.find(s => s.id === subsectionId);
+            if (sub) movedSubsection = sub;
+            return { ...section, subsections: section.subsections.filter(s => s.id !== subsectionId) };
+          }
+          return section;
+        });
+
+        if (!movedSubsection) return prev;
+
+        return intermediate.map(section => {
+          if (section.id === toSectionId) {
+            return { ...section, subsections: [...section.subsections, movedSubsection!] };
+          }
+          return section;
+        });
+      });
+
+      if (hoveredSlice?.subsection?.id === subsectionId) setHoveredSlice(null);
+      if (pinnedSlice?.subsection?.id === subsectionId) setPinnedSlice(null);
+
+      toast({ title: "Moved", description: "Subsection moved successfully." });
+    } catch (error) {
+      console.error('Error moving subsection:', error);
+      toast({ title: "Error", description: "Failed to move subsection. Please try again.", variant: "destructive" });
+    }
+  };
+
+  const handleMoveTask = async (taskId: string, fromSubsectionId: string, toSubsectionId: string) => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ subsection_id: toSubsectionId })
+        .eq('id', taskId);
+      if (error) throw error;
+
+      setSections(prev => {
+        let movedTask: typeof prev[0]['subsections'][0]['tasks'][0] | null = null;
+
+        const intermediate = prev.map(section => ({
+          ...section,
+          subsections: section.subsections.map(sub => {
+            if (sub.id === fromSubsectionId) {
+              const task = sub.tasks.find(t => t.id === taskId);
+              if (task) movedTask = task;
+              return { ...sub, tasks: sub.tasks.filter(t => t.id !== taskId) };
+            }
+            return sub;
+          }),
+        }));
+
+        if (!movedTask) return prev;
+
+        return intermediate.map(section => ({
+          ...section,
+          subsections: section.subsections.map(sub => {
+            if (sub.id === toSubsectionId) {
+              return { ...sub, tasks: [...sub.tasks, movedTask!] };
+            }
+            return sub;
+          }),
+        }));
+      });
+
+      if (hoveredSlice?.task?.id === taskId) setHoveredSlice(null);
+      if (pinnedSlice?.task?.id === taskId) setPinnedSlice(null);
+
+      toast({ title: "Moved", description: "Task moved successfully." });
+    } catch (error) {
+      console.error('Error moving task:', error);
+      toast({ title: "Error", description: "Failed to move task. Please try again.", variant: "destructive" });
+    }
+  };
+
   const handleColorChange = async (sectionId: string, color: string) => {
     try {
       const { error } = await supabase
@@ -677,25 +763,6 @@ const Index = () => {
           .update({ high_priority: highPriority })
           .eq('id', id);
         if (error) throw error;
-
-        // Cascade to all subsections and their tasks
-        const sectionSubsectionIds = sections
-          .find(s => s.id === id)
-          ?.subsections.map(sub => sub.id) ?? [];
-
-        if (sectionSubsectionIds.length > 0) {
-          const { error: subError } = await supabase
-            .from('subsections')
-            .update({ high_priority: highPriority })
-            .in('id', sectionSubsectionIds);
-          if (subError) throw subError;
-
-          const { error: tasksError } = await supabase
-            .from('tasks')
-            .update({ high_priority: highPriority })
-            .in('subsection_id', sectionSubsectionIds);
-          if (tasksError) throw tasksError;
-        }
       } else if (type === 'subsection') {
         // Update the subsection priority
         const { error: subsectionError } = await supabase
@@ -761,15 +828,7 @@ const Index = () => {
       // Calculate updated sections
       const updatedSections = sections.map(section => {
         if (type === 'section' && section.id === id) {
-          return {
-            ...section,
-            high_priority: highPriority,
-            subsections: section.subsections.map(sub => ({
-              ...sub,
-              high_priority: highPriority,
-              tasks: sub.tasks.map(task => ({ ...task, high_priority: highPriority }))
-            }))
-          };
+          return { ...section, high_priority: highPriority };
         }
         
         return {
@@ -1428,15 +1487,6 @@ const Index = () => {
     }
   };
 
-  const handleDevReset = async () => {
-    if (!user) return;
-    await supabase.from('tasks').delete().eq('user_id', user.id);
-    await supabase.from('subsections').delete().eq('user_id', user.id);
-    await supabase.from('sections').delete().eq('user_id', user.id);
-    setSections([]);
-    setIsNewUser(true);
-  };
-
   const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
@@ -1568,9 +1618,9 @@ const Index = () => {
                 <TrendingUp className="w-4 h-4 text-primary" />
               </div>
               <div>
-                <p className="text-sm font-medium text-foreground">Set up Progress Mode</p>
+                <p className="text-sm font-medium text-foreground">Track your progress</p>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Click the <TrendingUp className="inline w-3 h-3 mx-0.5 align-text-top" /> icon in the top-right corner to measure progress by effort, not just completion.
+                  The sunburst chart updates live as you organize. Log effort on tasks to work towards your Goal.
                 </p>
               </div>
             </div>
@@ -1582,7 +1632,7 @@ const Index = () => {
               <div>
                 <p className="text-sm font-medium text-foreground">Stay on top of deadlines</p>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  The metrics cards show what's due today, overdue, and coming up soon. Click the Completed Today card to explore your completion stats and usage history.
+                  The metrics cards at the top show what's overdue, due today, and coming up soon.
                 </p>
               </div>
             </div>
@@ -1708,6 +1758,7 @@ const Index = () => {
               
               {/* Keep Theme Toggle and Sign Out */}
               <div className="flex gap-2">
+                {user && <AnnouncementHistory userId={user.id} />}
                 {user && (
                   <PurposeModeSettings
                     userId={user.id}
@@ -1721,13 +1772,12 @@ const Index = () => {
                     }}
                   />
                 )}
-                {user && <AnnouncementHistory userId={user.id} />}
                 <Button
                   asChild
                   variant="outline"
                   size="sm"
                   className="h-9 w-9 p-0 border-gray-400 dark:border-border"
-                  title="Documentation"
+                  title="Open tutorial"
                 >
                   <a
                     href="https://docsify-this.net/?basePath=https://raw.githubusercontent.com/AnvayB/PriorityVizualizer/main/docs&homepage=USER-TUTORIAL.md&edit-link=https://github.com/AnvayB/PriorityVizualizer/blob/main/docs/USER-TUTORIAL.md&sidebar=true&dark-mode=auto#/?id=table-of-contents"
@@ -2193,8 +2243,8 @@ const Index = () => {
           {/* Sidebar */}
           <div className="space-y-6 md:space-y-10">
             {/* Hover Info */}
-            <HoverInfo 
-              slice={pinnedSlice || hoveredSlice} 
+            <HoverInfo
+              slice={pinnedSlice || hoveredSlice}
               onEdit={handleEdit}
               onDelete={handleDelete}
               onColorChange={handleColorChange}
@@ -2202,6 +2252,9 @@ const Index = () => {
               onComplete={handleComplete}
               onClose={() => setPinnedSlice(null)}
               isPinned={!!pinnedSlice}
+              sections={sections}
+              onMoveSubsection={handleMoveSubsection}
+              onMoveTask={handleMoveTask}
               userId={user?.id}
               purposeModeEnabled={purposeModeEnabled}
               animationIcon={animationIcon}
@@ -2226,17 +2279,6 @@ const Index = () => {
           </div>
         </div>
       </div>
-
-      {/* Dev-only reset button — only visible when signed in as test account */}
-      {user?.email === import.meta.env.VITE_TEST_EMAIL && (
-        <button
-          onClick={handleDevReset}
-          className="fixed bottom-4 right-4 z-50 px-3 py-1.5 text-xs font-bold rounded-full bg-orange-500/90 text-white hover:bg-orange-600 shadow-lg transition-colors"
-          title="Reset test account and re-run tutorial"
-        >
-          Reset Account
-        </button>
-      )}
     </div>
   );
 };

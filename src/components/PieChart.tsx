@@ -137,7 +137,6 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover, onSliceClick }) 
   const chartSize = 650 * scaleFactor;
   const centerPoint = chartSize / 2;
 
-
   const createPath = (startAngle: number, endAngle: number, innerRadius: number, outerRadius: number, centerX: number, centerY: number) => {
     const startAngleRad = (startAngle * Math.PI) / 180;
     const endAngleRad = (endAngle * Math.PI) / 180;
@@ -230,13 +229,6 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover, onSliceClick }) 
     return true;
   };
 
-  const getSectionFontSize = (angleDiff: number): number => {
-    if (angleDiff >= 45) return 18;
-    if (angleDiff >= 30) return 16;
-    if (angleDiff >= 20) return 14;
-    return 13;
-  };
-
   const getIsHighPriority = (slice: ChartSlice) => {
     if (slice.level === 'section') return slice.section.high_priority || false;
     if (slice.level === 'subsection') return slice.subsection?.high_priority || false;
@@ -298,11 +290,7 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover, onSliceClick }) 
                 className="font-semibold pointer-events-none"
                 fill="#000000"
                 style={{
-                  fontSize: slice.level === 'section'
-                    ? `${getSectionFontSize(slice.endAngle - slice.startAngle)}px`
-                    : slice.level === 'subsection'
-                    ? '16px'
-                    : '14px',
+                  fontSize: slice.level === 'section' ? 34 : slice.level === 'subsection' ? 27 : 26,
                 }}
               >
                 {getSliceText(slice)}
