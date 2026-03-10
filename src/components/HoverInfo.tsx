@@ -35,6 +35,7 @@ interface HoverInfoProps {
   animationIcon?: 'flower' | 'star' | 'sparkle';
   onEffortRecorded?: () => void;
   purposeAnchorPosition?: { x: number; y: number } | null;
+  onTaskClick?: (taskId: string, sectionId: string, subsectionId: string) => void;
 }
 
 const HoverInfo: React.FC<HoverInfoProps> = ({
@@ -54,6 +55,7 @@ const HoverInfo: React.FC<HoverInfoProps> = ({
   sections,
   onMoveSubsection,
   onMoveTask,
+  onTaskClick,
 }) => {
   const { theme } = useTheme();
   const [editTitle, setEditTitle] = useState('');
@@ -564,7 +566,11 @@ const HoverInfo: React.FC<HoverInfoProps> = ({
                     const overdue = isOverdue(task.dueDate);
                     
                     return (
-                      <div key={task.id} className="flex items-center justify-between text-xs p-2 bg-muted/50 rounded-md">
+                      <div
+                        key={task.id}
+                        className="flex items-center justify-between text-xs p-2 bg-muted/50 rounded-md cursor-pointer hover:bg-muted transition-colors"
+                        onClick={() => onTaskClick?.(task.id, slice.section.id, slice.subsection!.id)}
+                      >
                         <span className="truncate flex-1">{task.title}</span>
                         <Badge 
                           variant={overdue ? 'destructive' : daysUntil <= 3 ? 'secondary' : 'outline'}
