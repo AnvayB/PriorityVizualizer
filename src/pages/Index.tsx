@@ -2263,6 +2263,7 @@ const Index = () => {
                 // Effort count will be reloaded via useEffect
               }}
               purposeAnchorPosition={purposeAnchorPosition}
+              onTaskClick={handleTaskClick}
             />
 
             {/* Add Form */}
