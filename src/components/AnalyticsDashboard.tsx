@@ -78,7 +78,6 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
   const [consistencyScore, setConsistencyScore] = useState(0);
   const [sectionColors, setSectionColors] = useState<{ [key: string]: string }>({});
   const [supabaseSectionColors, setSupabaseSectionColors] = useState<{ [key: string]: string }>({});
-  const [currentSectionTitles, setCurrentSectionTitles] = useState<Set<string>>(new Set());
   
   // Effort analytics state
   const [isEffortLoading, setIsEffortLoading] = useState(true);
@@ -255,7 +254,6 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
           }
         });
         setSupabaseSectionColors(colorMap);
-        setCurrentSectionTitles(new Set(sectionsData?.map(s => s.title) ?? []));
       }
 
       // Process daily stats with section breakdown
@@ -499,11 +497,8 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
       .append('g')
       .attr('transform', `translate(${margin.left},${margin.top})`);
 
-    // Get top 5 currently-existing sections for stacking
-    const topSections = sectionStats
-      .filter(s => currentSectionTitles.size === 0 || currentSectionTitles.has(s.section))
-      .slice(0, 5)
-      .map(s => s.section);
+    // Get top 5 sections for stacking
+    const topSections = sectionStats.slice(0, 5).map(s => s.section);
     const sectionKeys = [...topSections];
     
     // Default colors
@@ -516,10 +511,9 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
       'hsl(var(--muted-foreground))',
     ];
     
-    // Color scale for sections (use custom colors, then Supabase colors, then defaults)
-    const getColor = (section: string, index: number) => {
-      // Priority: user-selected color > Supabase color > default color
-      return sectionColors[section] || supabaseSectionColors[section] || defaultColors[index] || defaultColors[index];
+    // Color scale for sections (use custom colors, then Supabase colors, then grey for deleted)
+    const getColor = (section: string, _index: number) => {
+      return sectionColors[section] || supabaseSectionColors[section] || '#6b7280';
     };
 
     // Create date scale for x-axis
@@ -894,10 +888,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
                       {/* Merged legend with color pickers */}
                       <div className="absolute right-4 top-5 space-y-2 bg-card/95 backdrop-blur-sm p-3 rounded-lg border border-border shadow-sm">
                         {(() => {
-                          const topSections = sectionStats
-                            .filter(s => currentSectionTitles.size === 0 || currentSectionTitles.has(s.section))
-                            .slice(0, 5)
-                            .map(s => s.section);
+                          const topSections = sectionStats.slice(0, 5).map(s => s.section);
                           const sectionKeys = [...topSections];
                           const defaultColors = [
                             'hsl(var(--chart-1))',
@@ -920,31 +911,33 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
                           };
                           
                           return sectionKeys.map((section, i) => {
-                            // Priority: user-selected color > Supabase color > default color
+                            const isDeleted = !sectionColors[section] && !supabaseSectionColors[section];
                             const currentColor = sectionColors[section] || supabaseSectionColors[section] || defaultColors[i];
-                            const hexColor = currentColor.startsWith('#') ? currentColor : hslToHex(currentColor);
+                            const hexColor = isDeleted ? '#6b7280' : (currentColor.startsWith('#') ? currentColor : hslToHex(currentColor));
                             const inputId = `color-picker-${section}`;
                             return (
                               <div key={section} className="flex items-center gap-2 relative">
-                                <label 
-                                  htmlFor={inputId}
-                                  className="w-4 h-4 rounded border border-border flex-shrink-0 cursor-pointer"
+                                <label
+                                  htmlFor={isDeleted ? undefined : inputId}
+                                  className={`w-4 h-4 rounded border border-border flex-shrink-0 ${isDeleted ? 'opacity-60' : 'cursor-pointer'}`}
                                   style={{ backgroundColor: hexColor }}
-                                  title={`Click to change color for ${section}`}
+                                  title={isDeleted ? `${section} (deleted)` : `Click to change color for ${section}`}
                                 />
-                                <input
-                                  id={inputId}
-                                  type="color"
-                                  value={hexColor}
-                                  onChange={(e) => {
-                                    setSectionColors((prev) => ({
-                                      ...prev,
-                                      [section]: e.target.value,
-                                    }));
-                                  }}
-                                  className="sr-only"
-                                />
-                                <span className="text-xs text-foreground font-medium">{section}</span>
+                                {!isDeleted && (
+                                  <input
+                                    id={inputId}
+                                    type="color"
+                                    value={hexColor}
+                                    onChange={(e) => {
+                                      setSectionColors((prev) => ({
+                                        ...prev,
+                                        [section]: e.target.value,
+                                      }));
+                                    }}
+                                    className="sr-only"
+                                  />
+                                )}
+                                <span className={`text-xs font-medium ${isDeleted ? 'text-muted-foreground' : 'text-foreground'}`}>{section}</span>
                               </div>
                             );
                           });
@@ -1125,8 +1118,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
                   if (sectionColors[sectionTitle]) return sectionColors[sectionTitle];
                   if (tasksModalSectionColors[sectionTitle]) return tasksModalSectionColors[sectionTitle];
                   if (supabaseSectionColors[sectionTitle]) return supabaseSectionColors[sectionTitle];
-                  const idx = sectionStats.findIndex((s) => s.section === sectionTitle);
-                  return defaultColors[idx >= 0 ? idx % defaultColors.length : 0];
+                  return '#6b7280'; // deleted section
                 };
                 return tasksData.map((task) => {
                   const sectionColor = getSectionColor(task.section_title);
