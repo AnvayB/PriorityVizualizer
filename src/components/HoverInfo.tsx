@@ -199,7 +199,7 @@ const HoverInfo: React.FC<HoverInfoProps> = ({
 
   const handleComplete = () => {
     if (!slice || !onComplete) return;
-    
+
     let id = '';
     if (slice.level === 'section') {
       id = slice.section.id;
@@ -208,8 +208,9 @@ const HoverInfo: React.FC<HoverInfoProps> = ({
     } else if (slice.level === 'task' && slice.task) {
       id = slice.task.id;
     }
-    
+
     onComplete(slice.level, id);
+    onClose?.();
   };
 
   const getCurrentPriority = () => {
