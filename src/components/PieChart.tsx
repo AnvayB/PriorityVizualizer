@@ -260,7 +260,7 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover, onSliceClick }) 
                 )}
                 fill="none"
                 stroke="hsl(var(--foreground))"
-                strokeWidth="6"
+                strokeWidth="3"
                 className="pointer-events-none"
               />
             )}
@@ -274,7 +274,7 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover, onSliceClick }) 
                 fill="#000000"
                 style={{
                   fontSize: slice.level === 'section' ? 14 : slice.level === 'subsection' ? 12 : 10,
-                  fontWeight: 600,
+                  fontWeight: 550,
                 }}
               >
                 {getSliceText(slice)}
