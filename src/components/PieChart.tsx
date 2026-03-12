@@ -36,20 +36,10 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover, onSliceClick }) 
       return [];
     }
 
-    // Calculate dynamic scaling based on text content
-    const maxTitleLength = Math.max(
-      ...sections.map(s => s.title.length),
-      ...sections.flatMap(s => s.subsections.map(sub => sub.title.length)),
-      ...sections.flatMap(s => s.subsections.flatMap(sub => sub.tasks.map(task => task.title.length)))
-    );
-    
-    // Scale factor based on content - minimum 1.0, increases with longer titles
-    const scaleFactor = Math.max(1.0, 1 + (maxTitleLength - 10) * 0.05);
-    
     let currentAngle = 0;
-    const baseRadius = 102 * scaleFactor;
-    const subsectionRadius = 181 * scaleFactor;
-    const taskRadius = 260 * scaleFactor;
+    const baseRadius = 102;
+    const subsectionRadius = 181;
+    const taskRadius = 260;
     
     // Each section gets equal portion of 360 degrees
     const sectionAngle = 360 / sections.length;
@@ -127,14 +117,7 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover, onSliceClick }) 
   }, [sections]);
 
   // Calculate dynamic dimensions based on content
-  const maxTitleLength = sections.length > 0 ? Math.max(
-    ...sections.map(s => s.title.length),
-    ...sections.flatMap(s => s.subsections.map(sub => sub.title.length)),
-    ...sections.flatMap(s => s.subsections.flatMap(sub => sub.tasks.map(task => task.title.length)))
-  ) : 10;
-  
-  const scaleFactor = Math.max(1.0, 1 + (maxTitleLength - 10) * 0.05);
-  const chartSize = 650 * scaleFactor;
+  const chartSize = 650;
   const centerPoint = chartSize / 2;
 
   const createPath = (startAngle: number, endAngle: number, innerRadius: number, outerRadius: number, centerX: number, centerY: number) => {
@@ -178,19 +161,19 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover, onSliceClick }) 
     onSliceClick?.(slice);
   };
 
-  const getInnerRadius = (level: string, scaleFactor: number) => {
+  const getInnerRadius = (level: string) => {
     switch (level) {
       case 'section': return 0;
-      case 'subsection': return 116 * scaleFactor;
-      case 'task': return 195 * scaleFactor;
+      case 'subsection': return 116;
+      case 'task': return 195;
       default: return 0;
     }
   };
 
-  const getTextPosition = (slice: ChartSlice, centerX: number, centerY: number, scaleFactor: number) => {
+  const getTextPosition = (slice: ChartSlice, centerX: number, centerY: number) => {
     const midAngle = (slice.startAngle + slice.endAngle) / 2;
     const midAngleRad = (midAngle * Math.PI) / 180;
-    const innerRadius = getInnerRadius(slice.level, scaleFactor);
+    const innerRadius = getInnerRadius(slice.level);
     const textRadius = (innerRadius + slice.radius) / 2;
     
     const x = centerX + textRadius * Math.cos(midAngleRad);
@@ -249,7 +232,7 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover, onSliceClick }) 
               d={createPath(
                 slice.startAngle,
                 slice.endAngle,
-                getInnerRadius(slice.level, scaleFactor),
+                getInnerRadius(slice.level),
                 slice.radius,
                 centerPoint,
                 centerPoint
@@ -270,7 +253,7 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover, onSliceClick }) 
                 d={createPath(
                   slice.startAngle,
                   slice.endAngle,
-                  getInnerRadius(slice.level, scaleFactor),
+                  getInnerRadius(slice.level),
                   slice.radius,
                   centerPoint,
                   centerPoint
@@ -283,14 +266,15 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover, onSliceClick }) 
             )}
             {shouldShowText(slice) && (
               <text
-                x={getTextPosition(slice, centerPoint, centerPoint, scaleFactor).x}
-                y={getTextPosition(slice, centerPoint, centerPoint, scaleFactor).y}
+                x={getTextPosition(slice, centerPoint, centerPoint).x}
+                y={getTextPosition(slice, centerPoint, centerPoint).y}
                 textAnchor="middle"
                 dominantBaseline="middle"
-                className="font-semibold pointer-events-none"
+                className="pointer-events-none"
                 fill="#000000"
                 style={{
-                  fontSize: slice.level === 'section' ? '24px' : slice.level === 'subsection' ? '20px' : '18px',
+                  fontSize: slice.level === 'section' ? 14 : slice.level === 'subsection' ? 12 : 10,
+                  fontWeight: 600,
                 }}
               >
                 {getSliceText(slice)}
