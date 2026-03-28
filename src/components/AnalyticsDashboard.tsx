@@ -137,6 +137,29 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
     }
   }, [dailySectionStats, sectionStats, sectionColors, supabaseSectionColors]);
 
+  useEffect(() => {
+    if (!isEffortLoading && effortDailyStats !== undefined) {
+      const timer = setTimeout(() => {
+        if (effortChartRef.current) {
+          drawEffortChart();
+        }
+      }, 100);
+
+      const handleResize = () => {
+        if (effortChartRef.current) {
+          drawEffortChart();
+        }
+      };
+
+      window.addEventListener('resize', handleResize);
+
+      return () => {
+        clearTimeout(timer);
+        window.removeEventListener('resize', handleResize);
+      };
+    }
+  }, [effortDailyStats, isEffortLoading]);
+
 
   const calculateStreaks = (allDailyStats: DailyStats[]) => {
     if (allDailyStats.length === 0) {
@@ -641,6 +664,201 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
       .style('font-size', '12px');
   };
 
+  const drawEffortChart = () => {
+    if (!effortChartRef.current) return;
+
+    const svg = d3.select(effortChartRef.current);
+    svg.selectAll('*').remove();
+
+    // Generate full 60-day date range, filling zeros for missing days
+    const now = new Date();
+    const pstNow = toZonedTime(now, PST_TZ);
+    const todayStr = format(pstNow, 'yyyy-MM-dd');
+    const allDates: { date: string; count: number }[] = [];
+    for (let i = 59; i >= 0; i--) {
+      const d = subDays(pstNow, i);
+      allDates.push({ date: format(d, 'yyyy-MM-dd'), count: 0 });
+    }
+    const effortMap = new Map(effortDailyStats.map(s => [s.date, s.count]));
+    allDates.forEach(d => { d.count = effortMap.get(d.date) || 0; });
+
+    const containerWidth = effortChartRef.current.getBoundingClientRect().width || 750;
+    const margin = { top: 24, right: 20, bottom: 44, left: 44 };
+    const width = containerWidth - margin.left - margin.right;
+    const height = 300 - margin.top - margin.bottom;
+
+    svg.attr('viewBox', `0 0 ${containerWidth} 300`);
+
+    // ── Defs: gradient + glow filter ──────────────────────────────────────
+    const defs = svg.append('defs');
+
+    const grad = defs.append('linearGradient')
+      .attr('id', 'barGradient')
+      .attr('x1', '0%').attr('y1', '0%')
+      .attr('x2', '0%').attr('y2', '100%');
+    grad.append('stop').attr('offset', '0%').attr('stop-color', '#22d3ee').attr('stop-opacity', 1);
+    grad.append('stop').attr('offset', '100%').attr('stop-color', '#0e7490').attr('stop-opacity', 0.7);
+
+    const todayGrad = defs.append('linearGradient')
+      .attr('id', 'todayGradient')
+      .attr('x1', '0%').attr('y1', '0%')
+      .attr('x2', '0%').attr('y2', '100%');
+    todayGrad.append('stop').attr('offset', '0%').attr('stop-color', '#f0abfc').attr('stop-opacity', 1);
+    todayGrad.append('stop').attr('offset', '100%').attr('stop-color', '#a855f7').attr('stop-opacity', 0.7);
+
+    const filter = defs.append('filter').attr('id', 'barGlow').attr('x', '-20%').attr('y', '-20%').attr('width', '140%').attr('height', '140%');
+    filter.append('feGaussianBlur').attr('in', 'SourceGraphic').attr('stdDeviation', '2').attr('result', 'blur');
+    const feMerge = filter.append('feMerge');
+    feMerge.append('feMergeNode').attr('in', 'blur');
+    feMerge.append('feMergeNode').attr('in', 'SourceGraphic');
+
+    const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+
+    const xScale = d3.scaleBand()
+      .domain(allDates.map(d => d.date))
+      .range([0, width])
+      .padding(0.25);
+
+    const maxCount = d3.max(allDates, d => d.count) || 1;
+    const yScale = d3.scaleLinear()
+      .domain([0, maxCount + 1])
+      .nice()
+      .range([height, 0]);
+
+    // ── Horizontal grid lines only (cleaner look) ─────────────────────────
+    const yGridAxis = g.append('g').attr('class', 'grid')
+      .call(d3.axisLeft(yScale).ticks(Math.min(maxCount + 1, 5)).tickSize(-width).tickFormat(() => ''));
+    yGridAxis.select('.domain').remove();
+    yGridAxis.selectAll('line')
+      .attr('stroke', 'currentColor')
+      .attr('stroke-opacity', 0.08)
+      .attr('stroke-dasharray', '4,4');
+
+    // ── Average reference line ─────────────────────────────────────────────
+    const activeDays = allDates.filter(d => d.count > 0).length;
+    if (activeDays > 0) {
+      const totalEffort = allDates.reduce((s, d) => s + d.count, 0);
+      const avg = totalEffort / activeDays;
+      g.append('line')
+        .attr('x1', 0).attr('x2', width)
+        .attr('y1', yScale(avg)).attr('y2', yScale(avg))
+        .attr('stroke', '#f59e0b')
+        .attr('stroke-width', 1)
+        .attr('stroke-dasharray', '6,4')
+        .attr('opacity', 0.5);
+      g.append('text')
+        .attr('x', width + 4)
+        .attr('y', yScale(avg) + 4)
+        .attr('fill', '#f59e0b')
+        .style('font-size', '9px')
+        .style('opacity', 0.7)
+        .text('avg');
+    }
+
+    // ── Bars ──────────────────────────────────────────────────────────────
+    g.selectAll('rect.bar')
+      .data(allDates)
+      .enter()
+      .append('rect')
+      .attr('class', 'bar')
+      .attr('x', d => xScale(d.date) || 0)
+      .attr('y', d => d.count > 0 ? yScale(d.count) : height)
+      .attr('height', d => d.count > 0 ? yScale(0) - yScale(d.count) : 0)
+      .attr('width', xScale.bandwidth())
+      .attr('fill', d => d.count > 0 ? (d.date === todayStr ? 'url(#todayGradient)' : 'url(#barGradient)') : 'transparent')
+      .attr('rx', 3)
+      .attr('filter', d => d.count > 0 ? 'url(#barGlow)' : '');
+
+    // ── Count labels ──────────────────────────────────────────────────────
+    g.selectAll('text.bar-label')
+      .data(allDates.filter(d => d.count > 0))
+      .enter()
+      .append('text')
+      .attr('class', 'bar-label')
+      .attr('x', d => (xScale(d.date) || 0) + xScale.bandwidth() / 2)
+      .attr('y', d => yScale(d.count) - 5)
+      .attr('text-anchor', 'middle')
+      .attr('fill', d => d.date === todayStr ? '#e879f9' : '#67e8f9')
+      .style('font-size', '10px')
+      .style('font-weight', '600')
+      .text(d => d.count);
+
+    // ── Tooltip (SVG-native) ───────────────────────────────────────────────
+    const tooltip = g.append('g').attr('class', 'tooltip').style('display', 'none');
+    const tooltipRect = tooltip.append('rect')
+      .attr('rx', 5).attr('ry', 5)
+      .attr('fill', 'hsl(var(--popover))')
+      .attr('stroke', 'hsl(var(--border))')
+      .attr('stroke-width', 1);
+    const tooltipText = tooltip.append('text')
+      .attr('fill', 'hsl(var(--popover-foreground))')
+      .style('font-size', '11px')
+      .style('font-weight', '500');
+
+    // Invisible hit-area rects for hover
+    g.selectAll('rect.hit')
+      .data(allDates)
+      .enter()
+      .append('rect')
+      .attr('class', 'hit')
+      .attr('x', d => xScale(d.date) || 0)
+      .attr('y', 0)
+      .attr('height', height)
+      .attr('width', xScale.bandwidth())
+      .attr('fill', 'transparent')
+      .style('cursor', d => d.count > 0 ? 'pointer' : 'default')
+      .on('mouseover', function(event, d) {
+        if (d.count === 0) return;
+        const label = `${format(parseISO(d.date), 'MMM d')}  ·  ${d.count} effort${d.count > 1 ? 's' : ''}`;
+        tooltipText.text(label);
+        const bbox = (tooltipText.node() as SVGTextElement).getBBox();
+        const pad = 8;
+        const tw = bbox.width + pad * 2;
+        const th = bbox.height + pad * 2;
+        const bx = (xScale(d.date) || 0) + xScale.bandwidth() / 2;
+        const by = yScale(d.count) - th - 8;
+        const tx = Math.max(0, Math.min(bx - tw / 2, width - tw));
+        tooltipRect.attr('x', tx).attr('y', by).attr('width', tw).attr('height', th);
+        tooltipText.attr('x', tx + pad).attr('y', by + pad + bbox.height - 2);
+        tooltip.style('display', null);
+      })
+      .on('mouseout', () => tooltip.style('display', 'none'));
+
+    // ── X-axis ────────────────────────────────────────────────────────────
+    const tickDates = allDates
+      .filter((_, i) => i % 10 === 0 || i === allDates.length - 1)
+      .map(d => d.date);
+
+    const xAxis = g.append('g').attr('transform', `translate(0,${height})`)
+      .call(
+        d3.axisBottom(xScale)
+          .tickValues(tickDates)
+          .tickFormat(d => format(parseISO(d as string), 'MMM d'))
+      );
+    xAxis.select('.domain').remove();
+    xAxis.selectAll('line').remove();
+    xAxis.selectAll('text')
+      .attr('fill', 'hsl(var(--muted-foreground))')
+      .style('font-size', '11px')
+      .style('text-anchor', 'end')
+      .attr('dx', '-.8em')
+      .attr('dy', '.15em')
+      .attr('transform', 'rotate(-45)');
+
+    // ── Y-axis ────────────────────────────────────────────────────────────
+    const yAxis = g.append('g')
+      .call(
+        d3.axisLeft(yScale)
+          .ticks(Math.min(maxCount + 1, 5))
+          .tickFormat(d => String(Math.round(+d)))
+      );
+    yAxis.select('.domain').remove();
+    yAxis.selectAll('line').remove();
+    yAxis.selectAll('text')
+      .attr('fill', 'hsl(var(--muted-foreground))')
+      .style('font-size', '11px');
+  };
+
   const loadCompletedTasksPage = async (page: number) => {
     setIsTasksLoading(true);
     const now = new Date();
@@ -1055,9 +1273,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
                   <CardDescription>Effort recorded over the last 60 days</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-center py-12 text-muted-foreground">
-                    Chart visualization coming soon
-                  </div>
+                  <svg ref={effortChartRef} width="100%" height={300} className="w-full" />
                 </CardContent>
               </Card>
             ) : (
