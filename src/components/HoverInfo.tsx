@@ -68,6 +68,7 @@ const HoverInfo: React.FC<HoverInfoProps> = ({
   const [isMoveOpen, setIsMoveOpen] = useState(false);
   const [moveTargetSectionId, setMoveTargetSectionId] = useState('');
   const [moveTargetSubsectionId, setMoveTargetSubsectionId] = useState('');
+  const [isDueDatePopoverOpen, setIsDueDatePopoverOpen] = useState(false);
   
 
   const colors = [
@@ -620,11 +621,37 @@ const HoverInfo: React.FC<HoverInfoProps> = ({
             
             {slice.task.dueDate && (
               <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg">
-                <Calendar className="w-4 h-4 text-primary" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium">Due Date</p>
-                  <p className="text-xs text-muted-foreground">{formatDate(slice.task.dueDate)}</p>
-                </div>
+                <Popover open={isDueDatePopoverOpen} onOpenChange={(open) => {
+                  if (open && slice.task?.dueDate) {
+                    const [year, month, day] = slice.task.dueDate.split('-').map(Number);
+                    setEditDueDate(new Date(year, month - 1, day));
+                  }
+                  setIsDueDatePopoverOpen(open);
+                }}>
+                  <PopoverTrigger asChild>
+                    <button className="flex items-center gap-2 flex-1 text-left hover:opacity-70 transition-opacity cursor-pointer">
+                      <Calendar className="w-4 h-4 text-primary" />
+                      <div>
+                        <p className="text-sm font-medium">Due Date</p>
+                        <p className="text-xs text-muted-foreground">{formatDate(slice.task.dueDate)}</p>
+                      </div>
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarComponent
+                      mode="single"
+                      selected={editDueDate}
+                      onSelect={(date) => {
+                        setEditDueDate(date);
+                        if (date && onEdit && slice.task) {
+                          onEdit('task', slice.task.id, slice.task.title, format(date, 'yyyy-MM-dd'), slice.task.description);
+                        }
+                        setIsDueDatePopoverOpen(false);
+                      }}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
                 <div className="flex items-center gap-2">
                   {(() => {
                     const daysUntil = getDaysUntilDue(slice.task.dueDate);
