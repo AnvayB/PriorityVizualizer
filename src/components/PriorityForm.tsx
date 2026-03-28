@@ -4,12 +4,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { Section, Subsection, Task } from '@/types/priorities';
-import { Plus, Calendar as CalendarIcon } from 'lucide-react';
+import { Section } from '@/types/priorities';
+import { Plus, Calendar as CalendarIcon, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -41,7 +40,7 @@ const PriorityForm: React.FC<PriorityFormProps> = ({
   const [taskDescription, setTaskDescription] = useState('');
   const [taskDueDate, setTaskDueDate] = useState<Date | undefined>(undefined);
   const [selectedSubsectionId, setSelectedSubsectionId] = useState(prefilledSubsectionId);
-  const [currentTab, setCurrentTab] = useState(activeTab);
+  const [mode, setMode] = useState<'section' | 'subsection' | 'task'>(activeTab);
   const lastPrefilledSectionId = React.useRef(prefilledSectionId);
   const lastPrefilledSubsectionId = React.useRef(prefilledSubsectionId);
 
@@ -72,30 +71,40 @@ const PriorityForm: React.FC<PriorityFormProps> = ({
     }
   };
 
-  const selectedSection = sections.find(s => s.id === selectedSectionId);
+  const handleSectionChange = (value: string) => {
+    if (value === prefilledSectionId && prefilledSubsectionId) {
+      setSelectedSectionId(value);
+      setSelectedSubsectionId(prefilledSubsectionId);
+      setMode('task');
+      return;
+    }
+    setSelectedSectionId(value);
+    setSelectedSubsectionId('');
+    setMode('subsection');
+  };
 
-  // Update local state when prefilled values change
+  const handleSubsectionChange = (value: string) => {
+    setSelectedSubsectionId(value);
+    setMode('task');
+  };
+
+  // Update local state when prefilled values change (from pie chart clicks)
   React.useEffect(() => {
-    // Only update if props actually changed
-    if (prefilledSectionId !== lastPrefilledSectionId.current || 
+    if (prefilledSectionId !== lastPrefilledSectionId.current ||
         prefilledSubsectionId !== lastPrefilledSubsectionId.current) {
       lastPrefilledSectionId.current = prefilledSectionId;
       lastPrefilledSubsectionId.current = prefilledSubsectionId;
-      
-      // Update both values together - React will batch these
       setSelectedSectionId(prefilledSectionId);
       setSelectedSubsectionId(prefilledSubsectionId);
     }
-    setCurrentTab(activeTab);
+    setMode(activeTab);
   }, [prefilledSectionId, prefilledSubsectionId, activeTab]);
-  
-  // Ensure subsection is set when section matches prefilled and subsection is provided
-  // This handles the case where onValueChange might have cleared it
+
+  // Ensure subsection stays set when section matches prefilled
   React.useEffect(() => {
-    if (selectedSectionId === prefilledSectionId && 
-        prefilledSubsectionId && 
+    if (selectedSectionId === prefilledSectionId &&
+        prefilledSubsectionId &&
         selectedSubsectionId !== prefilledSubsectionId) {
-      // Check if the prefilled subsection actually exists in the current section
       const section = sections.find(s => s.id === selectedSectionId);
       const subsectionExists = section?.subsections.some(sub => sub.id === prefilledSubsectionId);
       if (subsectionExists) {
@@ -104,193 +113,214 @@ const PriorityForm: React.FC<PriorityFormProps> = ({
     }
   }, [selectedSectionId, prefilledSectionId, prefilledSubsectionId, selectedSubsectionId, sections]);
 
+  const selectedSection = sections.find(s => s.id === selectedSectionId);
+  const selectedSubsection = selectedSection?.subsections.find(s => s.id === selectedSubsectionId);
+
+  const pillClass = (active: boolean, disabled = false) =>
+    cn(
+      'flex-1 px-3 py-1.5 rounded-md text-sm transition-colors text-center whitespace-nowrap',
+      active
+        ? 'bg-background text-foreground font-semibold shadow-sm'
+        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
+      disabled && 'opacity-40 cursor-not-allowed pointer-events-none'
+    );
+
   return (
     <Card className={`w-full max-w-md bg-card/50 backdrop-blur-sm border-border/50 ${isHighlighted ? 'ring-2 ring-primary/20' : ''}`}>
-      <CardHeader>
+      <CardHeader className="pb-3">
         <CardTitle className="text-primary flex items-center gap-2">
           <Plus className="w-5 h-5" />
           Add Priorities
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <Tabs value={currentTab} onValueChange={(value) => setCurrentTab(value as 'section' | 'subsection' | 'task')} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="section">Section</TabsTrigger>
-            <TabsTrigger value="subsection">Subsection</TabsTrigger>
-            <TabsTrigger value="task">Task</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="section" className="space-y-4">
-            <form onSubmit={handleAddSection} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="section-title">Section Title</Label>
-                <Input
-                  id="section-title"
-                  placeholder="e.g., Work, Personal, School"
-                  value={sectionTitle}
-                  onChange={(e) => setSectionTitle(e.target.value)}
-                  className="bg-background/80"
-                />
-              </div>
-              <Button type="submit" className="w-full bg-gradient-primary hover:opacity-90">
-                Add Section
-              </Button>
-            </form>
-          </TabsContent>
-
-          <TabsContent value="subsection" className="space-y-4">
-            <form onSubmit={handleAddSubsection} className="space-y-4">
-              <div className="space-y-2">
-                <Label>Section</Label>
-                <Select value={selectedSectionId} onValueChange={setSelectedSectionId}>
-                  <SelectTrigger className="bg-background/80">
-                    <SelectValue placeholder="Select a section" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sections.map((section) => (
-                      <SelectItem key={section.id} value={section.id}>
-                        {section.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="subsection-title">Subsection Title</Label>
-                <Input
-                  id="subsection-title"
-                  placeholder="e.g., Payroll, Class Project, Chores"
-                  value={subsectionTitle}
-                  onChange={(e) => setSubsectionTitle(e.target.value)}
-                  className="bg-background/80"
-                />
-              </div>
-              <Button 
-                type="submit" 
-                className="w-full bg-gradient-primary hover:opacity-90"
-                disabled={!selectedSectionId}
+      <CardContent className="space-y-4">
+        {/* Tab bar */}
+        <div className="flex items-center bg-muted/30 rounded-lg p-1 gap-0.5">
+          {/* Section: dropdown if sections exist, else plain pill */}
+          {sections.length > 0 ? (
+            <Select value={selectedSectionId || ''} onValueChange={handleSectionChange}>
+              <SelectTrigger
+                className={cn(
+                  pillClass(mode === 'section'),
+                  'h-auto border-0 shadow-none focus:ring-0 focus:ring-offset-0 bg-transparent',
+                  mode === 'section' && 'bg-background shadow-sm'
+                )}
               >
-                Add Subsection
-              </Button>
-            </form>
-          </TabsContent>
+                <SelectValue>
+                  {selectedSection ? selectedSection.title : 'Section'}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {sections.map((section) => (
+                  <SelectItem key={section.id} value={section.id}>
+                    {section.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setMode('section')}
+              className={pillClass(mode === 'section')}
+            >
+              Section
+            </button>
+          )}
 
-          <TabsContent value="task" className="space-y-4">
-            <form onSubmit={handleAddTask} className="space-y-4">
-              <div className="space-y-2">
-                <Label>Section</Label>
-                <Select value={selectedSectionId} onValueChange={(value) => {
-                  // If this matches the prefilled section AND we have a prefilled subsection,
-                  // this is a prop update - set both and don't clear
-                  if (value === prefilledSectionId && prefilledSubsectionId) {
-                    setSelectedSectionId(value);
-                    setSelectedSubsectionId(prefilledSubsectionId);
-                    return;
-                  }
-                  
-                  // Otherwise, this is a user-initiated change
-                  setSelectedSectionId(value);
-                  // Check if current subsection belongs to new section
-                  const newSection = sections.find(s => s.id === value);
-                  const subsectionExists = newSection?.subsections.some(sub => sub.id === selectedSubsectionId);
-                  if (!subsectionExists) {
-                    setSelectedSubsectionId('');
-                  }
-                }}>
-                  <SelectTrigger className="bg-background/80">
-                    <SelectValue placeholder="Select a section" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sections.map((section) => (
-                      <SelectItem key={section.id} value={section.id}>
-                        {section.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              {selectedSection && (
-                <div className="space-y-2">
-                  <Label>Subsection</Label>
-                  <Select value={selectedSubsectionId} onValueChange={setSelectedSubsectionId}>
-                    <SelectTrigger className="bg-background/80">
-                      <SelectValue placeholder="Select a subsection" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {selectedSection.subsections.map((subsection) => (
-                        <SelectItem key={subsection.id} value={subsection.id}>
-                          {subsection.title}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-              
-              <div className="space-y-2">
-                <Label htmlFor="task-title">Task Title</Label>
-                <Input
-                  id="task-title"
-                  placeholder="e.g., Finish Part 1, 2 Job Apps"
-                  value={taskTitle}
-                  onChange={(e) => setTaskTitle(e.target.value)}
-                  className="bg-background/80"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="task-description">
-                  Description <span className="text-muted-foreground text-xs font-normal">(Optional)</span>
-                </Label>
-                <Textarea
-                  id="task-description"
-                  placeholder="Add more details about this task..."
-                  value={taskDescription}
-                  onChange={(e) => setTaskDescription(e.target.value)}
-                  className="bg-background/80 min-h-[80px]"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <CalendarIcon className="w-4 h-4" />
-                  Due Date <span className="text-muted-foreground text-xs font-normal">(Optional)</span>
-                </Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal bg-background/80",
-                        !taskDueDate && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {taskDueDate ? format(taskDueDate, "PPP") : <span>Pick a date (optional)</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={taskDueDate}
-                      onSelect={setTaskDueDate}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-              
-              <Button 
-                type="submit" 
-                className="w-full bg-gradient-primary hover:opacity-90"
-                disabled={!selectedSectionId || !selectedSubsectionId}
+          <ChevronRight className="w-3 h-3 text-muted-foreground shrink-0" />
+
+          {/* Subsection: dropdown if subsections exist in selected section, else plain pill */}
+          {selectedSection && selectedSection.subsections.length > 0 ? (
+            <Select value={selectedSubsectionId || ''} onValueChange={handleSubsectionChange}>
+              <SelectTrigger
+                className={cn(
+                  pillClass(mode === 'subsection'),
+                  'h-auto border-0 shadow-none focus:ring-0 focus:ring-offset-0 bg-transparent',
+                  mode === 'subsection' && 'bg-background shadow-sm'
+                )}
               >
-                Add Task
-              </Button>
-            </form>
-          </TabsContent>
-        </Tabs>
+                <SelectValue>
+                  {selectedSubsection ? selectedSubsection.title : 'Subsection'}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {selectedSection.subsections.map((subsection) => (
+                  <SelectItem key={subsection.id} value={subsection.id}>
+                    {subsection.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <button
+              type="button"
+              onClick={() => selectedSectionId && setMode('subsection')}
+              className={pillClass(mode === 'subsection', !selectedSectionId)}
+            >
+              Subsection
+            </button>
+          )}
+
+          <ChevronRight className="w-3 h-3 text-muted-foreground shrink-0" />
+
+          {/* Task: always a plain pill */}
+          <button
+            type="button"
+            onClick={() => selectedSectionId && selectedSubsectionId && setMode('task')}
+            className={pillClass(mode === 'task', !selectedSubsectionId)}
+          >
+            Task
+          </button>
+        </div>
+
+        {/* Section form */}
+        {mode === 'section' && (
+          <form onSubmit={handleAddSection} className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="section-title">Section Title</Label>
+              <Input
+                id="section-title"
+                placeholder="e.g., Work, Personal, School"
+                value={sectionTitle}
+                onChange={(e) => setSectionTitle(e.target.value)}
+                className="bg-background/80"
+              />
+            </div>
+            <Button type="submit" className="w-full bg-gradient-primary hover:opacity-90">
+              Add Section
+            </Button>
+          </form>
+        )}
+
+        {/* Subsection form */}
+        {mode === 'subsection' && (
+          <form onSubmit={handleAddSubsection} className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="subsection-title">Subsection Title</Label>
+              <Input
+                id="subsection-title"
+                placeholder="e.g., Payroll, Class Project, Chores"
+                value={subsectionTitle}
+                onChange={(e) => setSubsectionTitle(e.target.value)}
+                className="bg-background/80"
+              />
+            </div>
+            <Button
+              type="submit"
+              className="w-full bg-gradient-primary hover:opacity-90"
+              disabled={!selectedSectionId}
+            >
+              Add Subsection
+            </Button>
+          </form>
+        )}
+
+        {/* Task form */}
+        {mode === 'task' && (
+          <form onSubmit={handleAddTask} className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="task-title">Task Title</Label>
+              <Input
+                id="task-title"
+                placeholder="e.g., Finish Part 1, 2 Job Apps"
+                value={taskTitle}
+                onChange={(e) => setTaskTitle(e.target.value)}
+                className="bg-background/80"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="task-description">
+                Description <span className="text-muted-foreground text-xs font-normal">(Optional)</span>
+              </Label>
+              <Textarea
+                id="task-description"
+                placeholder="Add more details about this task..."
+                value={taskDescription}
+                onChange={(e) => setTaskDescription(e.target.value)}
+                className="bg-background/80 min-h-[80px]"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="flex items-center gap-2">
+                <CalendarIcon className="w-4 h-4" />
+                Due Date <span className="text-muted-foreground text-xs font-normal">(Optional)</span>
+              </Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      'w-full justify-start text-left font-normal bg-background/80 border-gray-400 dark:border-border',
+                      !taskDueDate && 'text-muted-foreground'
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {taskDueDate ? format(taskDueDate, 'PPP') : <span>Pick a date (optional)</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={taskDueDate}
+                    onSelect={setTaskDueDate}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full bg-gradient-primary hover:opacity-90"
+              disabled={!selectedSectionId || !selectedSubsectionId}
+            >
+              Add Task
+            </Button>
+          </form>
+        )}
       </CardContent>
     </Card>
   );
