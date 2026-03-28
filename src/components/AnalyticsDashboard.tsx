@@ -682,8 +682,13 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
     const effortMap = new Map(effortDailyStats.map(s => [s.date, s.count]));
     allDates.forEach(d => { d.count = effortMap.get(d.date) || 0; });
 
+    // Trim display range: start 1 day before first logged effort for breathing room
+    const firstEffortDate = effortDailyStats.length > 0 ? effortDailyStats[0].date : todayStr;
+    const firstIdx = Math.max(0, allDates.findIndex(d => d.date >= firstEffortDate) - 1);
+    const displayDates = allDates.slice(firstIdx);
+
     const containerWidth = effortChartRef.current.getBoundingClientRect().width || 750;
-    const margin = { top: 24, right: 20, bottom: 44, left: 44 };
+    const margin = { top: 24, right: 36, bottom: 44, left: 44 };
     const width = containerWidth - margin.left - margin.right;
     const height = 300 - margin.top - margin.bottom;
 
@@ -715,19 +720,19 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
     const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
 
     const xScale = d3.scaleBand()
-      .domain(allDates.map(d => d.date))
+      .domain(displayDates.map(d => d.date))
       .range([0, width])
       .padding(0.25);
 
-    const maxCount = d3.max(allDates, d => d.count) || 1;
+    const maxCount = d3.max(displayDates, d => d.count) || 1;
     const yScale = d3.scaleLinear()
-      .domain([0, maxCount + 1])
-      .nice()
+      .domain([0, maxCount + 0.5])
       .range([height, 0]);
 
-    // ── Horizontal grid lines only (cleaner look) ─────────────────────────
+    // ── Horizontal grid lines at integer values only ───────────────────────
+    const yTicks = Array.from({ length: maxCount + 1 }, (_, i) => i);
     const yGridAxis = g.append('g').attr('class', 'grid')
-      .call(d3.axisLeft(yScale).ticks(Math.min(maxCount + 1, 5)).tickSize(-width).tickFormat(() => ''));
+      .call(d3.axisLeft(yScale).tickValues(yTicks).tickSize(-width).tickFormat(() => ''));
     yGridAxis.select('.domain').remove();
     yGridAxis.selectAll('line')
       .attr('stroke', 'currentColor')
@@ -735,9 +740,9 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
       .attr('stroke-dasharray', '4,4');
 
     // ── Average reference line ─────────────────────────────────────────────
-    const activeDays = allDates.filter(d => d.count > 0).length;
+    const activeDays = displayDates.filter(d => d.count > 0).length;
     if (activeDays > 0) {
-      const totalEffort = allDates.reduce((s, d) => s + d.count, 0);
+      const totalEffort = displayDates.reduce((s, d) => s + d.count, 0);
       const avg = totalEffort / activeDays;
       g.append('line')
         .attr('x1', 0).attr('x2', width)
@@ -757,7 +762,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
 
     // ── Bars ──────────────────────────────────────────────────────────────
     g.selectAll('rect.bar')
-      .data(allDates)
+      .data(displayDates)
       .enter()
       .append('rect')
       .attr('class', 'bar')
@@ -771,7 +776,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
 
     // ── Count labels ──────────────────────────────────────────────────────
     g.selectAll('text.bar-label')
-      .data(allDates.filter(d => d.count > 0))
+      .data(displayDates.filter(d => d.count > 0))
       .enter()
       .append('text')
       .attr('class', 'bar-label')
@@ -797,7 +802,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
 
     // Invisible hit-area rects for hover
     g.selectAll('rect.hit')
-      .data(allDates)
+      .data(displayDates)
       .enter()
       .append('rect')
       .attr('class', 'hit')
@@ -825,8 +830,10 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
       .on('mouseout', () => tooltip.style('display', 'none'));
 
     // ── X-axis ────────────────────────────────────────────────────────────
-    const tickDates = allDates
-      .filter((_, i) => i % 10 === 0 || i === allDates.length - 1)
+    // Show evenly spaced labels across the visible range (max ~6 labels)
+    const tickInterval = Math.max(1, Math.floor(displayDates.length / 6));
+    const tickDates = displayDates
+      .filter((_, i) => i % tickInterval === 0 || i === displayDates.length - 1)
       .map(d => d.date);
 
     const xAxis = g.append('g').attr('transform', `translate(0,${height})`)
@@ -849,7 +856,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
     const yAxis = g.append('g')
       .call(
         d3.axisLeft(yScale)
-          .ticks(Math.min(maxCount + 1, 5))
+          .tickValues(yTicks)
           .tickFormat(d => String(Math.round(+d)))
       );
     yAxis.select('.domain').remove();
