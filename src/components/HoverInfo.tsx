@@ -612,7 +612,7 @@ const HoverInfo: React.FC<HoverInfoProps> = ({
                       <DialogTitle>Task Description</DialogTitle>
                     </DialogHeader>
                     <div className="p-4 bg-muted/30 rounded-lg">
-                      <p className="text-sm whitespace-pre-wrap">{slice.task.description}</p>
+                      <p className="text-sm whitespace-pre-wrap break-all">{slice.task.description}</p>
                     </div>
                   </DialogContent>
                 </Dialog>
