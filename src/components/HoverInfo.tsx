@@ -573,12 +573,14 @@ const HoverInfo: React.FC<HoverInfoProps> = ({
                         onClick={() => onTaskClick?.(task.id, slice.section.id, slice.subsection!.id)}
                       >
                         <span className="truncate flex-1">{task.title}</span>
-                        <Badge 
-                          variant={overdue ? 'destructive' : daysUntil <= 3 ? 'secondary' : 'outline'}
-                          className="ml-2 text-xs"
-                        >
-                          {overdue ? 'Overdue' : daysUntil === 0 ? 'Today' : daysUntil === 1 ? 'Tomorrow' : `${daysUntil}d`}
-                        </Badge>
+                        {daysUntil !== Infinity && (
+                          <Badge
+                            variant={overdue ? 'destructive' : daysUntil <= 3 ? 'secondary' : 'outline'}
+                            className="ml-2 text-xs"
+                          >
+                            {overdue ? 'Overdue' : daysUntil === 0 ? 'Today' : daysUntil === 1 ? 'Tomorrow' : `${daysUntil}d`}
+                          </Badge>
+                        )}
                       </div>
                     );
                   })}

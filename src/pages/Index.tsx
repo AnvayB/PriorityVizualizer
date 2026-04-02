@@ -634,6 +634,18 @@ const Index = () => {
           return section;
         });
       });
+
+      // Clear the HoverInfo panel if the deleted item is currently displayed
+      if (type === 'task' && taskId) {
+        if (pinnedSlice?.task?.id === taskId) setPinnedSlice(null);
+        if (hoveredSlice?.task?.id === taskId) setHoveredSlice(null);
+      } else if (type === 'subsection' && subsectionId) {
+        if (pinnedSlice?.subsection?.id === subsectionId) setPinnedSlice(null);
+        if (hoveredSlice?.subsection?.id === subsectionId) setHoveredSlice(null);
+      } else if (type === 'section') {
+        if (pinnedSlice?.section?.id === sectionId) setPinnedSlice(null);
+        if (hoveredSlice?.section?.id === sectionId) setHoveredSlice(null);
+      }
     } catch (error) {
       console.error('Error deleting:', error);
       toast({
