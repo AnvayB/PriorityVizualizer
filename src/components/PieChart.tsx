@@ -5,6 +5,7 @@ interface PieChartProps {
   sections: Section[];
   onHover?: (slice: ChartSlice | null) => void;
   onSliceClick?: (slice: ChartSlice) => void;
+  showOverdueArcs?: boolean;
 }
 
 const CHART_COLORS = [
@@ -18,7 +19,15 @@ const CHART_COLORS = [
   'hsl(var(--chart-8))',
 ];
 
-const PieChart: React.FC<PieChartProps> = ({ sections, onHover, onSliceClick }) => {
+const isOverdue = (dateString: string) => {
+  if (!dateString) return false;
+  const d = new Date(dateString + 'T00:00:00');
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return d < today;
+};
+
+const PieChart: React.FC<PieChartProps> = ({ sections, onHover, onSliceClick, showOverdueArcs = false }) => {
   const [hoveredSlice, setHoveredSlice] = useState<ChartSlice | null>(null);
 
   const chartData = useMemo(() => {
@@ -114,6 +123,21 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover, onSliceClick }) 
     });
 
     return slices;
+  }, [sections]);
+
+  const overdueData = useMemo(() => {
+    const map: Record<string, { total: number; overdue: number }> = {};
+    for (const section of sections) {
+      let total = 0, overdue = 0;
+      for (const sub of section.subsections) {
+        for (const task of sub.tasks) {
+          total++;
+          if (isOverdue(task.dueDate)) overdue++;
+        }
+      }
+      map[section.id] = { total, overdue };
+    }
+    return map;
   }, [sections]);
 
   // Calculate dynamic dimensions based on content
@@ -282,6 +306,34 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover, onSliceClick }) 
             )}
           </g>
         ))}
+        {showOverdueArcs && chartData
+          .filter(slice => slice.level === 'section')
+          .map((slice, index) => {
+            const data = overdueData[slice.section.id];
+            if (!data || data.total === 0 || data.overdue === 0) return null;
+            const { total, overdue } = data;
+            const arcR = 276;
+            const fillEndAngle = slice.startAngle + (overdue / total) * (slice.endAngle - slice.startAngle);
+            const startRad = (slice.startAngle * Math.PI) / 180;
+            const endRad = (fillEndAngle * Math.PI) / 180;
+            const x1 = centerPoint + arcR * Math.cos(startRad);
+            const y1 = centerPoint + arcR * Math.sin(startRad);
+            const x2 = centerPoint + arcR * Math.cos(endRad);
+            const y2 = centerPoint + arcR * Math.sin(endRad);
+            const largeArc = (fillEndAngle - slice.startAngle) > 180 ? 1 : 0;
+            const d = `M ${x1} ${y1} A ${arcR} ${arcR} 0 ${largeArc} 1 ${x2} ${y2}`;
+            return (
+              <path
+                key={`overdue-arc-${index}`}
+                d={d}
+                fill="none"
+                stroke={slice.color}
+                strokeWidth="8"
+                strokeLinecap="round"
+                className="pointer-events-none"
+              />
+            );
+          })}
       </svg>
     </div>
   );

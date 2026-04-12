@@ -4,6 +4,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import PieChart from '@/components/PieChart';
@@ -38,6 +39,7 @@ const Index = () => {
   const [isDueTodayModalOpen, setIsDueTodayModalOpen] = useState(false);
   const [isDueSoonModalOpen, setIsDueSoonModalOpen] = useState(false);
   const [isOverdueModalOpen, setIsOverdueModalOpen] = useState(false);
+  const [showOverdueArcs, setShowOverdueArcs] = useState(false);
   const [showTutorialModal, setShowTutorialModal] = useState(false);
   const [dontShowTutorial, setDontShowTutorial] = useState(false);
   const [isNewUser, setIsNewUser] = useState<boolean | null>(null);
@@ -1959,6 +1961,19 @@ const Index = () => {
                       <p className="text-sm text-muted-foreground group-hover:text-purple-500/80 transition-colors">Overdue</p>
                     </div>
                   </div>
+                  <div
+                    className="flex items-center gap-2 mt-3"
+                    onClick={e => e.stopPropagation()}
+                  >
+                    <Switch
+                      id="overdue-arcs-toggle"
+                      checked={showOverdueArcs}
+                      onCheckedChange={setShowOverdueArcs}
+                    />
+                    <label htmlFor="overdue-arcs-toggle" className="text-xs cursor-pointer select-none text-muted-foreground">
+                      Show on chart
+                    </label>
+                  </div>
                 </CardContent>
               </Card>
             </DialogTrigger>
@@ -2229,10 +2244,11 @@ const Index = () => {
                 {(() => {
                   console.log('[Index] Rendering PieChart area, sections.length:', sections.length);
                   return sections.length > 0 ? (
-                    <PieChart 
-                      sections={sections} 
+                    <PieChart
+                      sections={sections}
                       onHover={setHoveredSlice}
                       onSliceClick={handleSliceClickForForm}
+                      showOverdueArcs={showOverdueArcs}
                     />
                   ) : (
                     <div className="flex items-center justify-center h-96 text-center">
