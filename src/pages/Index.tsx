@@ -38,6 +38,7 @@ const Index = () => {
   const [isDueTodayModalOpen, setIsDueTodayModalOpen] = useState(false);
   const [isDueSoonModalOpen, setIsDueSoonModalOpen] = useState(false);
   const [isOverdueModalOpen, setIsOverdueModalOpen] = useState(false);
+  const [showOverdueArcs, setShowOverdueArcs] = useState(false);
   const [showTutorialModal, setShowTutorialModal] = useState(false);
   const [dontShowTutorial, setDontShowTutorial] = useState(false);
   const [isNewUser, setIsNewUser] = useState<boolean | null>(null);
@@ -1782,6 +1783,8 @@ const Index = () => {
                       setEffortRefresh(prev => prev + 1);
                       loadTodayEffortCount();
                     }}
+                    showOverdueArcs={showOverdueArcs}
+                    onShowOverdueArcsChange={setShowOverdueArcs}
                   />
                 )}
                 <Button
@@ -2229,10 +2232,11 @@ const Index = () => {
                 {(() => {
                   console.log('[Index] Rendering PieChart area, sections.length:', sections.length);
                   return sections.length > 0 ? (
-                    <PieChart 
-                      sections={sections} 
+                    <PieChart
+                      sections={sections}
                       onHover={setHoveredSlice}
                       onSliceClick={handleSliceClickForForm}
+                      showOverdueArcs={showOverdueArcs}
                     />
                   ) : (
                     <div className="flex items-center justify-center h-96 text-center">
