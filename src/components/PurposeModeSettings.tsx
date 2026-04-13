@@ -8,8 +8,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { toZonedTime } from 'date-fns-tz';
 import { format } from 'date-fns';
-import { TrendingUp, Upload, X, Flower, Star, Sparkles, Trash2 } from 'lucide-react';
+import { Settings, Upload, X, Flower, Star, Sparkles, Trash2, ChevronDown, TrendingUp, Layers } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Switch } from '@/components/ui/switch';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 const SAMPLE_IMAGES = [
   { src: '/purpose-samples/compass.svg',  label: 'Compass – find your direction' },
@@ -25,6 +27,8 @@ interface PurposeModeSettingsProps {
   animationIcon: 'flower' | 'star' | 'sparkle';
   onSettingsUpdate: () => void;
   onEffortCleared?: () => void;
+  showOverdueArcs: boolean;
+  onShowOverdueArcsChange: (value: boolean) => void;
 }
 
 const PurposeModeSettings: React.FC<PurposeModeSettingsProps> = ({
@@ -34,10 +38,14 @@ const PurposeModeSettings: React.FC<PurposeModeSettingsProps> = ({
   animationIcon,
   onSettingsUpdate,
   onEffortCleared,
+  showOverdueArcs,
+  onShowOverdueArcsChange,
 }) => {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isProgressModeOpen, setIsProgressModeOpen] = useState(false);
+  const [isOverdueArcsOpen, setIsOverdueArcsOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleTogglePurposeMode = async (enabled: boolean) => {
@@ -325,154 +333,192 @@ const PurposeModeSettings: React.FC<PurposeModeSettingsProps> = ({
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="h-9 w-9 p-0 border-gray-400 dark:border-border" title="Progress Mode Settings">
-          <TrendingUp className="w-4 h-4" />
+        <Button variant="outline" size="sm" className="h-9 w-9 p-0 border-gray-400 dark:border-border" title="Settings">
+          <Settings className="w-4 h-4" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80" align="end">
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <h4 className="font-medium text-sm">Progress Mode</h4>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="purpose-mode"
-                checked={purposeModeEnabled}
-                onCheckedChange={handleTogglePurposeMode}
-              />
-              <Label
-                htmlFor="purpose-mode"
-                className="text-sm font-normal cursor-pointer"
-              >
-                Enable Progress Mode
-              </Label>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Click <span className="font-medium text-foreground">Worked on Today</span> on any task slice to log effort. When enabled, your goal image appears as a visual marker around slices you've worked on.
-            </p>
-          </div>
+      <PopoverContent className="w-80 max-h-[80vh] overflow-y-auto" align="end">
+        <div className="space-y-1">
+          <h4 className="font-semibold text-sm mb-3">Settings</h4>
 
-          {purposeModeEnabled && (
-            <>
+          {/* Progress Mode section */}
+          <Collapsible open={isProgressModeOpen} onOpenChange={setIsProgressModeOpen}>
+            <CollapsibleTrigger className="flex items-center justify-between w-full rounded-md px-2 py-1.5 hover:bg-muted/50 transition-colors">
+              <span className="flex items-center gap-2 text-sm font-medium">
+                <TrendingUp className="w-4 h-4 text-muted-foreground" />
+                Progress Mode
+              </span>
+              <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform duration-200", isProgressModeOpen && "rotate-180")} />
+            </CollapsibleTrigger>
+            <CollapsibleContent className="px-2 pt-2 space-y-4">
               <div className="space-y-2">
-                <Label className="text-sm font-medium">Goal Image</Label>
-                <p className="text-xs text-muted-foreground">
-                  Choose a built-in image or upload your own (recommended: 256×256px square).
-                </p>
-                {/* Sample image grid */}
-                <div className="grid grid-cols-4 gap-2">
-                  {SAMPLE_IMAGES.map(({ src, label }) => (
-                    <button
-                      key={src}
-                      title={label}
-                      onClick={() => handleSelectSampleImage(src)}
-                      className={cn(
-                        "rounded-full overflow-hidden border-2 cursor-pointer transition-all focus:outline-none",
-                        purposeImageUrl === src
-                          ? "border-primary ring-2 ring-primary/30"
-                          : "border-border hover:border-primary/50"
-                      )}
-                    >
-                      <img src={src} alt={label} className="w-14 h-14 object-cover" />
-                    </button>
-                  ))}
-                </div>
-                {/* Divider */}
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <div className="flex-1 border-t border-border" />
-                  <span>or upload your own</span>
-                  <div className="flex-1 border-t border-border" />
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) handleImageUpload(file);
-                    }}
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="purpose-mode"
+                    checked={purposeModeEnabled}
+                    onCheckedChange={handleTogglePurposeMode}
                   />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploading}
-                    className="flex-1"
+                  <Label
+                    htmlFor="purpose-mode"
+                    className="text-sm font-normal cursor-pointer"
                   >
-                    <Upload className="w-4 h-4 mr-2" />
-                    {isUploading ? 'Uploading...' : purposeImageUrl ? 'Change Image' : 'Upload Image'}
-                  </Button>
-                  {purposeImageUrl && (
+                    Enable Progress Mode
+                  </Label>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Click <span className="font-medium text-foreground">Worked on Today</span> on any task slice to log effort. When enabled, your goal image appears as a visual marker around slices you've worked on.
+                </p>
+              </div>
+
+              {purposeModeEnabled && (
+                <>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Goal Image</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Choose a built-in image or upload your own (recommended: 256×256px square).
+                    </p>
+                    <div className="grid grid-cols-4 gap-2">
+                      {SAMPLE_IMAGES.map(({ src, label }) => (
+                        <button
+                          key={src}
+                          title={label}
+                          onClick={() => handleSelectSampleImage(src)}
+                          className={cn(
+                            "rounded-full overflow-hidden border-2 cursor-pointer transition-all focus:outline-none",
+                            purposeImageUrl === src
+                              ? "border-primary ring-2 ring-primary/30"
+                              : "border-border hover:border-primary/50"
+                          )}
+                        >
+                          <img src={src} alt={label} className="w-14 h-14 object-cover" />
+                        </button>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <div className="flex-1 border-t border-border" />
+                      <span>or upload your own</span>
+                      <div className="flex-1 border-t border-border" />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleImageUpload(file);
+                        }}
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploading}
+                        className="flex-1"
+                      >
+                        <Upload className="w-4 h-4 mr-2" />
+                        {isUploading ? 'Uploading...' : purposeImageUrl ? 'Change Image' : 'Upload Image'}
+                      </Button>
+                      {purposeImageUrl && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleRemoveImage}
+                          className="px-2"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                    {purposeImageUrl && (
+                      <div className="mt-2">
+                        <img
+                          src={purposeImageUrl}
+                          alt="Goal image preview"
+                          className="w-16 h-16 rounded-full object-cover border border-border"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Icon</Label>
+                    <Select value={animationIcon} onValueChange={handleAnimationIconChange}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="flower">
+                          <div className="flex items-center gap-2">
+                            <Flower className="w-4 h-4" />
+                            <span>Flower</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="star">
+                          <div className="flex items-center gap-2">
+                            <Star className="w-4 h-4" />
+                            <span>Star</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="sparkle">
+                          <div className="flex items-center gap-2">
+                            <Sparkles className="w-4 h-4" />
+                            <span>Sparkle</span>
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Choose the icon that appears around the anchor when you mark effort on tasks.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2 pt-2 border-t border-border">
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={handleRemoveImage}
-                      className="px-2"
+                      onClick={handleClearAllIcons}
+                      className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
                     >
-                      <X className="w-4 h-4" />
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Clear All Icons
                     </Button>
-                  )}
-                </div>
-                {purposeImageUrl && (
-                  <div className="mt-2">
-                    <img
-                      src={purposeImageUrl}
-                      alt="Goal image preview"
-                      className="w-16 h-16 rounded-full object-cover border border-border"
-                    />
+                    <p className="text-xs text-muted-foreground">
+                      Remove all effort icons from the purpose anchor for today.
+                    </p>
                   </div>
-                )}
-              </div>
+                </>
+              )}
+            </CollapsibleContent>
+          </Collapsible>
 
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Icon</Label>
-                <Select value={animationIcon} onValueChange={handleAnimationIconChange}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="flower">
-                      <div className="flex items-center gap-2">
-                        <Flower className="w-4 h-4" />
-                        <span>Flower</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="star">
-                      <div className="flex items-center gap-2">
-                        <Star className="w-4 h-4" />
-                        <span>Star</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="sparkle">
-                      <div className="flex items-center gap-2">
-                        <Sparkles className="w-4 h-4" />
-                        <span>Sparkle</span>
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  Choose the icon that appears around the anchor when you mark effort on tasks.
-                </p>
-              </div>
+          <div className="border-t border-border/50 my-1" />
 
-              <div className="space-y-2 pt-2 border-t border-border">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleClearAllIcons}
-                  className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
-                >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Clear All Icons
-                </Button>
-                <p className="text-xs text-muted-foreground">
-                  Remove all effort icons from the purpose anchor for today.
-                </p>
+          {/* Chart Overlays section */}
+          <Collapsible open={isOverdueArcsOpen} onOpenChange={setIsOverdueArcsOpen}>
+            <CollapsibleTrigger className="flex items-center justify-between w-full rounded-md px-2 py-1.5 hover:bg-muted/50 transition-colors">
+              <span className="flex items-center gap-2 text-sm font-medium">
+                <Layers className="w-4 h-4 text-muted-foreground" />
+                Chart Overlays
+              </span>
+              <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform duration-200", isOverdueArcsOpen && "rotate-180")} />
+            </CollapsibleTrigger>
+            <CollapsibleContent className="px-2 pt-2 space-y-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-normal">Overdue progress arcs</p>
+                  <p className="text-xs text-muted-foreground">Show colored arcs outside the chart indicating overdue tasks per section.</p>
+                </div>
+                <Switch
+                  id="overdue-arcs-toggle"
+                  checked={showOverdueArcs}
+                  onCheckedChange={onShowOverdueArcsChange}
+                  className="ml-3 shrink-0"
+                />
               </div>
-            </>
-          )}
+            </CollapsibleContent>
+          </Collapsible>
         </div>
       </PopoverContent>
     </Popover>

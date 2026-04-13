@@ -4,7 +4,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import PieChart from '@/components/PieChart';
@@ -1784,6 +1783,8 @@ const Index = () => {
                       setEffortRefresh(prev => prev + 1);
                       loadTodayEffortCount();
                     }}
+                    showOverdueArcs={showOverdueArcs}
+                    onShowOverdueArcsChange={setShowOverdueArcs}
                   />
                 )}
                 <Button
@@ -1960,19 +1961,6 @@ const Index = () => {
                       <p className="text-2xl font-bold text-foreground">{overdueTasks.length}</p>
                       <p className="text-sm text-muted-foreground group-hover:text-purple-500/80 transition-colors">Overdue</p>
                     </div>
-                  </div>
-                  <div
-                    className="flex items-center gap-2 mt-3"
-                    onClick={e => e.stopPropagation()}
-                  >
-                    <Switch
-                      id="overdue-arcs-toggle"
-                      checked={showOverdueArcs}
-                      onCheckedChange={setShowOverdueArcs}
-                    />
-                    <label htmlFor="overdue-arcs-toggle" className="text-xs cursor-pointer select-none text-muted-foreground">
-                      Show on chart
-                    </label>
                   </div>
                 </CardContent>
               </Card>
