@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -527,7 +528,7 @@ const HoverInfo: React.FC<HoverInfoProps> = ({
         </div>
       </CardHeader>
       
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-2">
         {slice.level === 'section' && (
           <div className="space-y-2">
             <p className="text-sm text-muted-foreground">
@@ -591,14 +592,13 @@ const HoverInfo: React.FC<HoverInfoProps> = ({
         )}
 
         {slice.level === 'task' && slice.task && (
-          <div className="space-y-3">
+          <div className="space-y-2">
             <div className="flex items-start justify-between gap-3">
-              <div className="space-y-1 flex-1 min-w-0">
+              <div className="flex-1 min-w-0">
                 <p className="text-sm text-muted-foreground">
-                  Section: <span className="text-foreground font-medium">{slice.section.title}</span>
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Subsection: <span className="text-foreground font-medium">{slice.subsection?.title}</span>
+                  <span className="text-foreground font-medium">{slice.section.title}</span>
+                  <span className="mx-1.5 text-muted-foreground/50">→</span>
+                  <span className="text-foreground font-medium">{slice.subsection?.title}</span>
                 </p>
               </div>
               
@@ -709,7 +709,7 @@ const HoverInfo: React.FC<HoverInfoProps> = ({
           </div>
         )}
         
-        <div className="space-y-3 pt-4 border-t border-border/50">
+        <div className="space-y-2 pt-2 border-t border-border/50">
           <div className="flex items-center space-x-2 flex-wrap gap-2">
             <div className="flex items-center space-x-2">
               <Checkbox
@@ -721,7 +721,16 @@ const HoverInfo: React.FC<HoverInfoProps> = ({
                 htmlFor="high-priority"
                 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2"
               >
-                <AlertTriangle className="w-4 h-4 text-red-500" />
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <AlertTriangle className="w-4 h-4 text-red-500 cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>This {slice.level} will display with a {theme === 'dark' ? 'white' : 'black'} border in the chart</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 High Priority
               </label>
             </div>
@@ -735,11 +744,6 @@ const HoverInfo: React.FC<HoverInfoProps> = ({
               />
             )}
           </div>
-          {getCurrentPriority() && (
-            <p className="text-xs text-muted-foreground ml-6">
-              This {slice.level} will display with a {theme === 'dark' ? 'white' : 'black'} border in the chart
-            </p>
-          )}
         </div>
       </CardContent>
     </Card>

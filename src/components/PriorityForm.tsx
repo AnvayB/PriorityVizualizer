@@ -127,13 +127,13 @@ const PriorityForm: React.FC<PriorityFormProps> = ({
 
   return (
     <Card className={`w-full max-w-md bg-card/50 backdrop-blur-sm border-border/50 ${isHighlighted ? 'ring-2 ring-primary/20' : ''}`}>
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-1">
         <CardTitle className="text-primary flex items-center gap-2">
           <Plus className="w-5 h-5" />
           Add Priorities
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-2">
         {/* Tab bar */}
         <div className="flex items-center bg-muted/30 rounded-lg p-1 gap-0.5">
           {/* Section: dropdown if sections exist, else plain pill */}
@@ -216,8 +216,8 @@ const PriorityForm: React.FC<PriorityFormProps> = ({
 
         {/* Section form */}
         {mode === 'section' && (
-          <form onSubmit={handleAddSection} className="space-y-3">
-            <div className="space-y-1.5">
+          <form onSubmit={handleAddSection} className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="section-title">Section Title</Label>
               <Input
                 id="section-title"
@@ -235,8 +235,8 @@ const PriorityForm: React.FC<PriorityFormProps> = ({
 
         {/* Subsection form */}
         {mode === 'subsection' && (
-          <form onSubmit={handleAddSubsection} className="space-y-3">
-            <div className="space-y-1.5">
+          <form onSubmit={handleAddSubsection} className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="subsection-title">Subsection Title</Label>
               <Input
                 id="subsection-title"
@@ -258,8 +258,8 @@ const PriorityForm: React.FC<PriorityFormProps> = ({
 
         {/* Task form */}
         {mode === 'task' && (
-          <form onSubmit={handleAddTask} className="space-y-3">
-            <div className="space-y-1.5">
+          <form onSubmit={handleAddTask} className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="task-title">Task Title</Label>
               <Input
                 id="task-title"
@@ -270,7 +270,7 @@ const PriorityForm: React.FC<PriorityFormProps> = ({
               />
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               <Label htmlFor="task-description">
                 Description <span className="text-muted-foreground text-xs font-normal">(Optional)</span>
               </Label>
@@ -279,11 +279,12 @@ const PriorityForm: React.FC<PriorityFormProps> = ({
                 placeholder="Add more details about this task..."
                 value={taskDescription}
                 onChange={(e) => setTaskDescription(e.target.value)}
-                className="bg-background/80 min-h-[80px]"
+                rows={1}
+                className="bg-background/80 min-h-[36px]"
               />
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               <Label className="flex items-center gap-2">
                 <CalendarIcon className="w-4 h-4" />
                 Due Date <span className="text-muted-foreground text-xs font-normal">(Optional)</span>
