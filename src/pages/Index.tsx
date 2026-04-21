@@ -1831,7 +1831,7 @@ const Index = () => {
 
         {/* Stats Bar */}
       <div className="container mx-auto px-4 md:px-6 py-4 md:py-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-6 md:mb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 mb-3 md:mb-5">
           {/* Combined Tasks & Sections Card */}
           <Card className="bg-card/50 backdrop-blur-sm border-border/50">
             <CardContent className="p-5">
@@ -2207,7 +2207,7 @@ const Index = () => {
         {user && <AnnouncementDialog userId={user.id} />}
 
         {/* Main Content */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 md:gap-10">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-3 md:gap-5">
           {/* Pie Chart */}
           <div className="xl:col-span-2">
             <Card className="bg-card/50 backdrop-blur-sm border-border/50 h-fit">
@@ -2257,7 +2257,7 @@ const Index = () => {
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6 md:space-y-10">
+          <div className="space-y-3 md:space-y-5">
             {/* Hover Info */}
             <HoverInfo
               slice={pinnedSlice || hoveredSlice}
