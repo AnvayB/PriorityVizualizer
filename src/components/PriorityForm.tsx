@@ -72,6 +72,12 @@ const PriorityForm: React.FC<PriorityFormProps> = ({
   };
 
   const handleSectionChange = (value: string) => {
+    if (value === '__new__') {
+      setSelectedSectionId('');
+      setSelectedSubsectionId('');
+      setMode('section');
+      return;
+    }
     if (value === prefilledSectionId && prefilledSubsectionId) {
       setSelectedSectionId(value);
       setSelectedSubsectionId(prefilledSubsectionId);
@@ -147,10 +153,17 @@ const PriorityForm: React.FC<PriorityFormProps> = ({
                 )}
               >
                 <SelectValue>
-                  {selectedSection ? selectedSection.title : 'Section'}
+                  {selectedSection ? selectedSection.title : mode === 'section' ? '+ New Section' : 'Section'}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="__new__">
+                  <span className="flex items-center gap-1.5 text-primary">
+                    <Plus className="w-3.5 h-3.5" />
+                    New Section
+                  </span>
+                </SelectItem>
+                <div className="my-1 border-t border-border/50" />
                 {sections.map((section) => (
                   <SelectItem key={section.id} value={section.id}>
                     {section.title}
