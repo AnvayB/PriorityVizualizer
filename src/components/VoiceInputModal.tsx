@@ -60,6 +60,8 @@ interface VoiceInputModalProps {
     dueDate: string,
     description?: string
   ) => Promise<void>;
+  /** Render a compact inline trigger instead of the full-width dashed button */
+  compact?: boolean;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -84,6 +86,7 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
   onAddSection,
   onAddSubsection,
   onAddTask,
+  compact = false,
 }) => {
   const [open, setOpen] = useState(false);
   const [stage, setStage] = useState<Stage>('idle');
@@ -291,14 +294,26 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
   return (
     <>
       {/* Trigger button */}
-      <Button
-        variant="outline"
-        className="w-full border-dashed border-gray-400 dark:border-border text-muted-foreground hover:text-foreground gap-2"
-        onClick={() => { setOpen(true); }}
-      >
-        <Mic className="w-4 h-4" />
-        Talk to add
-      </Button>
+      {compact ? (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 px-2 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+          onClick={() => { setOpen(true); }}
+        >
+          <Mic className="w-3.5 h-3.5" />
+          Talk to add
+        </Button>
+      ) : (
+        <Button
+          variant="outline"
+          className="w-full border-dashed border-gray-400 dark:border-border text-muted-foreground hover:text-foreground gap-2"
+          onClick={() => { setOpen(true); }}
+        >
+          <Mic className="w-4 h-4" />
+          Talk to add
+        </Button>
+      )}
 
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogContent className="max-w-lg">

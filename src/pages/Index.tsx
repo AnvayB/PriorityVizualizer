@@ -2283,16 +2283,6 @@ const Index = () => {
               onTaskClick={handleTaskClick}
             />
 
-            {/* Voice Input */}
-            {user && (
-              <VoiceInputModal
-                sections={sections}
-                onAddSection={handleAddSection}
-                onAddSubsection={handleAddSubsection}
-                onAddTask={handleAddTask}
-              />
-            )}
-
             {/* Add Form */}
             <PriorityForm
               sections={sections}
@@ -2303,6 +2293,17 @@ const Index = () => {
               prefilledSubsectionId={formPrefilledSubsectionId}
               activeTab={formActiveTab}
               isHighlighted={isFormHighlighted}
+              headerAction={
+                user ? (
+                  <VoiceInputModal
+                    compact
+                    sections={sections}
+                    onAddSection={handleAddSection}
+                    onAddSubsection={handleAddSubsection}
+                    onAddTask={handleAddTask}
+                  />
+                ) : undefined
+              }
             />
           </div>
         </div>
