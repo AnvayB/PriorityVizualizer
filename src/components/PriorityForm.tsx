@@ -21,6 +21,7 @@ interface PriorityFormProps {
   prefilledSubsectionId?: string;
   activeTab?: 'section' | 'subsection' | 'task';
   isHighlighted?: boolean;
+  headerAction?: React.ReactNode;
 }
 
 const PriorityForm: React.FC<PriorityFormProps> = ({
@@ -32,6 +33,7 @@ const PriorityForm: React.FC<PriorityFormProps> = ({
   prefilledSubsectionId = '',
   activeTab = 'section',
   isHighlighted = false,
+  headerAction,
 }) => {
   const [sectionTitle, setSectionTitle] = useState('');
   const [subsectionTitle, setSubsectionTitle] = useState('');
@@ -134,9 +136,12 @@ const PriorityForm: React.FC<PriorityFormProps> = ({
   return (
     <Card className={`w-full max-w-md bg-card/50 backdrop-blur-sm border-border/50 ${isHighlighted ? 'ring-2 ring-primary/20' : ''}`}>
       <CardHeader className="pb-1">
-        <CardTitle className="text-primary flex items-center gap-2">
-          <Plus className="w-5 h-5" />
-          Add Priorities
+        <CardTitle className="text-primary flex items-center justify-between gap-2">
+          <span className="flex items-center gap-2">
+            <Plus className="w-5 h-5" />
+            Add Priorities
+          </span>
+          {headerAction}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
