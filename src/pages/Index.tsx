@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import PieChart from '@/components/PieChart';
 import PriorityForm from '@/components/PriorityForm';
+import VoiceInputModal from '@/components/VoiceInputModal';
 import HoverInfo from '@/components/HoverInfo';
 import CompletionCounter from '@/components/CompletionCounter';
 import DeadlineEditor from '@/components/DeadlineEditor';
@@ -2281,6 +2282,16 @@ const Index = () => {
               purposeAnchorPosition={purposeAnchorPosition}
               onTaskClick={handleTaskClick}
             />
+
+            {/* Voice Input */}
+            {user && (
+              <VoiceInputModal
+                sections={sections}
+                onAddSection={handleAddSection}
+                onAddSubsection={handleAddSubsection}
+                onAddTask={handleAddTask}
+              />
+            )}
 
             {/* Add Form */}
             <PriorityForm
