@@ -4,6 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import {
   Mic,
@@ -184,6 +192,36 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
     });
   };
 
+  const updateSectionTitle = (sIdx: number, title: string) => {
+    setParsedSections((prev) => {
+      const next = structuredClone(prev);
+      next[sIdx].title = title;
+      return next;
+    });
+  };
+
+  const selectExistingSection = (sIdx: number, value: string) => {
+    setParsedSections((prev) => {
+      const next = structuredClone(prev);
+      if (value === '__new__') {
+        next[sIdx].matchedExistingId = undefined;
+      } else {
+        next[sIdx].matchedExistingId = value;
+        const match = sections.find((s) => s.id === value);
+        if (match) next[sIdx].title = match.title;
+      }
+      return next;
+    });
+  };
+
+  const updateSubsectionTitle = (sIdx: number, subIdx: number, title: string) => {
+    setParsedSections((prev) => {
+      const next = structuredClone(prev);
+      next[sIdx].subsections[subIdx].title = title;
+      return next;
+    });
+  };
+
   // ── Confirming ───────────────────────────────────────────────────────────
 
   const confirmAdd = useCallback(async () => {
@@ -341,19 +379,50 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
                       <div key={sIdx} className="space-y-1.5">
                         {/* Section row */}
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold text-foreground">{section.title}</span>
-                          <Badge variant={section.matchedExistingId ? 'secondary' : 'outline'} className="text-xs">
-                            {section.matchedExistingId ? 'Existing' : 'New'}
-                          </Badge>
+                          <Input
+                            value={section.title}
+                            onChange={(e) => updateSectionTitle(sIdx, e.target.value)}
+                            className="h-7 text-sm font-semibold px-2 py-0.5 border-muted hover:border-border focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent flex-1 min-w-0"
+                          />
+                          <Select
+                            value={section.matchedExistingId ?? '__new__'}
+                            onValueChange={(val) => selectExistingSection(sIdx, val)}
+                          >
+                            <SelectTrigger className="h-7 w-fit shrink-0 border-muted hover:border-border focus:ring-0 gap-1 px-2 text-xs">
+                              <SelectValue>
+                                <Badge
+                                  variant={section.matchedExistingId ? 'secondary' : 'outline'}
+                                  className="text-xs pointer-events-none"
+                                >
+                                  {section.matchedExistingId ? 'Existing' : 'New'}
+                                </Badge>
+                              </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="__new__">New section</SelectItem>
+                              {sections.length > 0 && (
+                                <div className="my-1 border-t border-border/50" />
+                              )}
+                              {sections.map((s) => (
+                                <SelectItem key={s.id} value={s.id}>
+                                  {s.title}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
 
                         {section.subsections.map((sub, subIdx) => (
                           <div key={subIdx} className="ml-3 space-y-1">
                             {/* Subsection row */}
-                            <p className="text-xs text-muted-foreground font-medium flex items-center gap-1">
-                              <ChevronRight className="w-3 h-3" />
-                              {sub.title}
-                            </p>
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground font-medium">
+                              <ChevronRight className="w-3 h-3 shrink-0" />
+                              <Input
+                                value={sub.title}
+                                onChange={(e) => updateSubsectionTitle(sIdx, subIdx, e.target.value)}
+                                className="h-6 text-xs px-1.5 py-0 border-muted hover:border-border focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent flex-1 min-w-0"
+                              />
+                            </div>
 
                             {sub.tasks.map((task, tIdx) => (
                               <div
