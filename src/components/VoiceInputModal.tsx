@@ -303,6 +303,9 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
         >
           <Mic className="w-3.5 h-3.5" />
           Talk to add
+          <span className="ml-0.5 rounded-full bg-primary/15 text-primary px-1.5 py-px text-[10px] font-semibold leading-none">
+            Beta
+          </span>
         </Button>
       ) : (
         <Button
