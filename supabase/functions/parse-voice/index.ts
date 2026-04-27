@@ -122,6 +122,7 @@ Return ONLY valid JSON in this exact shape, no markdown, no explanation:
       body: JSON.stringify({
         model: "gpt-4o",
         temperature: 0.2,
+        response_format: { type: "json_object" },
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: transcript },
@@ -138,13 +139,16 @@ Return ONLY valid JSON in this exact shape, no markdown, no explanation:
     }
 
     const gptData = await gptRes.json();
-    const rawJson = gptData.choices[0].message.content.trim();
+    let rawJson = gptData.choices[0].message.content.trim();
+
+    // Strip markdown code fences if present (e.g. ```json ... ```)
+    rawJson = rawJson.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
 
     let parsed: { sections: ParsedSection[] };
     try {
       parsed = JSON.parse(rawJson);
     } catch {
-      return new Response(JSON.stringify({ error: "Failed to parse GPT response", raw: rawJson }), {
+      return new Response(JSON.stringify({ error: `Failed to parse GPT response: ${rawJson.slice(0, 200)}` }), {
         status: 500,
         headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
       });
