@@ -150,8 +150,17 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
         body: form,
       });
 
-      if (fnError) throw new Error(fnError.message);
-      if (data.error) throw new Error(data.error);
+      if (fnError) {
+        // Extract the real error body from the HTTP response
+        let msg = fnError.message;
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const body = await (fnError as any).context?.json?.();
+          if (body?.error) msg = body.error;
+        } catch { /* ignore parse errors */ }
+        throw new Error(msg);
+      }
+      if (data?.error) throw new Error(data.error);
 
       setTranscript(data.transcript ?? '');
       setParsedSections(data.sections ?? []);
