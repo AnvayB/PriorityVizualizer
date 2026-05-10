@@ -415,7 +415,7 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
 
           {/* ── PREVIEW ── */}
           {stage === 'preview' && (
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 overflow-hidden">
               {error && <p className="text-sm text-destructive">{error}</p>}
 
               {parsedSections.length === 0 ? (
@@ -429,11 +429,11 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
                   </p>
 
                   {/* Tree view */}
-                  <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
+                  <div className="space-y-3 max-h-72 overflow-y-auto overflow-x-hidden pr-1">
                     {parsedSections.map((section, sIdx) => (
-                      <div key={sIdx} className="space-y-1.5">
+                      <div key={sIdx} className="space-y-1.5 min-w-0">
                         {/* Section row */}
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 min-w-0 overflow-hidden">
                           <Input
                             value={section.title}
                             onChange={(e) => updateSectionTitle(sIdx, e.target.value)}
@@ -468,9 +468,9 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
                         </div>
 
                         {section.subsections.map((sub, subIdx) => (
-                          <div key={subIdx} className="ml-3 space-y-1">
+                          <div key={subIdx} className="ml-3 space-y-1 min-w-0 overflow-hidden">
                             {/* Subsection row */}
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
                               <ChevronRight className="w-3 h-3 shrink-0 text-muted-foreground" />
                               <Input
                                 value={sub.title}
@@ -515,11 +515,11 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
                             {sub.tasks.map((task, tIdx) => (
                               <div
                                 key={tIdx}
-                                className="ml-4 flex items-start justify-between gap-2 p-2 rounded-md bg-muted/40 hover:bg-muted/60 transition-colors"
+                                className="ml-2 flex items-start justify-between gap-2 p-2 rounded-md bg-muted/40 hover:bg-muted/60 transition-colors min-w-0 overflow-hidden"
                               >
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-1.5 flex-wrap">
-                                    <span className="text-xs font-medium text-foreground">{task.title}</span>
+                                <div className="flex-1 min-w-0 overflow-hidden">
+                                  <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                                    <span className="text-xs font-medium text-foreground truncate max-w-[160px]">{task.title}</span>
                                     {task.high_priority && (
                                       <AlertTriangle className="w-3 h-3 text-red-500 shrink-0" />
                                     )}
@@ -559,7 +559,7 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
                       {transcriptExpanded ? 'Hide' : 'Show'} transcript
                     </button>
                     {transcriptExpanded && (
-                      <p className="mt-2 text-xs text-muted-foreground italic leading-relaxed">{transcript}</p>
+                      <p className="mt-2 text-xs text-muted-foreground italic leading-relaxed break-words">{transcript}</p>
                     )}
                   </div>
 
