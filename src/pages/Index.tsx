@@ -39,7 +39,9 @@ const Index = () => {
   const [isDueTodayModalOpen, setIsDueTodayModalOpen] = useState(false);
   const [isDueSoonModalOpen, setIsDueSoonModalOpen] = useState(false);
   const [isOverdueModalOpen, setIsOverdueModalOpen] = useState(false);
-  const [showOverdueArcs, setShowOverdueArcs] = useState(false);
+  const [showOverdueArcs, setShowOverdueArcs] = useState(
+    () => localStorage.getItem('showOverdueArcs') === 'true'
+  );
   const [showTutorialModal, setShowTutorialModal] = useState(false);
   const [dontShowTutorial, setDontShowTutorial] = useState(false);
   const [isNewUser, setIsNewUser] = useState<boolean | null>(null);
@@ -1785,7 +1787,10 @@ const Index = () => {
                       loadTodayEffortCount();
                     }}
                     showOverdueArcs={showOverdueArcs}
-                    onShowOverdueArcsChange={setShowOverdueArcs}
+                    onShowOverdueArcsChange={(val) => {
+                      setShowOverdueArcs(val);
+                      localStorage.setItem('showOverdueArcs', String(val));
+                    }}
                   />
                 )}
                 <Button

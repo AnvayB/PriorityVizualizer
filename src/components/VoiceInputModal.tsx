@@ -38,6 +38,7 @@ interface ParsedTask {
 
 interface ParsedSubsection {
   title: string;
+  matchedExistingId?: string;
   tasks: ParsedTask[];
 }
 
@@ -174,7 +175,25 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
       if (data?.error) throw new Error(data.error);
 
       setTranscript(data.transcript ?? '');
-      setParsedSections(data.sections ?? []);
+
+      // Client-side subsection matching: for any section that matched an existing
+      // section, try to find existing subsections by name (case-insensitive).
+      const rawSections: ParsedSection[] = data.sections ?? [];
+      const enriched = rawSections.map((ps) => {
+        const existingSection = ps.matchedExistingId
+          ? sections.find((s) => s.id === ps.matchedExistingId)
+          : undefined;
+        return {
+          ...ps,
+          subsections: ps.subsections.map((sub) => {
+            const existingSub = existingSection?.subsections.find(
+              (s) => s.title.toLowerCase() === sub.title.toLowerCase()
+            );
+            return { ...sub, matchedExistingId: existingSub?.id };
+          }),
+        };
+      });
+      setParsedSections(enriched);
       setStage('preview');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
@@ -225,6 +244,22 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
     });
   };
 
+  const selectExistingSubsection = (sIdx: number, subIdx: number, value: string) => {
+    setParsedSections((prev) => {
+      const next = structuredClone(prev);
+      const section = next[sIdx];
+      if (value === '__new__') {
+        section.subsections[subIdx].matchedExistingId = undefined;
+      } else {
+        section.subsections[subIdx].matchedExistingId = value;
+        const parentSection = sections.find((s) => s.id === section.matchedExistingId);
+        const match = parentSection?.subsections.find((s) => s.id === value);
+        if (match) section.subsections[subIdx].title = match.title;
+      }
+      return next;
+    });
+  };
+
   // ── Confirming ───────────────────────────────────────────────────────────
 
   const confirmAdd = useCallback(async () => {
@@ -240,11 +275,13 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
           sectionId = newSection.id;
         }
         for (const sub of parsedSection.subsections) {
-          const newSub = await onAddSubsection(sectionId, sub.title);
+          const subsectionId = sub.matchedExistingId
+            ? sub.matchedExistingId
+            : (await onAddSubsection(sectionId, sub.title)).id;
           for (const task of sub.tasks) {
             await onAddTask(
               sectionId,
-              newSub.id,
+              subsectionId,
               task.title,
               task.dueDate ?? '',
               task.description
@@ -378,7 +415,7 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
 
           {/* ── PREVIEW ── */}
           {stage === 'preview' && (
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 overflow-hidden">
               {error && <p className="text-sm text-destructive">{error}</p>}
 
               {parsedSections.length === 0 ? (
@@ -392,11 +429,11 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
                   </p>
 
                   {/* Tree view */}
-                  <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
+                  <div className="space-y-3 max-h-72 overflow-y-auto overflow-x-hidden pr-1">
                     {parsedSections.map((section, sIdx) => (
-                      <div key={sIdx} className="space-y-1.5">
+                      <div key={sIdx} className="space-y-1.5 min-w-0">
                         {/* Section row */}
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 min-w-0 overflow-hidden">
                           <Input
                             value={section.title}
                             onChange={(e) => updateSectionTitle(sIdx, e.target.value)}
@@ -431,25 +468,58 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
                         </div>
 
                         {section.subsections.map((sub, subIdx) => (
-                          <div key={subIdx} className="ml-3 space-y-1">
+                          <div key={subIdx} className="ml-3 space-y-1 min-w-0 overflow-hidden">
                             {/* Subsection row */}
-                            <div className="flex items-center gap-1 text-xs text-muted-foreground font-medium">
-                              <ChevronRight className="w-3 h-3 shrink-0" />
+                            <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
+                              <ChevronRight className="w-3 h-3 shrink-0 text-muted-foreground" />
                               <Input
                                 value={sub.title}
                                 onChange={(e) => updateSubsectionTitle(sIdx, subIdx, e.target.value)}
                                 className="h-6 text-xs px-1.5 py-0 border-muted hover:border-border focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent flex-1 min-w-0"
                               />
+                              {/* Only show subsection picker when parent section is matched to an existing one */}
+                              {(() => {
+                                const parentSection = sections.find((s) => s.id === section.matchedExistingId);
+                                if (!parentSection) return null;
+                                return (
+                                  <Select
+                                    value={sub.matchedExistingId ?? '__new__'}
+                                    onValueChange={(val) => selectExistingSubsection(sIdx, subIdx, val)}
+                                  >
+                                    <SelectTrigger className="h-6 w-fit shrink-0 border-muted hover:border-border focus:ring-0 gap-1 px-1.5 text-xs">
+                                      <SelectValue>
+                                        <Badge
+                                          variant={sub.matchedExistingId ? 'secondary' : 'outline'}
+                                          className="text-xs pointer-events-none"
+                                        >
+                                          {sub.matchedExistingId ? 'Existing' : 'New'}
+                                        </Badge>
+                                      </SelectValue>
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="__new__">New subsection</SelectItem>
+                                      {parentSection.subsections.length > 0 && (
+                                        <div className="my-1 border-t border-border/50" />
+                                      )}
+                                      {parentSection.subsections.map((s) => (
+                                        <SelectItem key={s.id} value={s.id}>
+                                          {s.title}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                );
+                              })()}
                             </div>
 
                             {sub.tasks.map((task, tIdx) => (
                               <div
                                 key={tIdx}
-                                className="ml-4 flex items-start justify-between gap-2 p-2 rounded-md bg-muted/40 hover:bg-muted/60 transition-colors"
+                                className="ml-2 flex items-start justify-between gap-2 p-2 rounded-md bg-muted/40 hover:bg-muted/60 transition-colors min-w-0 overflow-hidden"
                               >
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-1.5 flex-wrap">
-                                    <span className="text-xs font-medium text-foreground">{task.title}</span>
+                                <div className="flex-1 min-w-0 overflow-hidden">
+                                  <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                                    <span className="text-xs font-medium text-foreground truncate max-w-[160px]">{task.title}</span>
                                     {task.high_priority && (
                                       <AlertTriangle className="w-3 h-3 text-red-500 shrink-0" />
                                     )}
@@ -489,7 +559,7 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
                       {transcriptExpanded ? 'Hide' : 'Show'} transcript
                     </button>
                     {transcriptExpanded && (
-                      <p className="mt-2 text-xs text-muted-foreground italic leading-relaxed">{transcript}</p>
+                      <p className="mt-2 text-xs text-muted-foreground italic leading-relaxed break-words">{transcript}</p>
                     )}
                   </div>
 
