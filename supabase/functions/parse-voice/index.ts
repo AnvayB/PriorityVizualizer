@@ -14,7 +14,14 @@ interface ParsedTask {
 
 interface ParsedSubsection {
   title: string;
+  matchedExistingSubsectionId?: string;
   tasks: ParsedTask[];
+}
+
+interface ExistingSectionInput {
+  id: string;
+  title: string;
+  subsections: { id: string; title: string }[];
 }
 
 interface ParsedSection {
@@ -71,19 +78,28 @@ Deno.serve(async (req) => {
     const { text: transcript } = await whisperRes.json();
 
     // --- Step 2: Parse with GPT-4o ---
-    const existingSections: { id: string; title: string }[] = existingSectionsJson
+    const existingSections: ExistingSectionInput[] = existingSectionsJson
       ? JSON.parse(existingSectionsJson)
       : [];
 
     const existingList = existingSections.length > 0
-      ? `The user's existing sections are: ${existingSections.map((s) => `"${s.title}" (id: ${s.id})`).join(", ")}.`
+      ? `The user's existing sections and subsections are:\n${
+          existingSections.map((s) =>
+            `- "${s.title}" (sectionId: ${s.id})` +
+            (s.subsections.length > 0
+              ? `\n  Subsections: ${s.subsections.map((sub) => `"${sub.title}" (subsectionId: ${sub.id})`).join(", ")}`
+              : "")
+          ).join("\n")
+        }`
       : "The user has no existing sections yet.";
 
     const systemPrompt = `You are a task extraction assistant. The user will describe their week or upcoming tasks in natural language. Your job is to parse this into a structured hierarchy of sections, subsections, and tasks.
 
 Rules:
 1. Group related tasks under logical sections (e.g., "Work", "School", "Personal").
-2. ${existingList} If a spoken topic clearly matches an existing section (fuzzy/semantic match), set matchedExistingId to that section's id. Otherwise leave it undefined.
+2a. ${existingList}
+    If a spoken topic clearly matches an existing section (fuzzy/semantic match), set matchedExistingId to that section's sectionId. Otherwise leave it undefined.
+2b. For each subsection inside a matched existing section, semantically compare its topic to the existing subsections listed above. If a good semantic match exists (e.g. "things I need to buy" → "Buy", "shopping list" → "Buy", "gym routine" → "Fitness"), set matchedExistingSubsectionId to that subsection's subsectionId. Only create a new subsection (omit matchedExistingSubsectionId) if no existing subsection is a reasonable fit.
 3. Each section should have at least one subsection (e.g., "Work" → "Projects", "Meetings").
 4. Task titles MUST be ≤15 characters (for chart display). If the natural phrase is longer, create a short title AND put the full phrase as the description.
 5. If the user implies urgency ("urgent", "ASAP", "critical", "important", "must", "need to"), set high_priority: true.
@@ -99,6 +115,7 @@ Return ONLY valid JSON in this exact shape, no markdown, no explanation:
       "subsections": [
         {
           "title": "string",
+          "matchedExistingSubsectionId": "string or omit if new",
           "tasks": [
             {
               "title": "string (≤15 chars)",

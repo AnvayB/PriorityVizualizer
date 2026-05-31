@@ -154,7 +154,13 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
       form.append('audio', blob, `recording.${ext}`);
       form.append(
         'existingSections',
-        JSON.stringify(sections.map((s) => ({ id: s.id, title: s.title })))
+        JSON.stringify(
+          sections.map((s) => ({
+            id: s.id,
+            title: s.title,
+            subsections: s.subsections.map((sub) => ({ id: sub.id, title: sub.title })),
+          }))
+        )
       );
       form.append('today', new Date().toISOString().split('T')[0]);
 
@@ -177,7 +183,8 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
       setTranscript(data.transcript ?? '');
 
       // Client-side subsection matching: for any section that matched an existing
-      // section, try to find existing subsections by name (case-insensitive).
+      // section, prefer GPT's semantic matchedExistingSubsectionId (validated against
+      // real ids) then fall back to case-insensitive exact title match.
       const rawSections: ParsedSection[] = data.sections ?? [];
       const enriched = rawSections.map((ps) => {
         const existingSection = ps.matchedExistingId
@@ -186,10 +193,18 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
         return {
           ...ps,
           subsections: ps.subsections.map((sub) => {
-            const existingSub = existingSection?.subsections.find(
+            // 1. Trust GPT's semantic match only if the id actually exists in this
+            //    parent section (guards against hallucinated ids).
+            const gptMatchId = (sub as ParsedSubsection & { matchedExistingSubsectionId?: string })
+              .matchedExistingSubsectionId;
+            if (gptMatchId && existingSection?.subsections.some((s) => s.id === gptMatchId)) {
+              return { ...sub, matchedExistingId: gptMatchId };
+            }
+            // 2. Case-insensitive exact title match as a safety net.
+            const fallback = existingSection?.subsections.find(
               (s) => s.title.toLowerCase() === sub.title.toLowerCase()
             );
-            return { ...sub, matchedExistingId: existingSub?.id };
+            return { ...sub, matchedExistingId: fallback?.id };
           }),
         };
       });
