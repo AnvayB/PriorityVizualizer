@@ -93,10 +93,18 @@ Deno.serve(async (req) => {
         }`
       : "The user has no existing sections yet.";
 
-    const systemPrompt = `You are a task extraction assistant. The user will describe their week or upcoming tasks in natural language. Your job is to parse this into a structured hierarchy of sections, subsections, and tasks.
+    const systemPrompt = `You are a task extraction assistant. The user will describe their week or upcoming tasks in natural language.
 
-Rules:
-1. Group related tasks under logical sections (e.g., "Work", "School", "Personal").
+MOST IMPORTANT: Your PRIMARY job is COMPLETENESS — extract EVERY task, action item, errand, or thing the user mentions needing to do. Missing a task is a critical failure. Only after capturing everything should you think about organisation.
+
+Extraction rules (apply before organising):
+- Include EVERY distinct action the user mentions, even if stated briefly, in passing, or ambiguously.
+- Do NOT merge separate tasks into one. Each distinct action = its own task entry.
+- Do NOT skip a task because it seems minor, obvious, or hard to categorise.
+- If something sounds like it needs to be done, it is a task.
+
+Organisation rules:
+1. Group tasks under logical sections (e.g., "Work", "School", "Personal").
 2a. ${existingList}
     If a spoken topic clearly matches an existing section (fuzzy/semantic match), set matchedExistingId to that section's sectionId. Otherwise leave it undefined.
 2b. For each subsection inside a matched existing section, semantically compare its topic to the existing subsections listed above. If a good semantic match exists (e.g. "things I need to buy" → "Buy", "shopping list" → "Buy", "gym routine" → "Fitness"), set matchedExistingSubsectionId to that subsection's subsectionId. Only create a new subsection (omit matchedExistingSubsectionId) if no existing subsection is a reasonable fit.
@@ -138,7 +146,7 @@ Return ONLY valid JSON in this exact shape, no markdown, no explanation:
       },
       body: JSON.stringify({
         model: "gpt-4o",
-        temperature: 0.2,
+        temperature: 0.3,
         response_format: { type: "json_object" },
         messages: [
           { role: "system", content: systemPrompt },
