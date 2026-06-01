@@ -84,12 +84,13 @@ Deno.serve(async (req) => {
 
     const existingList = existingSections.length > 0
       ? `The user's existing sections and subsections are:\n${
-          existingSections.map((s) =>
-            `- "${s.title}" (sectionId: ${s.id})` +
-            (s.subsections.length > 0
-              ? `\n  Subsections: ${s.subsections.map((sub) => `"${sub.title}" (subsectionId: ${sub.id})`).join(", ")}`
-              : "")
-          ).join("\n")
+          existingSections.map((s) => {
+            const subs = s.subsections ?? [];
+            return `- "${s.title}" (sectionId: ${s.id})` +
+              (subs.length > 0
+                ? `\n  Subsections: ${subs.map((sub) => `"${sub.title}" (subsectionId: ${sub.id})`).join(", ")}`
+                : "");
+          }).join("\n")
         }`
       : "The user has no existing sections yet.";
 

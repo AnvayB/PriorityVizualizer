@@ -158,7 +158,7 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
           sections.map((s) => ({
             id: s.id,
             title: s.title,
-            subsections: s.subsections.map((sub) => ({ id: sub.id, title: sub.title })),
+            subsections: (s.subsections ?? []).map((sub) => ({ id: sub.id, title: sub.title })),
           }))
         )
       );
@@ -190,18 +190,19 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
         const existingSection = ps.matchedExistingId
           ? sections.find((s) => s.id === ps.matchedExistingId)
           : undefined;
+        const existingSubs = existingSection?.subsections ?? [];
         return {
           ...ps,
-          subsections: ps.subsections.map((sub) => {
+          subsections: (ps.subsections ?? []).map((sub) => {
             // 1. Trust GPT's semantic match only if the id actually exists in this
             //    parent section (guards against hallucinated ids).
             const gptMatchId = (sub as ParsedSubsection & { matchedExistingSubsectionId?: string })
               .matchedExistingSubsectionId;
-            if (gptMatchId && existingSection?.subsections.some((s) => s.id === gptMatchId)) {
+            if (gptMatchId && existingSubs.some((s) => s.id === gptMatchId)) {
               return { ...sub, matchedExistingId: gptMatchId };
             }
             // 2. Case-insensitive exact title match as a safety net.
-            const fallback = existingSection?.subsections.find(
+            const fallback = existingSubs.find(
               (s) => s.title.toLowerCase() === sub.title.toLowerCase()
             );
             return { ...sub, matchedExistingId: fallback?.id };
@@ -496,6 +497,7 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
                               {(() => {
                                 const parentSection = sections.find((s) => s.id === section.matchedExistingId);
                                 if (!parentSection) return null;
+                                const parentSubs = parentSection.subsections ?? [];
                                 return (
                                   <Select
                                     value={sub.matchedExistingId ?? '__new__'}
@@ -513,10 +515,10 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
                                     </SelectTrigger>
                                     <SelectContent>
                                       <SelectItem value="__new__">New subsection</SelectItem>
-                                      {parentSection.subsections.length > 0 && (
+                                      {parentSubs.length > 0 && (
                                         <div className="my-1 border-t border-border/50" />
                                       )}
-                                      {parentSection.subsections.map((s) => (
+                                      {parentSubs.map((s) => (
                                         <SelectItem key={s.id} value={s.id}>
                                           {s.title}
                                         </SelectItem>
