@@ -372,7 +372,7 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
       )}
 
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="w-[calc(100%-2rem)] max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Mic className="w-4 h-4 text-primary" />
