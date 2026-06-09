@@ -312,7 +312,7 @@ const HoverInfo: React.FC<HoverInfoProps> = ({
             )}
           </div>
         </div>
-        <div className="flex items-center gap-2 mt-2">
+        <div className="flex items-center gap-2 mt-2 flex-wrap">
           <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm" onClick={handleEdit} className="border-gray-400 dark:border-border">
