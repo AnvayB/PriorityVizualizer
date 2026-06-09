@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
@@ -37,6 +37,18 @@ const Index = () => {
   const [completionRefresh, setCompletionRefresh] = useState(0);
   const [effortRefresh, setEffortRefresh] = useState(0);
   const [isDueTodayModalOpen, setIsDueTodayModalOpen] = useState(false);
+  // Suppresses chart clicks for a brief window after any HoverInfo dialog closes,
+  // preventing the dialog-dismiss tap from ghost-clicking the chart on mobile.
+  const suppressChartRef = useRef(false);
+  const suppressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleHoverInfoDialogChange = useCallback((open: boolean) => {
+    if (!open) {
+      if (suppressTimerRef.current) clearTimeout(suppressTimerRef.current);
+      suppressChartRef.current = true;
+      suppressTimerRef.current = setTimeout(() => { suppressChartRef.current = false; }, 400);
+    }
+  }, []);
+
   const [isDueSoonModalOpen, setIsDueSoonModalOpen] = useState(false);
   const [isOverdueModalOpen, setIsOverdueModalOpen] = useState(false);
   const [showOverdueArcs, setShowOverdueArcs] = useState(
@@ -1520,6 +1532,7 @@ const Index = () => {
   };
 
   const handleSliceClickForForm = (slice: ChartSlice) => {
+    if (suppressChartRef.current) return;
     // Set the pinned slice for the HoverInfo component
     setPinnedSlice(slice);
     
@@ -1548,6 +1561,7 @@ const Index = () => {
   };
 
   const handleWhiteSpaceClick = () => {
+    if (suppressChartRef.current) return;
     if (pinnedSlice) {
       setPinnedSlice(null);
       setIsFormHighlighted(false);
@@ -2280,6 +2294,7 @@ const Index = () => {
               userId={user?.id}
               purposeModeEnabled={purposeModeEnabled}
               animationIcon={animationIcon}
+              onAnyDialogChange={handleHoverInfoDialogChange}
               onEffortRecorded={() => {
                 setEffortRefresh(prev => prev + 1);
                 // Effort count will be reloaded via useEffect

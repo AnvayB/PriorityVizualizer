@@ -37,6 +37,9 @@ interface HoverInfoProps {
   onEffortRecorded?: () => void;
   purposeAnchorPosition?: { x: number; y: number } | null;
   onTaskClick?: (taskId: string, sectionId: string, subsectionId: string) => void;
+  /** Called whenever any modal/dialog inside HoverInfo opens (true) or closes (false).
+   *  Used by the parent to suppress ghost-tap events on the chart after a dialog closes. */
+  onAnyDialogChange?: (open: boolean) => void;
 }
 
 const HoverInfo: React.FC<HoverInfoProps> = ({
@@ -57,6 +60,7 @@ const HoverInfo: React.FC<HoverInfoProps> = ({
   onMoveSubsection,
   onMoveTask,
   onTaskClick,
+  onAnyDialogChange,
 }) => {
   const { theme } = useTheme();
   const [editTitle, setEditTitle] = useState('');
@@ -70,6 +74,12 @@ const HoverInfo: React.FC<HoverInfoProps> = ({
   const [moveTargetSectionId, setMoveTargetSectionId] = useState('');
   const [moveTargetSubsectionId, setMoveTargetSubsectionId] = useState('');
   const [isDueDatePopoverOpen, setIsDueDatePopoverOpen] = useState(false);
+
+  /** Wraps a dialog-state setter so the parent is notified on every open/close. */
+  const dialogSetter = (setter: (v: boolean) => void) => (open: boolean) => {
+    setter(open);
+    onAnyDialogChange?.(open);
+  };
   
 
   const colors = [
@@ -313,7 +323,7 @@ const HoverInfo: React.FC<HoverInfoProps> = ({
           </div>
         </div>
         <div className="flex items-center gap-2 mt-2 flex-wrap">
-          <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+          <Dialog open={isEditOpen} onOpenChange={dialogSetter(setIsEditOpen)}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm" onClick={handleEdit} className="border-gray-400 dark:border-border">
                 <Edit className="w-3 h-3 mr-1" />
@@ -389,6 +399,7 @@ const HoverInfo: React.FC<HoverInfoProps> = ({
           {(slice.level === 'subsection' || slice.level === 'task') && (
             <Dialog open={isMoveOpen} onOpenChange={(open) => {
               setIsMoveOpen(open);
+              onAnyDialogChange?.(open);
               if (!open) { setMoveTargetSectionId(''); setMoveTargetSubsectionId(''); }
             }}>
               <DialogTrigger asChild>
@@ -476,7 +487,7 @@ const HoverInfo: React.FC<HoverInfoProps> = ({
           )}
 
           {slice.level === 'section' && (
-            <Dialog open={isColorOpen} onOpenChange={setIsColorOpen}>
+            <Dialog open={isColorOpen} onOpenChange={dialogSetter(setIsColorOpen)}>
               <DialogTrigger asChild>
                 <Button variant="outline" size="sm" className="border-gray-400 dark:border-border">
                   <Palette className="w-3 h-3 mr-1" />
