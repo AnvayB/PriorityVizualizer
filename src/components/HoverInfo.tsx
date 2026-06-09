@@ -320,7 +320,7 @@ const HoverInfo: React.FC<HoverInfoProps> = ({
                 Edit
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="w-[calc(100%-2rem)] max-w-lg">
               <DialogHeader>
                 <DialogTitle>Edit {slice.level}</DialogTitle>
               </DialogHeader>
@@ -397,7 +397,7 @@ const HoverInfo: React.FC<HoverInfoProps> = ({
                   Move
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="w-[calc(100%-2rem)] max-w-lg">
                 <DialogHeader>
                   <DialogTitle>Move {slice.level === 'subsection' ? 'Subsection' : 'Task'}</DialogTitle>
                 </DialogHeader>
@@ -483,7 +483,7 @@ const HoverInfo: React.FC<HoverInfoProps> = ({
                   Color
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="w-[calc(100%-2rem)] max-w-lg">
                 <DialogHeader>
                   <DialogTitle>Choose Section Color</DialogTitle>
                 </DialogHeader>
@@ -609,12 +609,12 @@ const HoverInfo: React.FC<HoverInfoProps> = ({
                       View Description
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-lg">
+                  <DialogContent className="w-[calc(100%-2rem)] max-w-lg">
                     <DialogHeader>
                       <DialogTitle>Task Description</DialogTitle>
                     </DialogHeader>
                     <div className="p-4 bg-muted/30 rounded-lg">
-                      <p className="text-sm whitespace-pre-wrap break-all">{slice.task.description}</p>
+                      <p className="text-sm whitespace-pre-wrap break-words">{slice.task.description}</p>
                     </div>
                   </DialogContent>
                 </Dialog>
