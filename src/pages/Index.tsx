@@ -19,7 +19,7 @@ import AnnouncementHistory from '@/components/AnnouncementHistory';
 import PurposeModeSettings from '@/components/PurposeModeSettings';
 import OnboardingModal from '@/components/OnboardingModal';
 import { Section, Subsection, Task, ChartSlice } from '@/types/priorities';
-import { PieChart as PieChartIcon, Target, Calendar, Save, Upload, ChevronDown, LogOut, User, Clock, AlertTriangle, CheckCircle, Info, BookOpen, TrendingUp } from 'lucide-react';
+import { PieChart as PieChartIcon, Target, Calendar, Save, Upload, ChevronDown, LogOut, User, Clock, AlertTriangle, CheckCircle, Info, BookOpen, TrendingUp, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { storeLocalBackup, detectDataLoss, downloadAutoBackup } from '@/utils/dataProtection';
@@ -37,6 +37,20 @@ const Index = () => {
   const [completionRefresh, setCompletionRefresh] = useState(0);
   const [effortRefresh, setEffortRefresh] = useState(0);
   const [isDueTodayModalOpen, setIsDueTodayModalOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = useCallback(async () => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    try {
+      await loadFromSupabase();
+      await loadTodayEffortCount();
+      setCompletionRefresh(prev => prev + 1);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [isRefreshing, loadFromSupabase, loadTodayEffortCount]);
+
   // Suppresses chart clicks for a brief window after any HoverInfo dialog closes,
   // preventing the dialog-dismiss tap from ghost-clicking the chart on mobile.
   const suppressChartRef = useRef(false);
@@ -2232,20 +2246,30 @@ const Index = () => {
           <div className="xl:col-span-2">
             <Card className="bg-card/50 backdrop-blur-sm border-border/50 h-fit">
               <CardHeader className="pb-2">
-                <CardTitle className="text-xl text-primary flex items-center gap-2">
-                  Priority Display
-                  <TooltipProvider>
-                    <Tooltip delayDuration={300}>
-                      <TooltipTrigger asChild>
-                        <Info className="w-4 h-4 text-muted-foreground cursor-help" />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="max-w-xs">
-                          This chart is flexible. Some people structure it as Roles → Goals → Actions (inspired by Stephen Covey) instead of priorities. Use whatever labels help you focus on what matters most.
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                <CardTitle className="text-xl text-primary flex items-center justify-between gap-2">
+                  <span className="flex items-center gap-2">
+                    Priority Display
+                    <TooltipProvider>
+                      <Tooltip delayDuration={300}>
+                        <TooltipTrigger asChild>
+                          <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="max-w-xs">
+                            This chart is flexible. Some people structure it as Roles → Goals → Actions (inspired by Stephen Covey) instead of priorities. Use whatever labels help you focus on what matters most.
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </span>
+                  <button
+                    onClick={handleRefresh}
+                    disabled={isRefreshing}
+                    title="Refresh chart and stats"
+                    className="text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  </button>
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-3 pt-0 md:p-6 md:pt-2" onClick={handleWhiteSpaceClick}>
