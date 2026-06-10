@@ -39,18 +39,6 @@ const Index = () => {
   const [isDueTodayModalOpen, setIsDueTodayModalOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const handleRefresh = useCallback(async () => {
-    if (isRefreshing) return;
-    setIsRefreshing(true);
-    try {
-      await loadFromSupabase();
-      await loadTodayEffortCount();
-      setCompletionRefresh(prev => prev + 1);
-    } finally {
-      setIsRefreshing(false);
-    }
-  }, [isRefreshing, loadFromSupabase, loadTodayEffortCount]);
-
   // Suppresses chart clicks for a brief window after any HoverInfo dialog closes,
   // preventing the dialog-dismiss tap from ghost-clicking the chart on mobile.
   const suppressChartRef = useRef(false);
@@ -241,6 +229,18 @@ const Index = () => {
       console.error('Error loading today effort count:', error);
     }
   }, []);
+
+  const handleRefresh = useCallback(async () => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    try {
+      await loadFromSupabase();
+      await loadTodayEffortCount();
+      setCompletionRefresh(prev => prev + 1);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [isRefreshing, loadFromSupabase, loadTodayEffortCount]);
 
   // Load user settings (purpose mode)
   const loadUserSettings = useCallback(async () => {
