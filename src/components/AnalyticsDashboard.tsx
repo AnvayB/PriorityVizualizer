@@ -539,10 +539,27 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
       return sectionColors[section] || supabaseSectionColors[section] || '#6b7280';
     };
 
-    // Create date scale for x-axis
+    // Build a complete day-by-day range from the earliest completion to today
+    // so every day appears on the x-axis even if no tasks were completed.
+    const pstNow = toZonedTime(new Date(), PST_TZ);
+    const todayStr = format(pstNow, 'yyyy-MM-dd');
+    const earliestDate = dailySectionStats.reduce(
+      (min, d) => (d.date < min ? d.date : min),
+      todayStr
+    );
+    const daysBack = Math.round(
+      (parseISO(todayStr).getTime() - parseISO(earliestDate).getTime()) / 86400000
+    );
+    const allDates: string[] = [];
+    for (let i = daysBack; i >= 0; i--) {
+      allDates.push(format(subDays(pstNow, i), 'yyyy-MM-dd'));
+    }
+    const completionMap = new Map(dailySectionStats.map((d) => [d.date, d]));
+
+    // Create date scale for x-axis (full continuous range)
     const xScale = d3
       .scaleBand()
-      .domain(dailySectionStats.map((d) => d.date))
+      .domain(allDates)
       .range([0, width])
       .padding(0.2);
 
@@ -554,21 +571,23 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
       .nice()
       .range([height, 0]);
 
-    // Prepare data for stacking
+    // Prepare data for stacking — zero-fill days with no completions
     interface StackedDataPoint {
       date: string;
       [key: string]: number | string;
     }
-    
-    const stackedDataPoints: StackedDataPoint[] = dailySectionStats.map((d) => {
-      const result: StackedDataPoint = { date: d.date };
-      
-      topSections.forEach((section) => {
-        result[section] = d.sections[section] || 0;
-      });
 
+    const stackedDataPoints: StackedDataPoint[] = allDates.map((date) => {
+      const existing = completionMap.get(date);
+      const result: StackedDataPoint = { date };
+      topSections.forEach((section) => {
+        result[section] = existing?.sections[section] || 0;
+      });
       return result;
     });
+
+    // Also build a full-range array for bar-label rendering
+    const allDailyStats = allDates.map((date) => completionMap.get(date) || { date, sections: {}, total: 0 });
 
     // Stack the data
     const stack = d3.stack<StackedDataPoint>().keys(sectionKeys);
@@ -624,9 +643,9 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
         return getColor(parentData.key, sectionIndex);
       });
 
-    // Add total value labels on top of bars
+    // Add total value labels on top of bars — only for days with completions
     g.selectAll('text.bar-label')
-      .data(dailySectionStats)
+      .data(allDailyStats.filter((d) => d.total > 0))
       .enter()
       .append('text')
       .attr('class', 'bar-label')
@@ -638,12 +657,20 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
       .style('font-weight', '500')
       .text((d) => d.total);
 
+    // Thin x-axis tick labels so they don't crowd on longer ranges
+    const tickStep = allDates.length > 60 ? 14
+      : allDates.length > 30 ? 7
+      : allDates.length > 14 ? 3
+      : 1;
+    const tickValues = allDates.filter((_, i) => i % tickStep === 0);
+
     // Add axes
     g.append('g')
       .attr('transform', `translate(0,${height})`)
       .call(
         d3
           .axisBottom(xScale)
+          .tickValues(tickValues)
           .tickFormat((d) => {
             const date = parseISO(d as string);
             return format(date, 'MMM d');
