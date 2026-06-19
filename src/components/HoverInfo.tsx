@@ -323,13 +323,11 @@ const HoverInfo: React.FC<HoverInfoProps> = ({
           </div>
         </div>
         <div className="flex items-center gap-2 mt-2 flex-wrap">
+          <Button variant="outline" size="sm" onClick={handleEdit} className="border-gray-400 dark:border-border">
+            <Edit className="w-3 h-3 mr-1" />
+            Edit
+          </Button>
           <Dialog open={isEditOpen} onOpenChange={dialogSetter(setIsEditOpen)}>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm" onClick={handleEdit} className="border-gray-400 dark:border-border">
-                <Edit className="w-3 h-3 mr-1" />
-                Edit
-              </Button>
-            </DialogTrigger>
             <DialogContent className="w-[calc(100%-2rem)] max-w-lg">
               <DialogHeader>
                 <DialogTitle>Edit {slice.level}</DialogTitle>
@@ -624,8 +622,14 @@ const HoverInfo: React.FC<HoverInfoProps> = ({
                     <DialogHeader>
                       <DialogTitle>Task Description</DialogTitle>
                     </DialogHeader>
-                    <div className="p-4 bg-muted/30 rounded-lg">
-                      <p className="text-sm whitespace-pre-wrap break-words">{slice.task.description}</p>
+                    <div className="p-4 bg-muted/30 rounded-lg overflow-hidden">
+                      <p className="text-sm whitespace-pre-wrap break-all">{
+                        slice.task.description.split(/(https?:\/\/[^\s]+)/g).map((part, i) =>
+                          /^https?:\/\//.test(part)
+                            ? <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline break-all">{part}</a>
+                            : part
+                        )
+                      }</p>
                     </div>
                   </DialogContent>
                 </Dialog>

@@ -250,6 +250,22 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover, onSliceClick, sh
         className="drop-shadow-soft w-full h-auto"
         style={{ aspectRatio: '1/1', maxWidth: '624px' }}
       >
+        <defs>
+          {chartData.map((slice, index) => (
+            <clipPath key={`clip-${index}`} id={`slice-clip-${index}`}>
+              <path
+                d={createPath(
+                  slice.startAngle,
+                  slice.endAngle,
+                  getInnerRadius(slice.level),
+                  slice.radius,
+                  centerPoint,
+                  centerPoint
+                )}
+              />
+            </clipPath>
+          ))}
+        </defs>
         {chartData.map((slice, index) => (
           <g key={index}>
             <path
@@ -296,6 +312,7 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover, onSliceClick, sh
                 dominantBaseline="middle"
                 className="pointer-events-none"
                 fill="#000000"
+                clipPath={`url(#slice-clip-${index})`}
                 style={{
                   fontSize: slice.level === 'section' ? 14 : slice.level === 'subsection' ? 12 : 10,
                   fontWeight: 550,
