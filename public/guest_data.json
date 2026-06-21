@@ -2,7 +2,7 @@
     "sections": [
         {
             "id": "f7f9d2c3-6c6e-4a0a-9b24-4d5a8c1f0a01",
-            "title": "Work / School",
+            "title": "Work",
             "color": "#60a5fa",
             "subsections": [
                 {
@@ -39,7 +39,7 @@
                 },
                 {
                     "id": "a1b2c3d4-1111-4444-8888-000000000003",
-                    "title": "Meetings / Classes",
+                    "title": "Meetings",
                     "tasks": [
                         {
                             "id": "c1d2e3f4-0001-0002-0003-000000000005",
@@ -62,7 +62,7 @@
         },
         {
             "id": "7b8c9d0e-3f57-4a1c-8d46-8b8c7d6e0a03",
-            "title": "Home & Chores",
+            "title": "Home",
             "color": "#f59e0b",
             "subsections": [
                 {
@@ -112,7 +112,7 @@
         },
         {
             "id": "1e2f3a41-6c8a-4d4f-a079-1e1f0a9f0a06",
-            "title": "Personal Growth",
+            "title": "Growth",
             "color": "#8b5cf6",
             "subsections": [
                 {
@@ -146,7 +146,7 @@
         },
         {
             "id": "0f1a2b32-7d9b-4e50-b18a-2f2f1b0f0a07",
-            "title": "Social & Fun",
+            "title": "Social",
             "color": "#ef4444",
             "subsections": [
                 {
@@ -175,7 +175,7 @@
         },
         {
             "id": "bd4cd5e6-9fbd-4a72-b3ac-4b4f3d2f0a09",
-            "title": "Meal Planning",
+            "title": "Meals",
             "color": "#f97316",
             "subsections": [
                 {
@@ -209,7 +209,7 @@
         },
         {
             "id": "ef7f0819-c1e0-4da5-b6df-7e7f604f0a12",
-            "title": "Digital Life",
+            "title": "Digital",
             "color": "#64748b",
             "subsections": [
                 {
@@ -255,7 +255,7 @@
         },
         {
             "id": "123b34cc-f513-4fd8-b912-a1a1826f0a15",
-            "title": "Pets / Plants",
+            "title": "Pets",
             "color": "#84cc16",
             "subsections": [
                 {
