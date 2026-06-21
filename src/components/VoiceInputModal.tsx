@@ -48,7 +48,7 @@ interface ParsedSection {
   subsections: ParsedSubsection[];
 }
 
-type Stage = 'idle' | 'recording' | 'processing' | 'preview' | 'adding' | 'done';
+type Stage = 'idle' | 'recording' | 'transcribing' | 'transcript' | 'parsing' | 'preview' | 'adding' | 'done';
 
 interface VoiceInputModalProps {
   sections: Section[];
@@ -95,6 +95,7 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
   const [transcript, setTranscript] = useState('');
   const [parsedSections, setParsedSections] = useState<ParsedSection[]>([]);
   const [transcriptExpanded, setTranscriptExpanded] = useState(false);
+  const [editableTranscript, setEditableTranscript] = useState('');
   const [addingProgress, setAddingProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
@@ -146,12 +147,46 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
   // ── Processing ───────────────────────────────────────────────────────────
 
   const processAudio = useCallback(async (blob: Blob, mimeType: string) => {
-    setStage('processing');
+    setStage('transcribing');
     setError(null);
     try {
       const form = new FormData();
       const ext = mimeType.includes('ogg') ? 'ogg' : 'webm';
       form.append('audio', blob, `recording.${ext}`);
+      form.append('mode', 'transcribe');
+
+      const { data, error: fnError } = await supabase.functions.invoke('parse-voice', {
+        body: form,
+      });
+
+      if (fnError) {
+        let msg = fnError.message;
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const body = await (fnError as any).context?.json?.();
+          if (body?.error) msg = body.error;
+        } catch { /* ignore */ }
+        throw new Error(msg);
+      }
+      if (data?.error) throw new Error(data.error);
+
+      const t = data.transcript ?? '';
+      setTranscript(t);
+      setEditableTranscript(t);
+      setStage('transcript');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+      setStage('idle');
+    }
+  }, []);
+
+  const parseTranscript = useCallback(async () => {
+    setStage('parsing');
+    setError(null);
+    try {
+      const form = new FormData();
+      form.append('mode', 'parse');
+      form.append('transcript', editableTranscript);
       form.append(
         'existingSections',
         JSON.stringify(
@@ -169,22 +204,16 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
       });
 
       if (fnError) {
-        // Extract the real error body from the HTTP response
         let msg = fnError.message;
         try {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const body = await (fnError as any).context?.json?.();
           if (body?.error) msg = body.error;
-        } catch { /* ignore parse errors */ }
+        } catch { /* ignore */ }
         throw new Error(msg);
       }
       if (data?.error) throw new Error(data.error);
 
-      setTranscript(data.transcript ?? '');
-
-      // Client-side subsection matching: for any section that matched an existing
-      // section, prefer GPT's semantic matchedExistingSubsectionId (validated against
-      // real ids) then fall back to case-insensitive exact title match.
       const rawSections: ParsedSection[] = data.sections ?? [];
       const enriched = rawSections.map((ps) => {
         const existingSection = ps.matchedExistingId
@@ -194,14 +223,11 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
         return {
           ...ps,
           subsections: (ps.subsections ?? []).map((sub) => {
-            // 1. Trust GPT's semantic match only if the id actually exists in this
-            //    parent section (guards against hallucinated ids).
             const gptMatchId = (sub as ParsedSubsection & { matchedExistingSubsectionId?: string })
               .matchedExistingSubsectionId;
             if (gptMatchId && existingSubs.some((s) => s.id === gptMatchId)) {
               return { ...sub, matchedExistingId: gptMatchId };
             }
-            // 2. Case-insensitive exact title match as a safety net.
             const fallback = existingSubs.find(
               (s) => s.title.toLowerCase() === sub.title.toLowerCase()
             );
@@ -213,9 +239,9 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
       setStage('preview');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
-      setStage('idle');
+      setStage('transcript');
     }
-  }, [sections]);
+  }, [editableTranscript, sections]);
 
   // ── Editing preview ──────────────────────────────────────────────────────
 
@@ -322,6 +348,7 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
     setStage('idle');
     setElapsed(0);
     setTranscript('');
+    setEditableTranscript('');
     setParsedSections([]);
     setTranscriptExpanded(false);
     setAddingProgress(0);
@@ -329,7 +356,7 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
   };
 
   const handleOpenChange = (val: boolean) => {
-    if (!val && (stage === 'recording' || stage === 'adding')) return; // prevent close mid-flow
+    if (!val && (stage === 'recording' || stage === 'transcribing' || stage === 'parsing' || stage === 'adding')) return; // prevent close mid-flow
     if (!val) {
       if (mediaRecorderRef.current?.state === 'recording') {
         mediaRecorderRef.current.stop();
@@ -418,11 +445,63 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
             </div>
           )}
 
-          {/* ── PROCESSING ── */}
-          {stage === 'processing' && (
+          {/* ── TRANSCRIBING ── */}
+          {stage === 'transcribing' && (
             <div className="flex flex-col items-center gap-4 py-8">
               <Loader2 className="w-10 h-10 animate-spin text-primary" />
-              <p className="text-sm text-muted-foreground">Transcribing and parsing your tasks…</p>
+              <p className="text-sm text-muted-foreground">Transcribing your recording…</p>
+            </div>
+          )}
+
+          {/* ── TRANSCRIPT ── */}
+          {stage === 'transcript' && (
+            <div className="flex flex-col gap-4">
+              {error && <p className="text-sm text-destructive">{error}</p>}
+              <p className="text-sm text-muted-foreground">
+                Ready to parse. Optionally review and fix the transcript first.
+              </p>
+              <div className="border border-border/50 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => setTranscriptExpanded((v) => !v)}
+                  className="w-full flex items-center justify-between gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
+                >
+                  <span>Review transcript</span>
+                  <ChevronDown className={cn('w-3 h-3 transition-transform', transcriptExpanded && 'rotate-180')} />
+                </button>
+                {transcriptExpanded && (
+                  <div className="border-t border-border/50 p-3">
+                    <textarea
+                      value={editableTranscript}
+                      onChange={(e) => setEditableTranscript(e.target.value)}
+                      className="w-full text-xs text-foreground bg-transparent resize-none outline-none leading-relaxed min-h-[80px]"
+                      placeholder="Transcript will appear here…"
+                    />
+                  </div>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" className="gap-1.5" onClick={resetState}>
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  Start over
+                </Button>
+                <Button
+                  size="sm"
+                  className="flex-1 gap-1.5 bg-gradient-primary hover:opacity-90"
+                  onClick={parseTranscript}
+                  disabled={!editableTranscript.trim()}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                  Parse
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* ── PARSING ── */}
+          {stage === 'parsing' && (
+            <div className="flex flex-col items-center gap-4 py-8">
+              <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              <p className="text-sm text-muted-foreground">Organising your tasks…</p>
             </div>
           )}
 
