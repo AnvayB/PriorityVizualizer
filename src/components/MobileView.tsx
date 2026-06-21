@@ -10,6 +10,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import PriorityForm from '@/components/PriorityForm';
 import VoiceInputModal from '@/components/VoiceInputModal';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import {
   AlertTriangle,
@@ -23,8 +25,10 @@ import {
   Trash2,
   Edit,
   Star,
+  Flower,
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 
@@ -208,14 +212,38 @@ function TaskEditDialog({ task, open, onClose, onSave }: TaskEditDialogProps) {
 interface TaskRowProps {
   task: FlatTask;
   showPath?: boolean;
+  userId?: string;
   onComplete: () => void;
   onEdit: (t: FlatTask) => void;
   onDelete: () => void;
   onPriorityToggle: () => void;
 }
 
-function TaskRow({ task, showPath = false, onComplete, onEdit, onDelete, onPriorityToggle }: TaskRowProps) {
+function TaskRow({ task, showPath = false, userId, onComplete, onEdit, onDelete, onPriorityToggle }: TaskRowProps) {
+  const { toast } = useToast();
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [workedOnToday, setWorkedOnToday] = useState(false);
+
+  const handleWorkedOn = async () => {
+    if (!userId || workedOnToday) return;
+    try {
+      const pstNow = toZonedTime(new Date(), 'America/Los_Angeles');
+      const today = format(pstNow, 'yyyy-MM-dd');
+      const { data: existing } = await supabase
+        .from('task_effort')
+        .select('id')
+        .eq('task_id', task.id)
+        .eq('user_id', userId)
+        .eq('date', today)
+        .maybeSingle();
+      if (existing) { setWorkedOnToday(true); return; }
+      await supabase.from('task_effort').insert({ task_id: task.id, user_id: userId, date: today });
+      setWorkedOnToday(true);
+      toast({ title: 'Effort recorded', description: 'Marked as worked on today.' });
+    } catch {
+      toast({ title: 'Error', description: 'Failed to record effort.', variant: 'destructive' });
+    }
+  };
   const overdue = isOverdue(task.dueDate);
   const today = isDueToday(task.dueDate);
   const daysUntil = getDaysUntilDue(task.dueDate);
@@ -287,9 +315,12 @@ function TaskRow({ task, showPath = false, onComplete, onEdit, onDelete, onPrior
               <Star className="w-3.5 h-3.5 mr-2" />
               {task.high_priority ? 'Remove priority' : 'Mark high priority'}
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={onComplete}>
-              <Check className="w-3.5 h-3.5 mr-2" /> Complete
-            </DropdownMenuItem>
+            {userId && (
+              <DropdownMenuItem onClick={handleWorkedOn} disabled={workedOnToday}>
+                <Flower className="w-3.5 h-3.5 mr-2" />
+                {workedOnToday ? 'Worked on today ✓' : 'Worked on'}
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem className="text-destructive" onClick={() => setDeleteOpen(true)}>
               <Trash2 className="w-3.5 h-3.5 mr-2" /> Delete
             </DropdownMenuItem>
@@ -330,6 +361,7 @@ const MobileView: React.FC<MobileViewProps> = ({
 }) => {
   const [activeFilter, setActiveFilter] = useState<StatusFilter>(null);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
+  const [expandedSubsections, setExpandedSubsections] = useState<Set<string>>(new Set());
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<FlatTask | null>(null);
 
@@ -354,24 +386,23 @@ const MobileView: React.FC<MobileViewProps> = ({
   const dueTodayTasks = useMemo(() => allFlatTasks.filter(t => isDueToday(t.dueDate)), [allFlatTasks]);
   const dueSoonTasks = useMemo(() => allFlatTasks.filter(t => isDueSoon(t.dueDate)), [allFlatTasks]);
 
-  // Auto-expand sections that have urgent tasks
+  // Track which sections have urgent tasks (for the warning icon)
   const urgentSectionIds = useMemo(() => {
     const ids = new Set<string>();
     [...overdueTasks, ...dueTodayTasks].forEach(t => ids.add(t.sectionId));
     return ids;
   }, [overdueTasks, dueTodayTasks]);
 
-  // On first render, expand urgent sections
-  const didInit = React.useRef(false);
-  React.useEffect(() => {
-    if (!didInit.current && urgentSectionIds.size > 0) {
-      setExpandedSections(new Set(urgentSectionIds));
-      didInit.current = true;
-    }
-  }, [urgentSectionIds]);
-
   const toggleSection = (id: string) => {
     setExpandedSections(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSubsection = (id: string) => {
+    setExpandedSubsections(prev => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
       return next;
@@ -401,20 +432,20 @@ const MobileView: React.FC<MobileViewProps> = ({
       {/* ── Status pills ── */}
       <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
         <StatusPill
-          label="Overdue"
-          count={overdueTasks.length}
-          active={activeFilter === 'overdue'}
-          color="purple"
-          icon={<AlertTriangle className="w-3.5 h-3.5" />}
-          onClick={() => setActiveFilter(f => f === 'overdue' ? null : 'overdue')}
-        />
-        <StatusPill
           label="Due Today"
           count={dueTodayTasks.length}
           active={activeFilter === 'today'}
           color="red"
           icon={<Clock className="w-3.5 h-3.5" />}
           onClick={() => setActiveFilter(f => f === 'today' ? null : 'today')}
+        />
+        <StatusPill
+          label="Overdue"
+          count={overdueTasks.length}
+          active={activeFilter === 'overdue'}
+          color="purple"
+          icon={<AlertTriangle className="w-3.5 h-3.5" />}
+          onClick={() => setActiveFilter(f => f === 'overdue' ? null : 'overdue')}
         />
         <StatusPill
           label="Due Soon"
@@ -442,6 +473,7 @@ const MobileView: React.FC<MobileViewProps> = ({
                   key={task.id}
                   task={task}
                   showPath
+                  userId={user?.id}
                   onComplete={() => handleTaskComplete(task)}
                   onEdit={handleTaskEdit}
                   onDelete={() => handleTaskDelete(task)}
@@ -517,47 +549,54 @@ const MobileView: React.FC<MobileViewProps> = ({
                     {section.subsections.length === 0 ? (
                       <p className="text-xs text-muted-foreground px-4 py-3">No subsections yet.</p>
                     ) : (
-                      section.subsections.map((sub, subIdx) => (
-                        <div key={sub.id}>
-                          {subIdx > 0 && <div className="h-px bg-border/30 mx-4" />}
-                          {/* Subsection label */}
-                          <div className="px-4 pt-2.5 pb-1">
-                            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
-                              <ChevronRight className="w-3 h-3" />
-                              {sub.title}
-                              <span className="font-normal normal-case tracking-normal">({sub.tasks.length})</span>
-                            </span>
+                      section.subsections.map((sub, subIdx) => {
+                        const subCollapsed = !expandedSubsections.has(sub.id);
+                        return (
+                          <div key={sub.id}>
+                            {subIdx > 0 && <div className="h-px bg-border/30 mx-4" />}
+                            {/* Subsection label */}
+                            <button
+                              className="w-full px-4 pt-2.5 pb-1 flex items-center gap-1.5 text-left hover:bg-muted/20 transition-colors"
+                              onClick={() => toggleSubsection(sub.id)}
+                            >
+                              <ChevronDown className={cn('w-3 h-3 text-muted-foreground transition-transform shrink-0', subCollapsed && '-rotate-90')} />
+                              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                                {sub.title}
+                              </span>
+                              <span className="text-xs font-normal normal-case tracking-normal text-muted-foreground">({sub.tasks.length})</span>
+                            </button>
+                            {/* Tasks */}
+                            {!subCollapsed && (sub.tasks.length === 0 ? (
+                              <p className="text-xs text-muted-foreground px-10 pb-2.5">No tasks.</p>
+                            ) : (
+                              <div className="divide-y divide-border/30">
+                                {sub.tasks.map(task => {
+                                  const flat: FlatTask = {
+                                    ...task,
+                                    sectionId: section.id,
+                                    subsectionId: sub.id,
+                                    sectionTitle: section.title,
+                                    subsectionTitle: sub.title,
+                                    sectionColor: section.color,
+                                  };
+                                  return (
+                                    <TaskRow
+                                      key={task.id}
+                                      task={flat}
+                                      showPath={false}
+                                      userId={user?.id}
+                                      onComplete={() => handleTaskComplete(flat)}
+                                      onEdit={handleTaskEdit}
+                                      onDelete={() => handleTaskDelete(flat)}
+                                      onPriorityToggle={() => handleTaskPriority(flat)}
+                                    />
+                                  );
+                                })}
+                              </div>
+                            ))}
                           </div>
-                          {/* Tasks */}
-                          {sub.tasks.length === 0 ? (
-                            <p className="text-xs text-muted-foreground px-10 pb-2.5">No tasks.</p>
-                          ) : (
-                            <div className="divide-y divide-border/30">
-                              {sub.tasks.map(task => {
-                                const flat: FlatTask = {
-                                  ...task,
-                                  sectionId: section.id,
-                                  subsectionId: sub.id,
-                                  sectionTitle: section.title,
-                                  subsectionTitle: sub.title,
-                                  sectionColor: section.color,
-                                };
-                                return (
-                                  <TaskRow
-                                    key={task.id}
-                                    task={flat}
-                                    showPath={false}
-                                    onComplete={() => handleTaskComplete(flat)}
-                                    onEdit={handleTaskEdit}
-                                    onDelete={() => handleTaskDelete(flat)}
-                                    onPriorityToggle={() => handleTaskPriority(flat)}
-                                  />
-                                );
-                              })}
-                            </div>
-                          )}
-                        </div>
-                      ))
+                        );
+                      })
                     )}
                   </div>
                 )}

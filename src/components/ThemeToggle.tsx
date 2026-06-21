@@ -9,7 +9,11 @@ import {
 import { Sun, Moon, Monitor, Check } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 
-const ThemeToggle: React.FC = () => {
+interface ThemeToggleProps {
+  showLabel?: boolean;
+}
+
+const ThemeToggle: React.FC<ThemeToggleProps> = ({ showLabel = false }) => {
   const { theme, setTheme } = useTheme();
 
   const getIcon = () => {
@@ -31,10 +35,11 @@ const ThemeToggle: React.FC = () => {
         <Button
           variant="outline"
           size="sm"
-          className="h-9 w-9 p-0 border-gray-400 dark:border-border"
+          className={showLabel ? 'h-9 w-full justify-start gap-2 border-gray-400 dark:border-border' : 'h-9 w-9 p-0 border-gray-400 dark:border-border'}
           title="Change theme"
         >
           {getIcon()}
+          {showLabel && <span>Theme</span>}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">

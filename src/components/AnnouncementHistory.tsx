@@ -26,9 +26,10 @@ interface Announcement {
 
 interface AnnouncementHistoryProps {
   userId: string;
+  showLabel?: boolean;
 }
 
-const AnnouncementHistory: React.FC<AnnouncementHistoryProps> = ({ userId }) => {
+const AnnouncementHistory: React.FC<AnnouncementHistoryProps> = ({ userId, showLabel = false }) => {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [open, setOpen] = useState(false);
@@ -140,13 +141,14 @@ const AnnouncementHistory: React.FC<AnnouncementHistoryProps> = ({ userId }) => 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           size="sm"
-          className="h-9 w-9 p-0 border-gray-400 dark:border-border"
+          className={showLabel ? 'h-9 w-full justify-start gap-2 border-gray-400 dark:border-border' : 'h-9 w-9 p-0 border-gray-400 dark:border-border'}
           title="Updates"
         >
           <Megaphone className="w-4 h-4" />
+          {showLabel && <span>Updates</span>}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[80vh]">
