@@ -48,7 +48,7 @@ interface ParsedSection {
   subsections: ParsedSubsection[];
 }
 
-type Stage = 'idle' | 'recording' | 'transcribing' | 'transcript' | 'parsing' | 'preview' | 'adding' | 'done';
+type Stage = 'idle' | 'recording' | 'transcribing' | 'parsing' | 'preview' | 'adding' | 'done';
 
 interface VoiceInputModalProps {
   sections: Section[];
@@ -173,20 +173,21 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
       const t = data.transcript ?? '';
       setTranscript(t);
       setEditableTranscript(t);
-      setStage('transcript');
+      // Auto-parse immediately — no manual Parse step
+      await parseTranscriptText(t);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
       setStage('idle');
     }
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const parseTranscript = useCallback(async () => {
+  const parseTranscriptText = useCallback(async (text: string) => {
     setStage('parsing');
     setError(null);
     try {
       const form = new FormData();
       form.append('mode', 'parse');
-      form.append('transcript', editableTranscript);
+      form.append('transcript', text);
       form.append(
         'existingSections',
         JSON.stringify(
@@ -239,9 +240,9 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
       setStage('preview');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
-      setStage('transcript');
+      setStage('preview');
     }
-  }, [editableTranscript, sections]);
+  }, [sections]);
 
   // ── Editing preview ──────────────────────────────────────────────────────
 
@@ -356,7 +357,7 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
   };
 
   const handleOpenChange = (val: boolean) => {
-    if (!val && (stage === 'recording' || stage === 'transcribing' || stage === 'parsing' || stage === 'adding')) return; // prevent close mid-flow
+    if (!val && (stage === 'recording' || stage === 'transcribing' || stage === 'parsing' || stage === 'adding')) return;
     if (!val) {
       if (mediaRecorderRef.current?.state === 'recording') {
         mediaRecorderRef.current.stop();
@@ -445,63 +446,13 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
             </div>
           )}
 
-          {/* ── TRANSCRIBING ── */}
-          {stage === 'transcribing' && (
+          {/* ── TRANSCRIBING / PARSING ── */}
+          {(stage === 'transcribing' || stage === 'parsing') && (
             <div className="flex flex-col items-center gap-4 py-8">
               <Loader2 className="w-10 h-10 animate-spin text-primary" />
-              <p className="text-sm text-muted-foreground">Transcribing your recording…</p>
-            </div>
-          )}
-
-          {/* ── TRANSCRIPT ── */}
-          {stage === 'transcript' && (
-            <div className="flex flex-col gap-4">
-              {error && <p className="text-sm text-destructive">{error}</p>}
               <p className="text-sm text-muted-foreground">
-                Ready to parse. Optionally review and fix the transcript first.
+                {stage === 'transcribing' ? 'Transcribing your recording…' : 'Organising your tasks…'}
               </p>
-              <div className="border border-border/50 rounded-lg overflow-hidden">
-                <button
-                  onClick={() => setTranscriptExpanded((v) => !v)}
-                  className="w-full flex items-center justify-between gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
-                >
-                  <span>Review transcript</span>
-                  <ChevronDown className={cn('w-3 h-3 transition-transform', transcriptExpanded && 'rotate-180')} />
-                </button>
-                {transcriptExpanded && (
-                  <div className="border-t border-border/50 p-3">
-                    <textarea
-                      value={editableTranscript}
-                      onChange={(e) => setEditableTranscript(e.target.value)}
-                      className="w-full text-xs text-foreground bg-transparent resize-none outline-none leading-relaxed min-h-[80px]"
-                      placeholder="Transcript will appear here…"
-                    />
-                  </div>
-                )}
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="gap-1.5" onClick={resetState}>
-                  <RefreshCw className="w-3.5 h-3.5" />
-                  Start over
-                </Button>
-                <Button
-                  size="sm"
-                  className="flex-1 gap-1.5 bg-gradient-primary hover:opacity-90"
-                  onClick={parseTranscript}
-                  disabled={!editableTranscript.trim()}
-                >
-                  <ChevronRight className="w-4 h-4" />
-                  Parse
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* ── PARSING ── */}
-          {stage === 'parsing' && (
-            <div className="flex flex-col items-center gap-4 py-8">
-              <Loader2 className="w-10 h-10 animate-spin text-primary" />
-              <p className="text-sm text-muted-foreground">Organising your tasks…</p>
             </div>
           )}
 
@@ -642,17 +593,33 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
                     ))}
                   </div>
 
-                  {/* Transcript collapsible */}
+                  {/* Transcript editor */}
                   <div className="border-t border-border/50 pt-2">
                     <button
                       onClick={() => setTranscriptExpanded((v) => !v)}
                       className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
                     >
                       <ChevronDown className={cn('w-3 h-3 transition-transform', transcriptExpanded && 'rotate-180')} />
-                      {transcriptExpanded ? 'Hide' : 'Show'} transcript
+                      {transcriptExpanded ? 'Hide' : 'Edit'} transcript
                     </button>
                     {transcriptExpanded && (
-                      <p className="mt-2 text-xs text-muted-foreground italic leading-relaxed break-words">{transcript}</p>
+                      <div className="mt-2 space-y-2">
+                        <textarea
+                          value={editableTranscript}
+                          onChange={(e) => setEditableTranscript(e.target.value)}
+                          className="w-full text-xs text-foreground bg-muted/30 border border-border/50 rounded-md p-2 resize-none outline-none leading-relaxed min-h-[80px] focus:border-primary/50"
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full gap-1.5"
+                          onClick={() => parseTranscriptText(editableTranscript)}
+                          disabled={!editableTranscript.trim()}
+                        >
+                          <RefreshCw className="w-3.5 h-3.5" />
+                          Re-parse with edited transcript
+                        </Button>
+                      </div>
                     )}
                   </div>
 
