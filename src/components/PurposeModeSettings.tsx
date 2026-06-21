@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -29,6 +30,7 @@ interface PurposeModeSettingsProps {
   onEffortCleared?: () => void;
   showOverdueArcs: boolean;
   onShowOverdueArcsChange: (value: boolean) => void;
+  showLabel?: boolean;
 }
 
 const PurposeModeSettings: React.FC<PurposeModeSettingsProps> = ({
@@ -40,6 +42,7 @@ const PurposeModeSettings: React.FC<PurposeModeSettingsProps> = ({
   onEffortCleared,
   showOverdueArcs,
   onShowOverdueArcsChange,
+  showLabel = false,
 }) => {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
@@ -330,14 +333,14 @@ const PurposeModeSettings: React.FC<PurposeModeSettingsProps> = ({
     }
   };
 
-  return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
-      <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="h-9 w-9 p-0 border-gray-400 dark:border-border" title="Settings">
-          <Settings className="w-4 h-4" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-80 max-h-[80vh] overflow-y-auto" align="end">
+  const triggerButton = (
+    <Button variant="outline" size="sm" className={showLabel ? 'h-9 w-full justify-start gap-2 border-gray-400 dark:border-border' : 'h-9 w-9 p-0 border-gray-400 dark:border-border'} title="Settings" onClick={showLabel ? () => setIsOpen(true) : undefined}>
+      <Settings className="w-4 h-4" />
+      {showLabel && <span>Settings</span>}
+    </Button>
+  );
+
+  const settingsContent = (
         <div className="space-y-1">
           <h4 className="font-semibold text-sm mb-3">Settings</h4>
 
@@ -520,6 +523,31 @@ const PurposeModeSettings: React.FC<PurposeModeSettingsProps> = ({
             </CollapsibleContent>
           </Collapsible>
         </div>
+  );
+
+  if (showLabel) {
+    return (
+      <>
+        {triggerButton}
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+          <DialogContent className="w-[calc(100%-2rem)] max-w-lg max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Settings className="w-4 h-4" /> Settings
+              </DialogTitle>
+            </DialogHeader>
+            {settingsContent}
+          </DialogContent>
+        </Dialog>
+      </>
+    );
+  }
+
+  return (
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <PopoverTrigger asChild>{triggerButton}</PopoverTrigger>
+      <PopoverContent className="w-80 max-h-[80vh] overflow-y-auto" align="end">
+        {settingsContent}
       </PopoverContent>
     </Popover>
   );

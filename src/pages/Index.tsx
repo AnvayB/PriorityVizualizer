@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -10,6 +11,8 @@ import PieChart from '@/components/PieChart';
 import PriorityForm from '@/components/PriorityForm';
 import VoiceInputModal from '@/components/VoiceInputModal';
 import HoverInfo from '@/components/HoverInfo';
+import MobileView from '@/components/MobileView';
+import { useIsMobile } from '@/hooks/use-mobile';
 import CompletionCounter from '@/components/CompletionCounter';
 import DeadlineEditor from '@/components/DeadlineEditor';
 import MobileNavigation from '@/components/MobileNavigation';
@@ -19,7 +22,7 @@ import AnnouncementHistory from '@/components/AnnouncementHistory';
 import PurposeModeSettings from '@/components/PurposeModeSettings';
 import OnboardingModal from '@/components/OnboardingModal';
 import { Section, Subsection, Task, ChartSlice } from '@/types/priorities';
-import { PieChart as PieChartIcon, Target, Calendar, Save, Upload, ChevronDown, LogOut, User, Clock, AlertTriangle, CheckCircle, Info, BookOpen, TrendingUp, RefreshCw } from 'lucide-react';
+import { PieChart as PieChartIcon, Target, Calendar, Save, Upload, ChevronDown, LogOut, User, Clock, AlertTriangle, CheckCircle, Info, BookOpen, TrendingUp, RefreshCw, Menu } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { storeLocalBackup, detectDataLoss, downloadAutoBackup } from '@/utils/dataProtection';
@@ -29,6 +32,7 @@ import { format } from 'date-fns';
 
 const Index = () => {
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const [sections, setSections] = useState<Section[]>([]);
   const [user, setUser] = useState(null);
 
@@ -1726,53 +1730,33 @@ const Index = () => {
           }}
         />
         <div className="container mx-auto px-4 md:px-6 py-4 md:py-8">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-primary rounded-lg">
-                <Target className="w-5 h-5 md:w-6 md:h-6 text-white" />
+
+          {/* ── Mobile header: logo | center plant | hamburger ── */}
+          <div className="flex items-center md:hidden">
+            {/* Logo + title */}
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <div className="p-1.5 bg-gradient-primary rounded-lg shrink-0">
+                <Target className="w-4 h-4 text-white" />
               </div>
-              <h1 className="text-xl md:text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+              <h1 className="text-lg font-bold bg-gradient-primary bg-clip-text text-transparent truncate">
                 Priority Viz
               </h1>
             </div>
-            
-            {/* Purpose Anchor - Center of header */}
-            {purposeModeEnabled && purposeImageUrl && (
-              <div 
-                ref={setPurposeAnchorRef}
-                className="flex items-center justify-center relative ml-[10.5%]"
 
-              >
-                <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-primary/30 shadow-lg">
-                  <img 
-                    src={purposeImageUrl} 
-                    alt="Purpose anchor" 
-                    className="w-full h-full object-cover"
-                  />
+            {/* Purpose anchor — centered */}
+            {purposeModeEnabled && purposeImageUrl && (
+              <div ref={setPurposeAnchorRef} className="relative flex items-center justify-center flex-shrink-0 mx-3">
+                <div className="w-8 h-8 rounded-full overflow-hidden border border-primary/30 shadow">
+                  <img src={purposeImageUrl} alt="Purpose anchor" className="w-full h-full object-cover" />
                 </div>
-                {/* Effort indicators - emojis positioned around the circle, outside the bounds */}
                 {todayEffortCount > 0 && (
-                  <div className="absolute inset-0 pointer-events-none flex items-center justify-center" style={{ width: '80px', height: '80px', left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}>
-                    {Array.from({ length: Math.min(todayEffortCount, 20) }).map((_, index) => {
-                      // Position emojis in a circle around the anchor
-                      const angle = (index * 360) / Math.min(todayEffortCount, 20);
-                      const radius = 36; // Distance from center (slightly larger to fit more icons)
-                      const x = Math.cos((angle * Math.PI) / 180) * radius;
-                      const y = Math.sin((angle * Math.PI) / 180) * radius;
-                      const emoji = animationIcon === 'star' ? '⭐' : animationIcon === 'sparkle' ? '✨' : '🌸';
-                      
+                  <div className="absolute inset-0 pointer-events-none" style={{ width: '56px', height: '56px', left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}>
+                    {Array.from({ length: Math.min(todayEffortCount, 20) }).map((_, i) => {
+                      const angle = (i * 360) / Math.min(todayEffortCount, 20);
+                      const r = 24;
                       return (
-                        <div
-                          key={index}
-                          className="absolute z-10"
-                          style={{
-                            left: `calc(50% + ${x}px)`,
-                            top: `calc(50% + ${y}px)`,
-                            transform: 'translate(-50%, -50%)',
-                            fontSize: '0.625rem', // text-xs equivalent (10px) - making it even smaller
-                          }}
-                        >
-                          {emoji}
+                        <div key={i} className="absolute" style={{ left: `calc(50% + ${Math.cos((angle * Math.PI) / 180) * r}px)`, top: `calc(50% + ${Math.sin((angle * Math.PI) / 180) * r}px)`, transform: 'translate(-50%,-50%)', fontSize: '0.5rem' }}>
+                          {animationIcon === 'star' ? '⭐' : animationIcon === 'sparkle' ? '✨' : '🌸'}
                         </div>
                       );
                     })}
@@ -1780,88 +1764,144 @@ const Index = () => {
                 )}
               </div>
             )}
-            
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-              {user && (
-                <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
-                  <User className="w-4 h-4" />
-                  <span className="truncate max-w-32 md:max-w-none">{user.email}</span>
-                </div>
-              )}
-              {/* Menu button commented out - data auto-loads from Supabase, mainly for dev purposes */}
-              {/* <MobileNavigation
-                onSignOut={handleSignOut}
-                onSaveToDatabase={handleSaveToDatabase}
-                onSaveToComputer={handleReplaceCurrentData}
-                onLoadFromSupabase={loadFromSupabase}
-                onLoadFromFile={handleLoadFromFile}
-                onLoadGuestData={handleLoadGuestData}
-                user={user}
-                isGuestUser={isGuestUser}
-              /> */}
-              
-              {/* Keep Theme Toggle and Sign Out */}
-              <div className="flex gap-2">
-                {user && <AnnouncementHistory userId={user.id} />}
-                {user && (
-                  <PurposeModeSettings
-                    userId={user.id}
-                    purposeModeEnabled={purposeModeEnabled}
-                    purposeImageUrl={purposeImageUrl}
-                    animationIcon={animationIcon}
-                    onSettingsUpdate={loadUserSettings}
-                    onEffortCleared={() => {
-                      setEffortRefresh(prev => prev + 1);
-                      loadTodayEffortCount();
-                    }}
-                    showOverdueArcs={showOverdueArcs}
-                    onShowOverdueArcsChange={(val) => {
-                      setShowOverdueArcs(val);
-                      localStorage.setItem('showOverdueArcs', String(val));
-                    }}
-                  />
-                )}
-                <Button
-                  asChild
-                  variant="outline"
-                  size="sm"
-                  className="h-9 w-9 p-0 border-gray-400 dark:border-border"
-                  title="Open tutorial"
-                >
-                  <a
-                    href="https://docsify-this.net/?basePath=https://raw.githubusercontent.com/AnvayB/PriorityVizualizer/main/docs&homepage=USER-TUTORIAL.md&edit-link=https://github.com/AnvayB/PriorityVizualizer/blob/main/docs/USER-TUTORIAL.md&sidebar=true&dark-mode=auto#/?id=table-of-contents"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    <BookOpen className="w-4 h-4" />
-                  </a>
-                </Button>
-                <ThemeToggle />
-                <Button 
-                  onClick={handleSignOut} 
-                  variant="outline" 
-                  size="sm" 
-                  className="h-9 w-9 p-0 border-gray-400 dark:border-border"
-                  title="Sign Out"
-                >
-                  <LogOut className="w-4 h-4" />
-                </Button>
-              </div>
+
+            {/* Hamburger */}
+            <div className="flex-1 flex justify-end">
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-8 w-8 p-0 border-gray-400 dark:border-border">
+                    <Menu className="w-4 h-4" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-64 flex flex-col gap-4 pt-8">
+                  {user && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground px-1 pb-2 border-b border-border/50">
+                      <User className="w-4 h-4 shrink-0" />
+                      <span className="truncate">{user.email}</span>
+                    </div>
+                  )}
+                  {user && <AnnouncementHistory userId={user.id} showLabel />}
+                  {user && (
+                    <PurposeModeSettings
+                      userId={user.id}
+                      purposeModeEnabled={purposeModeEnabled}
+                      purposeImageUrl={purposeImageUrl}
+                      animationIcon={animationIcon}
+                      onSettingsUpdate={loadUserSettings}
+                      onEffortCleared={() => { setEffortRefresh(prev => prev + 1); loadTodayEffortCount(); }}
+                      showOverdueArcs={showOverdueArcs}
+                      onShowOverdueArcsChange={(val) => { setShowOverdueArcs(val); localStorage.setItem('showOverdueArcs', String(val)); }}
+                      showLabel
+                    />
+                  )}
+                  {user && <DeadlineEditor userId={user.id} />}
+                  <Button asChild variant="outline" size="sm" className="h-9 w-full justify-start gap-2 border-gray-400 dark:border-border">
+                    <a href="https://docsify-this.net/?basePath=https://raw.githubusercontent.com/AnvayB/PriorityVizualizer/main/docs&homepage=USER-TUTORIAL.md&edit-link=https://github.com/AnvayB/PriorityVizualizer/blob/main/docs/USER-TUTORIAL.md&sidebar=true&dark-mode=auto#/?id=table-of-contents" target="_blank" rel="noreferrer">
+                      <BookOpen className="w-4 h-4" /> Tutorial
+                    </a>
+                  </Button>
+                  <ThemeToggle showLabel />
+                  <Button onClick={handleSignOut} variant="outline" size="sm" className="h-9 w-full justify-start gap-2 border-gray-400 dark:border-border">
+                    <LogOut className="w-4 h-4" /> Sign Out
+                  </Button>
+                </SheetContent>
+              </Sheet>
             </div>
           </div>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <p className="text-muted-foreground">
-              <span className="sm:hidden">Visualize and manage your priorities across life</span>
-              <span className="hidden sm:inline">Visualize and manage your priorities across different areas of life</span>
-            </p>
-            {user && (
-              <div className="flex justify-start sm:justify-end">
-                <DeadlineEditor userId={user.id} />
+
+          {/* ── Desktop header: existing layout ── */}
+          <div className="hidden md:block">
+            <div className="flex md:flex-row md:items-center justify-between gap-4 mb-2">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-gradient-primary rounded-lg">
+                  <Target className="w-6 h-6 text-white" />
+                </div>
+                <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+                  Priority Viz
+                </h1>
               </div>
-            )}
+
+              {/* Purpose Anchor */}
+              {purposeModeEnabled && purposeImageUrl && (
+                <div ref={setPurposeAnchorRef} className="flex items-center justify-center relative ml-[10.5%]">
+                  <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-primary/30 shadow-lg">
+                    <img src={purposeImageUrl} alt="Purpose anchor" className="w-full h-full object-cover" />
+                  </div>
+                  {todayEffortCount > 0 && (
+                    <div className="absolute inset-0 pointer-events-none flex items-center justify-center" style={{ width: '80px', height: '80px', left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}>
+                      {Array.from({ length: Math.min(todayEffortCount, 20) }).map((_, index) => {
+                        const angle = (index * 360) / Math.min(todayEffortCount, 20);
+                        const radius = 36;
+                        const x = Math.cos((angle * Math.PI) / 180) * radius;
+                        const y = Math.sin((angle * Math.PI) / 180) * radius;
+                        const emoji = animationIcon === 'star' ? '⭐' : animationIcon === 'sparkle' ? '✨' : '🌸';
+                        return (
+                          <div key={index} className="absolute z-10" style={{ left: `calc(50% + ${x}px)`, top: `calc(50% + ${y}px)`, transform: 'translate(-50%, -50%)', fontSize: '0.625rem' }}>
+                            {emoji}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="flex items-center gap-2">
+                {user && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <User className="w-4 h-4" />
+                    <span>{user.email}</span>
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  {user && <AnnouncementHistory userId={user.id} />}
+                  {user && (
+                    <PurposeModeSettings
+                      userId={user.id}
+                      purposeModeEnabled={purposeModeEnabled}
+                      purposeImageUrl={purposeImageUrl}
+                      animationIcon={animationIcon}
+                      onSettingsUpdate={loadUserSettings}
+                      onEffortCleared={() => { setEffortRefresh(prev => prev + 1); loadTodayEffortCount(); }}
+                      showOverdueArcs={showOverdueArcs}
+                      onShowOverdueArcsChange={(val) => { setShowOverdueArcs(val); localStorage.setItem('showOverdueArcs', String(val)); }}
+                    />
+                  )}
+                  <Button asChild variant="outline" size="sm" className="h-9 w-9 p-0 border-gray-400 dark:border-border" title="Open tutorial">
+                    <a href="https://docsify-this.net/?basePath=https://raw.githubusercontent.com/AnvayB/PriorityVizualizer/main/docs&homepage=USER-TUTORIAL.md&edit-link=https://github.com/AnvayB/PriorityVizualizer/blob/main/docs/USER-TUTORIAL.md&sidebar=true&dark-mode=auto#/?id=table-of-contents" target="_blank" rel="noreferrer">
+                      <BookOpen className="w-4 h-4" />
+                    </a>
+                  </Button>
+                  <ThemeToggle />
+                  <Button onClick={handleSignOut} variant="outline" size="sm" className="h-9 w-9 p-0 border-gray-400 dark:border-border" title="Sign Out">
+                    <LogOut className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-muted-foreground">Visualize and manage your priorities across different areas of life</p>
+              {user && <DeadlineEditor userId={user.id} />}
+            </div>
           </div>
+
         </div>
       </header>
+
+      {isMobile ? (
+        <MobileView
+          sections={sections}
+          onComplete={handleComplete}
+          onDelete={handleDelete}
+          onEdit={handleEdit}
+          onPriorityChange={handlePriorityChange}
+          onAddSection={handleAddSection}
+          onAddSubsection={handleAddSubsection}
+          onAddTask={handleAddTask}
+          user={user}
+        />
+      ) : (
+      <>
 
         {/* Stats Bar */}
       <div className="container mx-auto px-4 md:px-6 py-4 md:py-6">
@@ -2352,6 +2392,8 @@ const Index = () => {
           </div>
         </div>
       </div>
+      </>
+      )}
     </div>
   );
 };
