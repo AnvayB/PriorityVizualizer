@@ -10,6 +10,8 @@ import PieChart from '@/components/PieChart';
 import PriorityForm from '@/components/PriorityForm';
 import VoiceInputModal from '@/components/VoiceInputModal';
 import HoverInfo from '@/components/HoverInfo';
+import MobileView from '@/components/MobileView';
+import { useIsMobile } from '@/hooks/use-mobile';
 import CompletionCounter from '@/components/CompletionCounter';
 import DeadlineEditor from '@/components/DeadlineEditor';
 import MobileNavigation from '@/components/MobileNavigation';
@@ -29,6 +31,7 @@ import { format } from 'date-fns';
 
 const Index = () => {
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const [sections, setSections] = useState<Section[]>([]);
   const [user, setUser] = useState(null);
 
@@ -1863,6 +1866,21 @@ const Index = () => {
         </div>
       </header>
 
+      {isMobile ? (
+        <MobileView
+          sections={sections}
+          onComplete={handleComplete}
+          onDelete={handleDelete}
+          onEdit={handleEdit}
+          onPriorityChange={handlePriorityChange}
+          onAddSection={handleAddSection}
+          onAddSubsection={handleAddSubsection}
+          onAddTask={handleAddTask}
+          user={user}
+        />
+      ) : (
+      <>
+
         {/* Stats Bar */}
       <div className="container mx-auto px-4 md:px-6 py-4 md:py-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 mb-3 md:mb-5">
@@ -2352,6 +2370,8 @@ const Index = () => {
           </div>
         </div>
       </div>
+      </>
+      )}
     </div>
   );
 };
