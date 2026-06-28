@@ -52,6 +52,8 @@ interface OnboardingModalProps {
     description?: string
   ) => Promise<void>;
   onComplete: () => void;
+  /** Dismiss the tutorial without completing it (e.g. wrong account signed in). */
+  onSkip: () => void;
 }
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -292,6 +294,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
   onSubsectionAdded,
   onTaskAdded,
   onComplete,
+  onSkip,
 }) => {
   const [step, setStep] = useState<OnboardingPhase>({ phase: 'sections' });
   const [addedSections, setAddedSections] = useState<Array<{ title: string; id: string; color: string }>>([]);
@@ -515,16 +518,15 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
   // ── Render ───────────────────────────────────────────────────────────────────
 
   return (
-    <Dialog open={open} onOpenChange={() => {}}>
+    <Dialog open={open} onOpenChange={(next) => { if (!next) onSkip(); }}>
       <DialogContent
-        className="max-w-lg [&>button:last-child]:hidden max-h-[90vh] overflow-y-auto"
+        className="max-w-lg max-h-[90vh] overflow-y-auto"
         onPointerDownOutside={(e) => e.preventDefault()}
-        onEscapeKeyDown={(e) => e.preventDefault()}
       >
         {/* ── Disclaimer banner ── */}
-        <div className="flex items-start gap-2 rounded-md bg-muted/50 border border-border/40 px-3 py-2 text-xs text-muted-foreground">
+        <div className="flex items-start gap-2 rounded-md bg-muted/50 border border-border/40 px-3 py-2 pr-8 text-xs text-muted-foreground">
           <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-          <span>TUTORIAL: Everything you create here can be changed or deleted from the Edit menu after completing the tutorial.</span>
+          <span>TUTORIAL: Everything you create here can be changed or deleted from the Edit menu after completing the tutorial. Signed in with the wrong account? Press the <span className="font-medium">×</span> to exit.</span>
         </div>
 
         {/* ── Progress header ── */}

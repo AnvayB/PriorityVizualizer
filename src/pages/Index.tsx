@@ -319,8 +319,10 @@ const Index = () => {
     }
 
     if (isNewUser === true) {
-      // Brand-new user: show the guided onboarding modal instead of the plain tutorial
-      setShowOnboardingModal(true);
+      // Brand-new user: show the guided onboarding modal instead of the plain tutorial,
+      // unless they previously chose to skip it (e.g. signed in with the wrong account).
+      const skippedOnboarding = localStorage.getItem(`pv-skip-onboarding-${user.id}`) === 'true';
+      setShowOnboardingModal(!skippedOnboarding);
       setShowTutorialModal(false);
       return;
     }
@@ -1718,6 +1720,12 @@ const Index = () => {
         onComplete={() => {
           setShowOnboardingModal(false);
           setIsNewUser(false);
+        }}
+        onSkip={() => {
+          if (user?.id) {
+            localStorage.setItem(`pv-skip-onboarding-${user.id}`, 'true');
+          }
+          setShowOnboardingModal(false);
         }}
       />
       {/* Header */}
