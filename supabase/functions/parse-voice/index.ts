@@ -157,13 +157,14 @@ Extraction rules (apply before organising):
 Organisation rules:
 1. Group tasks under logical sections (e.g., "Work", "School", "Personal").
 2a. ${existingList}
-    If a spoken topic clearly matches an existing section (fuzzy/semantic match), set matchedExistingId to that section's sectionId. Otherwise leave it undefined.
+    Only set matchedExistingId if the spoken section name is clearly the SAME section (near-identical name or obvious alias like "work" → "Work"). Do NOT match based on general topic similarity — if the user says a new section name, treat it as new.
 2b. For each subsection inside a matched existing section, semantically compare its topic to the existing subsections listed above. If a good semantic match exists (e.g. "things I need to buy" → "Buy", "shopping list" → "Buy", "gym routine" → "Fitness"), set matchedExistingSubsectionId to that subsection's subsectionId. Only create a new subsection (omit matchedExistingSubsectionId) if no existing subsection is a reasonable fit.
-3. Each section should have at least one subsection (e.g., "Work" → "Projects", "Meetings").
+3. Each section should have at least one subsection. If the user only mentions a section or subsection without specific tasks, still create the section/subsection structure with an empty tasks array.
 4. Task titles MUST be ≤15 characters (for chart display). If the natural phrase is longer, create a short title AND put the full phrase as the description.
 5. If the user implies urgency ("urgent", "ASAP", "critical", "important", "must", "need to"), set high_priority: true.
 6. Resolve relative dates using today's date (${today}). Return dates as ISO strings (YYYY-MM-DD). If no date is mentioned for a task, omit dueDate.
 7. Today is ${today}.
+8. tasks arrays may be empty [] if the user only wants to create the section/subsection structure without specific tasks yet.
 
 Return ONLY valid JSON in this exact shape, no markdown, no explanation:
 {
