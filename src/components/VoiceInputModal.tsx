@@ -67,6 +67,18 @@ interface VoiceInputModalProps {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+function countStructure(sections: ParsedSection[]) {
+  let count = 0;
+  for (const s of sections) {
+    count++; // section itself
+    for (const sub of s.subsections) {
+      count++; // subsection
+      count += sub.tasks.length;
+    }
+  }
+  return count;
+}
+
 function countItems(sections: ParsedSection[]) {
   return sections.reduce(
     (acc, s) => acc + s.subsections.reduce((a, sub) => a + sub.tasks.length, 0),
@@ -251,8 +263,7 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
       const next = structuredClone(prev);
       next[sIdx].subsections[subIdx].tasks.splice(tIdx, 1);
       // Remove empty subsections
-      next[sIdx].subsections = next[sIdx].subsections.filter((sub) => sub.tasks.length > 0);
-      // Remove empty sections
+      // Remove empty sections (but keep subsections with no tasks — user may want structure only)
       return next.filter((s) => s.subsections.length > 0);
     });
   };
@@ -308,6 +319,7 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
   const confirmAdd = useCallback(async () => {
     setStage('adding');
     const totalTasks = countItems(parsedSections);
+    const totalItems = countStructure(parsedSections);
     let done = 0;
 
     try {
@@ -330,7 +342,7 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
               task.description
             );
             done++;
-            setAddingProgress(Math.round((done / totalTasks) * 100));
+            setAddingProgress(Math.round((done / totalItems) * 100));
           }
         }
       }
@@ -556,6 +568,9 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
                               })()}
                             </div>
 
+                            {sub.tasks.length === 0 && (
+                              <p className="ml-2 text-xs text-muted-foreground italic">No tasks — structure only</p>
+                            )}
                             {sub.tasks.map((task, tIdx) => (
                               <div
                                 key={tIdx}
@@ -638,10 +653,10 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
                       size="sm"
                       className="flex-1 gap-1.5 bg-gradient-primary hover:opacity-90"
                       onClick={confirmAdd}
-                      disabled={totalTasks === 0}
+                      disabled={countStructure(parsedSections) === 0}
                     >
                       <Check className="w-4 h-4" />
-                      Add {totalTasks} task{totalTasks !== 1 ? 's' : ''}
+                      {totalTasks === 0 ? 'Add sections' : `Add ${totalTasks} task${totalTasks !== 1 ? 's' : ''}`}
                     </Button>
                   </div>
                 </>
