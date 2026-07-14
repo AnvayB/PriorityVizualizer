@@ -1705,7 +1705,12 @@ const Index = () => {
               />
               Don't Show Again
             </label>
-            <Button onClick={() => setShowTutorialModal(false)}>
+            <Button onClick={() => {
+              if (user?.id && dontShowTutorial) {
+                localStorage.setItem(`pv-hide-tutorial-${user.id}`, 'true');
+              }
+              setShowTutorialModal(false);
+            }}>
               Let's go →
             </Button>
           </div>

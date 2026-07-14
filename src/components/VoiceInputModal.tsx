@@ -389,9 +389,9 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
       {/* Trigger button */}
       {compact ? (
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
-          className="h-7 px-2 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+          className="h-7 px-2 gap-1.5 text-xs text-muted-foreground hover:text-foreground border-gray-400 dark:border-border"
           onClick={() => { setOpen(true); }}
         >
           <Mic className="w-3.5 h-3.5" />

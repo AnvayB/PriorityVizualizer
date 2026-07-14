@@ -363,6 +363,7 @@ const MobileView: React.FC<MobileViewProps> = ({
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
   const [expandedSubsections, setExpandedSubsections] = useState<Set<string>>(new Set());
   const [quickAddOpen, setQuickAddOpen] = useState(false);
+  const [quickAddKey, setQuickAddKey] = useState(0);
   const [editingTask, setEditingTask] = useState<FlatTask | null>(null);
 
   // Flatten all tasks with metadata
@@ -497,9 +498,9 @@ const MobileView: React.FC<MobileViewProps> = ({
           />
         )}
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
-          className="h-7 px-2 gap-1.5 text-xs text-muted-foreground hover:text-foreground border-gray-400 dark:border-border"
+          className="h-7 px-2 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
           onClick={() => setQuickAddOpen(true)}
         >
           <Plus className="w-3.5 h-3.5" />
@@ -607,19 +608,20 @@ const MobileView: React.FC<MobileViewProps> = ({
       )}
 
       {/* ── Quick add dialog ── */}
-      <Dialog open={quickAddOpen} onOpenChange={setQuickAddOpen}>
+      <Dialog open={quickAddOpen} onOpenChange={(open) => {
+        if (!open) setQuickAddKey((k) => k + 1);
+        setQuickAddOpen(open);
+      }}>
         <DialogContent className="w-[calc(100%-2rem)] max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Quick Add</DialogTitle>
           </DialogHeader>
           <PriorityForm
+            key={quickAddKey}
             sections={sections}
             onAddSection={onAddSection}
             onAddSubsection={onAddSubsection}
-            onAddTask={async (...args) => {
-              await onAddTask(...args);
-              setQuickAddOpen(false);
-            }}
+            onAddTask={onAddTask}
             activeTab="task"
           />
         </DialogContent>
