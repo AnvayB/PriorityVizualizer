@@ -497,9 +497,9 @@ const MobileView: React.FC<MobileViewProps> = ({
           />
         )}
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
-          className="h-7 px-2 gap-1.5 text-xs text-muted-foreground hover:text-foreground border-gray-400 dark:border-border"
+          className="h-7 px-2 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
           onClick={() => setQuickAddOpen(true)}
         >
           <Plus className="w-3.5 h-3.5" />
