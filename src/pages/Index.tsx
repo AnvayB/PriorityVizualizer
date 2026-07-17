@@ -2018,18 +2018,6 @@ const Index = () => {
       ) : (
       <>
 
-        {/* Workspace tabs */}
-        <div className="container mx-auto px-4 md:px-6 pt-3 pb-0">
-          <WorkspaceTabs
-            workspaces={workspaces}
-            activeWorkspaceId={activeWorkspaceId}
-            onSwitch={handleWorkspaceSwitch}
-            onAdd={handleAddWorkspace}
-            onRename={handleRenameWorkspace}
-            onDelete={handleDeleteWorkspace}
-          />
-        </div>
-
         {/* Stats Bar */}
       <div className="container mx-auto px-4 md:px-6 py-4 md:py-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 mb-3 md:mb-5">
@@ -2438,6 +2426,16 @@ const Index = () => {
                     <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                   </button>
                 </CardTitle>
+                {workspaces.length > 0 && (
+                  <WorkspaceTabs
+                    workspaces={workspaces}
+                    activeWorkspaceId={activeWorkspaceId}
+                    onSwitch={handleWorkspaceSwitch}
+                    onAdd={handleAddWorkspace}
+                    onRename={handleRenameWorkspace}
+                    onDelete={handleDeleteWorkspace}
+                  />
+                )}
               </CardHeader>
               <CardContent className="p-3 pt-0 md:p-6 md:pt-2" onClick={handleWhiteSpaceClick}>
                 {(() => {
