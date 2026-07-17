@@ -145,11 +145,9 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover, onSliceClick, sh
   const centerPoint = chartSize / 2;
 
   const createPath = (startAngle: number, endAngle: number, innerRadius: number, outerRadius: number, centerX: number, centerY: number) => {
-    // SVG arcs can't draw a full 360° in one command (start === end point). Split into two 180° arcs.
+    // SVG arcs collapse when start === end point (full 360°). Use 359.9999° instead — sub-pixel gap, invisible.
     if (endAngle - startAngle >= 360) {
-      const midAngle = startAngle + 180;
-      return createPath(startAngle, midAngle, innerRadius, outerRadius, centerX, centerY)
-        + ' ' + createPath(midAngle, endAngle, innerRadius, outerRadius, centerX, centerY);
+      endAngle = startAngle + 359.9999;
     }
 
     const startAngleRad = (startAngle * Math.PI) / 180;
