@@ -22,6 +22,13 @@ export interface Section {
   high_priority?: boolean;
 }
 
+export interface Workspace {
+  id: string;
+  name: string;
+  emoji?: string;
+  position: number;
+}
+
 export interface PriorityData {
   sections: Section[];
 }

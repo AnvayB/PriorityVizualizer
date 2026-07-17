@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { Section, Subsection, Task } from '@/types/priorities';
+import { Section, Subsection, Task, Workspace } from '@/types/priorities';
+import WorkspaceTabs from '@/components/WorkspaceTabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -59,6 +60,12 @@ interface MobileViewProps {
   onAddSubsection: (sectionId: string, title: string) => Promise<Subsection>;
   onAddTask: (sectionId: string, subsectionId: string, title: string, dueDate: string, description?: string) => Promise<void>;
   user: { id: string; email?: string } | null;
+  workspaces: Workspace[];
+  activeWorkspaceId: string | null;
+  onWorkspaceSwitch: (id: string) => void;
+  onWorkspaceAdd: (name: string) => Promise<void>;
+  onWorkspaceRename: (id: string, name: string) => Promise<void>;
+  onWorkspaceDelete: (id: string) => Promise<void>;
 }
 
 // ── Date helpers ─────────────────────────────────────────────────────────────
@@ -358,6 +365,12 @@ const MobileView: React.FC<MobileViewProps> = ({
   onAddSubsection,
   onAddTask,
   user,
+  workspaces,
+  activeWorkspaceId,
+  onWorkspaceSwitch,
+  onWorkspaceAdd,
+  onWorkspaceRename,
+  onWorkspaceDelete,
 }) => {
   const [activeFilter, setActiveFilter] = useState<StatusFilter>(null);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
@@ -429,6 +442,18 @@ const MobileView: React.FC<MobileViewProps> = ({
 
   return (
     <div className="flex flex-col gap-3 px-4 py-4 pb-8">
+
+      {/* ── Workspace tabs ── */}
+      {workspaces.length > 0 && (
+        <WorkspaceTabs
+          workspaces={workspaces}
+          activeWorkspaceId={activeWorkspaceId}
+          onSwitch={onWorkspaceSwitch}
+          onAdd={onWorkspaceAdd}
+          onRename={onWorkspaceRename}
+          onDelete={onWorkspaceDelete}
+        />
+      )}
 
       {/* ── Status pills ── */}
       <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">

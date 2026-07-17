@@ -21,7 +21,8 @@ import AnnouncementDialog from '@/components/AnnouncementDialog';
 import AnnouncementHistory from '@/components/AnnouncementHistory';
 import PurposeModeSettings from '@/components/PurposeModeSettings';
 import OnboardingModal from '@/components/OnboardingModal';
-import { Section, Subsection, Task, ChartSlice } from '@/types/priorities';
+import { Section, Subsection, Task, ChartSlice, Workspace } from '@/types/priorities';
+import WorkspaceTabs from '@/components/WorkspaceTabs';
 import { PieChart as PieChartIcon, Target, Calendar, Save, Upload, ChevronDown, LogOut, User, Clock, AlertTriangle, CheckCircle, Info, BookOpen, TrendingUp, RefreshCw, Menu } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -35,6 +36,8 @@ const Index = () => {
   const isMobile = useIsMobile();
   const [sections, setSections] = useState<Section[]>([]);
   const [user, setUser] = useState(null);
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+  const [activeWorkspaceId, setActiveWorkspaceId] = useState<string | null>(null);
 
   const [hoveredSlice, setHoveredSlice] = useState<ChartSlice | null>(null);
   const [pinnedSlice, setPinnedSlice] = useState<ChartSlice | null>(null);
@@ -81,22 +84,23 @@ const Index = () => {
   const [isFormHighlighted, setIsFormHighlighted] = useState(false);
 
   // Load data from Supabase
-  const loadFromSupabase = useCallback(async () => {
+  const loadFromSupabase = useCallback(async (workspaceId: string) => {
     try {
       const { data: { user: currentUser } } = await supabase.auth.getUser();
-      
+
       if (!currentUser) {
         console.log('[loadFromSupabase] No user found');
         return;
       }
 
-      console.log('[loadFromSupabase] Loading data for user:', currentUser.id);
+      console.log('[loadFromSupabase] Loading data for user:', currentUser.id, 'workspace:', workspaceId);
 
-      // Fetch sections
+      // Fetch sections filtered by workspace
       const { data: sectionsData, error: sectionsError } = await supabase
         .from('sections')
         .select('*')
-        .eq('user_id', currentUser.id);
+        .eq('user_id', currentUser.id)
+        .eq('workspace_id', workspaceId);
 
       if (sectionsError) {
         console.error('[loadFromSupabase] Error fetching sections:', sectionsError);
@@ -106,12 +110,10 @@ const Index = () => {
       console.log('[loadFromSupabase] Sections loaded:', sectionsData?.length || 0);
 
       if (!sectionsData || sectionsData.length === 0) {
-        console.log('[loadFromSupabase] No sections found, setting empty array');
-        setIsNewUser(true);
+        console.log('[loadFromSupabase] No sections found for this workspace');
         setSections([]);
         return;
       }
-      setIsNewUser(false);
 
       // Get all section IDs for filtering
       const sectionIds = sectionsData.map(s => s.id);
@@ -238,13 +240,104 @@ const Index = () => {
     if (isRefreshing) return;
     setIsRefreshing(true);
     try {
-      await loadFromSupabase();
+      setActiveWorkspaceId(prev => {
+        if (prev) loadFromSupabase(prev);
+        return prev;
+      });
       await loadTodayEffortCount();
       setCompletionRefresh(prev => prev + 1);
     } finally {
       setIsRefreshing(false);
     }
   }, [isRefreshing, loadFromSupabase, loadTodayEffortCount]);
+
+  // ── Workspace management ─────────────────────────────────────────────────────
+
+  const ensureWorkspaces = useCallback(async (userId: string): Promise<{ workspaces: Workspace[]; activeId: string; isNew: boolean }> => {
+    const { data, error } = await supabase
+      .from('workspaces')
+      .select('*')
+      .eq('user_id', userId)
+      .order('position', { ascending: true });
+
+    if (error) {
+      console.error('Error loading workspaces:', error);
+      throw error;
+    }
+
+    let wsList: Workspace[] = (data || []).map(w => ({
+      id: w.id,
+      name: w.name,
+      emoji: w.emoji || undefined,
+      position: w.position,
+    }));
+
+    let isNew = false;
+    if (wsList.length === 0) {
+      const { data: created, error: createErr } = await supabase
+        .from('workspaces')
+        .insert({ user_id: userId, name: 'My Workspace', position: 0 })
+        .select()
+        .single();
+      if (createErr) throw createErr;
+      wsList = [{ id: created.id, name: created.name, emoji: undefined, position: 0 }];
+      isNew = true;
+    }
+
+    setWorkspaces(wsList);
+
+    const stored = localStorage.getItem(`pv-active-workspace-${userId}`);
+    const activeId = (stored && wsList.some(w => w.id === stored)) ? stored : wsList[0].id;
+    setActiveWorkspaceId(activeId);
+
+    return { workspaces: wsList, activeId, isNew };
+  }, []);
+
+  const handleWorkspaceSwitch = useCallback((id: string) => {
+    setActiveWorkspaceId(id);
+    setSections([]);
+    if (user?.id) localStorage.setItem(`pv-active-workspace-${user.id}`, id);
+    loadFromSupabase(id);
+  }, [user?.id, loadFromSupabase]);
+
+  const handleAddWorkspace = useCallback(async (name: string) => {
+    if (!user?.id) return;
+    const maxPos = workspaces.reduce((m, w) => Math.max(m, w.position), -1);
+    const { data, error } = await supabase
+      .from('workspaces')
+      .insert({ user_id: user.id, name, position: maxPos + 1 })
+      .select()
+      .single();
+    if (error) {
+      toast({ title: 'Error', description: 'Failed to create workspace.', variant: 'destructive' });
+      return;
+    }
+    const newWs: Workspace = { id: data.id, name: data.name, emoji: data.emoji || undefined, position: data.position };
+    setWorkspaces(prev => [...prev, newWs]);
+    handleWorkspaceSwitch(newWs.id);
+  }, [user?.id, workspaces, handleWorkspaceSwitch, toast]);
+
+  const handleRenameWorkspace = useCallback(async (id: string, name: string) => {
+    const { error } = await supabase.from('workspaces').update({ name }).eq('id', id);
+    if (error) {
+      toast({ title: 'Error', description: 'Failed to rename workspace.', variant: 'destructive' });
+      return;
+    }
+    setWorkspaces(prev => prev.map(w => w.id === id ? { ...w, name } : w));
+  }, [toast]);
+
+  const handleDeleteWorkspace = useCallback(async (id: string) => {
+    const { error } = await supabase.from('workspaces').delete().eq('id', id);
+    if (error) {
+      toast({ title: 'Error', description: 'Failed to delete workspace.', variant: 'destructive' });
+      return;
+    }
+    const remaining = workspaces.filter(w => w.id !== id);
+    setWorkspaces(remaining);
+    if (activeWorkspaceId === id && remaining.length > 0) {
+      handleWorkspaceSwitch(remaining[0].id);
+    }
+  }, [workspaces, activeWorkspaceId, handleWorkspaceSwitch, toast]);
 
   // Load user settings (purpose mode)
   const loadUserSettings = useCallback(async () => {
@@ -300,15 +393,17 @@ const Index = () => {
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
-      
+
       if (user) {
-        await loadFromSupabase();
+        const { activeId, isNew } = await ensureWorkspaces(user.id);
+        setIsNewUser(isNew);
+        await loadFromSupabase(activeId);
         await loadUserSettings();
         await loadTodayEffortCount();
       }
     };
     getUser();
-  }, [loadFromSupabase, loadUserSettings, loadTodayEffortCount]);
+  }, [ensureWorkspaces, loadFromSupabase, loadUserSettings, loadTodayEffortCount]);
 
   useEffect(() => {
     if (!user?.id) {
@@ -377,6 +472,7 @@ const Index = () => {
         .insert({
           user_id: user.id,
           title,
+          workspace_id: activeWorkspaceId,
           ...(color ? { color } : {}),
         })
         .select()
@@ -1912,9 +2008,27 @@ const Index = () => {
           onAddSubsection={handleAddSubsection}
           onAddTask={handleAddTask}
           user={user}
+          workspaces={workspaces}
+          activeWorkspaceId={activeWorkspaceId}
+          onWorkspaceSwitch={handleWorkspaceSwitch}
+          onWorkspaceAdd={handleAddWorkspace}
+          onWorkspaceRename={handleRenameWorkspace}
+          onWorkspaceDelete={handleDeleteWorkspace}
         />
       ) : (
       <>
+
+        {/* Workspace tabs */}
+        <div className="container mx-auto px-4 md:px-6 pt-3 pb-0">
+          <WorkspaceTabs
+            workspaces={workspaces}
+            activeWorkspaceId={activeWorkspaceId}
+            onSwitch={handleWorkspaceSwitch}
+            onAdd={handleAddWorkspace}
+            onRename={handleRenameWorkspace}
+            onDelete={handleDeleteWorkspace}
+          />
+        </div>
 
         {/* Stats Bar */}
       <div className="container mx-auto px-4 md:px-6 py-4 md:py-6">
