@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -68,18 +67,18 @@ const WorkspaceTabs: React.FC<WorkspaceTabsProps> = ({
 
   return (
     <>
-      <div className="flex items-center gap-1 overflow-x-auto scrollbar-none py-1">
+      <div className="flex items-center gap-0.5 overflow-x-auto scrollbar-none">
         {workspaces.map((ws) => {
           const isActive = ws.id === activeWorkspaceId;
           return (
-            <div key={ws.id} className="flex items-center shrink-0">
+            <div key={ws.id} className="group flex items-center shrink-0">
               <button
                 onClick={() => onSwitch(ws.id)}
                 className={cn(
-                  'flex items-center gap-1.5 pl-3 pr-2 py-1.5 rounded-l-full text-sm font-medium transition-colors whitespace-nowrap',
+                  'flex items-center gap-1 px-2.5 py-1 text-xs font-medium transition-colors whitespace-nowrap rounded-sm',
                   isActive
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground'
+                    ? 'text-foreground bg-muted'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                 )}
               >
                 {ws.emoji && <span>{ws.emoji}</span>}
@@ -89,10 +88,8 @@ const WorkspaceTabs: React.FC<WorkspaceTabsProps> = ({
                 <DropdownMenuTrigger asChild>
                   <button
                     className={cn(
-                      'flex items-center px-1.5 py-1.5 rounded-r-full text-xs transition-colors border-l',
-                      isActive
-                        ? 'bg-primary text-primary-foreground border-primary-foreground/20 hover:bg-primary/80'
-                        : 'bg-muted text-muted-foreground border-muted-foreground/20 hover:bg-muted/80'
+                      'flex items-center px-0.5 py-1 rounded-sm transition-colors text-muted-foreground hover:text-foreground',
+                      isActive ? 'opacity-60 hover:opacity-100' : 'opacity-0 group-hover:opacity-60 hover:!opacity-100'
                     )}
                   >
                     <MoreHorizontal className="w-3 h-3" />
@@ -116,15 +113,13 @@ const WorkspaceTabs: React.FC<WorkspaceTabsProps> = ({
             </div>
           );
         })}
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-7 w-7 p-0 shrink-0 rounded-full text-muted-foreground hover:text-foreground"
-          title="New workspace"
+        <button
           onClick={() => setAddOpen(true)}
+          title="New workspace"
+          className="flex items-center px-1.5 py-1 text-muted-foreground hover:text-foreground transition-colors opacity-50 hover:opacity-100 shrink-0"
         >
-          <Plus className="w-3.5 h-3.5" />
-        </Button>
+          <Plus className="w-3 h-3" />
+        </button>
       </div>
 
       {/* Add workspace */}
