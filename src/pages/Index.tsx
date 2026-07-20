@@ -4,7 +4,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import PieChart from '@/components/PieChart';
@@ -64,7 +63,6 @@ const Index = () => {
     () => localStorage.getItem('showOverdueArcs') === 'true'
   );
   const [showTutorialModal, setShowTutorialModal] = useState(false);
-  const [dontShowTutorial, setDontShowTutorial] = useState(false);
   const [isNewUser, setIsNewUser] = useState<boolean | null>(null);
   const [showOnboardingModal, setShowOnboardingModal] = useState(false);
   
@@ -427,7 +425,6 @@ const Index = () => {
       // Returning user: show the existing welcome tips modal (respects "Don't Show Again")
       const storageKey = `pv-hide-tutorial-${user.id}`;
       const hideTutorial = localStorage.getItem(storageKey) === 'true';
-      setDontShowTutorial(false);
       setShowTutorialModal(!hideTutorial);
     }
   }, [user?.id, isNewUser]);
@@ -1720,12 +1717,7 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-bg">
       <Dialog
         open={showTutorialModal}
-        onOpenChange={(open) => {
-          if (!open && user?.id && dontShowTutorial) {
-            localStorage.setItem(`pv-hide-tutorial-${user.id}`, 'true');
-          }
-          setShowTutorialModal(open);
-        }}
+        onOpenChange={setShowTutorialModal}
       >
         <DialogContent className="max-w-lg">
           <DialogHeader>
@@ -1794,19 +1786,19 @@ const Index = () => {
 
           {/* Footer */}
           <div className="flex items-center justify-between pt-1">
-            <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
-              <Checkbox
-                checked={dontShowTutorial}
-                onCheckedChange={(checked) => setDontShowTutorial(checked === true)}
-              />
+            <Button
+              variant="ghost"
+              className="text-muted-foreground"
+              onClick={() => {
+                if (user?.id) {
+                  localStorage.setItem(`pv-hide-tutorial-${user.id}`, 'true');
+                }
+                setShowTutorialModal(false);
+              }}
+            >
               Don't Show Again
-            </label>
-            <Button onClick={() => {
-              if (user?.id && dontShowTutorial) {
-                localStorage.setItem(`pv-hide-tutorial-${user.id}`, 'true');
-              }
-              setShowTutorialModal(false);
-            }}>
+            </Button>
+            <Button onClick={() => setShowTutorialModal(false)}>
               Let's go →
             </Button>
           </div>
