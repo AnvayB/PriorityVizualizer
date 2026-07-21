@@ -226,19 +226,18 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover, onSliceClick, sh
   };
 
   const shouldShowText = (slice: ChartSlice) => {
-    // Only show text if the slice is large enough
     const angleDiff = slice.endAngle - slice.startAngle;
-    if (angleDiff <= 15) {
-      return false; // Don't show text if slice is too small
-    }
-    
-    // Don't show text if title is more than 20 characters
     const text = getSliceText(slice);
-    if (text.length >= 15) {
-      return false;
-    }
-    
-    return true;
+
+    // Estimate arc width at the label's radius and check if text fits.
+    // Approximate char widths based on font size per level.
+    const charWidth = slice.level === 'section' ? 10 : slice.level === 'subsection' ? 9 : 7.5;
+    const innerRadius = getInnerRadius(slice.level);
+    const textRadius = (innerRadius + slice.radius) / 2;
+    const arcWidth = textRadius * (angleDiff * Math.PI / 180);
+    const requiredWidth = text.length * charWidth;
+
+    return arcWidth >= requiredWidth;
   };
 
   const getIsHighPriority = (slice: ChartSlice) => {
