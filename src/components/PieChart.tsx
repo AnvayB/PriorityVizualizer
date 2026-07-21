@@ -229,15 +229,29 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover, onSliceClick, sh
     const angleDiff = slice.endAngle - slice.startAngle;
     const text = getSliceText(slice);
 
-    // SVG text renders as a straight line (not curved), so use chord width, not arc length.
-    // Font sizes: section=14px, subsection=12px, task=10px → ~0.58× char width ratio + 15% padding.
+    // Text is rendered as a horizontal (unrotated) SVG label. The available horizontal space
+    // through the label position is constrained by two independent limits:
+    // 1. Ring geometry: at y = textRadius * |sin(midAngle)|, the horizontal span of the
+    //    annular band = sqrt(outerR² - y²) - sqrt(innerR² - y²)  [if y < innerR]
+    //                 = 2 * sqrt(outerR² - y²)                   [if y >= innerR]
+    // 2. Angular width: chord of the arc = 2 * textRadius * sin(angleDiff/2)
+    //    (handles narrow slices regardless of position)
     const charWidth = slice.level === 'section' ? 9 : slice.level === 'subsection' ? 7.5 : 6.5;
-    const innerRadius = getInnerRadius(slice.level);
-    const textRadius = (innerRadius + slice.radius) / 2;
-    const chordWidth = 2 * textRadius * Math.sin((angleDiff * Math.PI / 180) / 2);
-    const requiredWidth = text.length * charWidth;
+    const innerR = getInnerRadius(slice.level);
+    const outerR = slice.radius;
+    const midAngle = (slice.startAngle + slice.endAngle) / 2;
+    const textRadius = (innerR + outerR) / 2;
+    const midAngleRad = (midAngle * Math.PI) / 180;
 
-    return chordWidth >= requiredWidth;
+    const y = textRadius * Math.abs(Math.sin(midAngleRad));
+    const ringWidth = y < innerR
+      ? Math.sqrt(outerR * outerR - y * y) - Math.sqrt(innerR * innerR - y * y)
+      : 2 * Math.sqrt(Math.max(0, outerR * outerR - y * y));
+
+    const chordWidth = 2 * textRadius * Math.sin((angleDiff * Math.PI / 180) / 2);
+    const availableWidth = Math.min(ringWidth, chordWidth);
+
+    return availableWidth >= text.length * charWidth;
   };
 
   const getIsHighPriority = (slice: ChartSlice) => {
