@@ -229,15 +229,15 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover, onSliceClick, sh
     const angleDiff = slice.endAngle - slice.startAngle;
     const text = getSliceText(slice);
 
-    // Estimate arc width at the label's radius and check if text fits.
-    // Approximate char widths based on font size per level.
-    const charWidth = slice.level === 'section' ? 10 : slice.level === 'subsection' ? 9 : 7.5;
+    // SVG text renders as a straight line (not curved), so use chord width, not arc length.
+    // Font sizes: section=14px, subsection=12px, task=10px → ~0.58× char width ratio + 15% padding.
+    const charWidth = slice.level === 'section' ? 9 : slice.level === 'subsection' ? 7.5 : 6.5;
     const innerRadius = getInnerRadius(slice.level);
     const textRadius = (innerRadius + slice.radius) / 2;
-    const arcWidth = textRadius * (angleDiff * Math.PI / 180);
+    const chordWidth = 2 * textRadius * Math.sin((angleDiff * Math.PI / 180) / 2);
     const requiredWidth = text.length * charWidth;
 
-    return arcWidth >= requiredWidth;
+    return chordWidth >= requiredWidth;
   };
 
   const getIsHighPriority = (slice: ChartSlice) => {
