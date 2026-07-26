@@ -456,7 +456,7 @@ const MobileView: React.FC<MobileViewProps> = ({
       )}
 
       {/* ── Status pills ── */}
-      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+      <div className="flex gap-1.5">
         <StatusPill
           label="Due Today"
           count={dueTodayTasks.length}
@@ -698,7 +698,7 @@ function StatusPill({ label, count, active, color, icon, onClick }: StatusPillPr
     <button
       onClick={onClick}
       className={cn(
-        'flex items-center gap-2 px-3 py-2 rounded-full border text-sm font-medium whitespace-nowrap transition-all',
+        'flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-full border text-sm font-medium whitespace-nowrap transition-all',
         active ? c.active : cn('bg-card/50', c.base)
       )}
     >
