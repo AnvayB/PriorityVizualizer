@@ -622,7 +622,7 @@ const HoverInfo: React.FC<HoverInfoProps> = ({
                     <DialogHeader className="shrink-0">
                       <DialogTitle>Task Description</DialogTitle>
                     </DialogHeader>
-                    <div className="p-4 bg-muted/30 rounded-lg overflow-y-auto min-h-0 resize-y" style={{ height: '40vh' }}>
+                    <div className="p-4 bg-muted/30 rounded-lg overflow-y-auto min-h-0 resize-y" style={{ maxHeight: '60vh' }}>
                       <p className="text-sm whitespace-pre-wrap break-all">{
                         slice.task.description.split(/(https?:\/\/[^\s]+)/g).map((part, i) =>
                           /^https?:\/\//.test(part)
