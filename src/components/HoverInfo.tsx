@@ -618,11 +618,11 @@ const HoverInfo: React.FC<HoverInfoProps> = ({
                       View Description
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="w-[calc(100%-2rem)] max-w-lg">
-                    <DialogHeader>
+                  <DialogContent className="w-[calc(100%-2rem)] max-w-lg flex flex-col" style={{ maxHeight: '80vh' }}>
+                    <DialogHeader className="shrink-0">
                       <DialogTitle>Task Description</DialogTitle>
                     </DialogHeader>
-                    <div className="p-4 bg-muted/30 rounded-lg overflow-hidden">
+                    <div className="p-4 bg-muted/30 rounded-lg overflow-y-auto min-h-0 resize-y" style={{ height: '40vh' }}>
                       <p className="text-sm whitespace-pre-wrap break-all">{
                         slice.task.description.split(/(https?:\/\/[^\s]+)/g).map((part, i) =>
                           /^https?:\/\//.test(part)
