@@ -25,62 +25,45 @@ const CompletionCounter: React.FC<CompletionCounterProps> = ({ userId, refreshTr
   const loadCompletionData = async () => {
     try {
       const PST_TZ = 'America/Los_Angeles';
-      
-      // Get current time in PST
+
       const now = new Date();
       const pstNow = toZonedTime(now, PST_TZ);
-      
-      // Get today's date string in PST
-      const todayString = format(pstNow, 'yyyy-MM-dd'); // Format: YYYY-MM-DD
-      
-      // Get start of today in PST (midnight PST)
       const startOfTodayPST = new Date(pstNow.getFullYear(), pstNow.getMonth(), pstNow.getDate(), 0, 0, 0);
-      
-      // Convert PST midnight to UTC for database queries
       const startOfTodayUTC = fromZonedTime(startOfTodayPST, PST_TZ).toISOString();
-      
-      // Get start of tomorrow in PST
       const startOfTomorrowPST = new Date(pstNow.getFullYear(), pstNow.getMonth(), pstNow.getDate() + 1, 0, 0, 0);
       const startOfTomorrowUTC = fromZonedTime(startOfTomorrowPST, PST_TZ).toISOString();
 
-      // Fetch completed tasks for today first to get accurate count
-      const { data: tasksData, error: tasksError } = await supabase
-        .from('completed_tasks')
-        .select('*')
-        .eq('user_id', userId)
-        .gte('completed_at', startOfTodayUTC)
-        .lt('completed_at', startOfTomorrowUTC)
-        .order('completed_at', { ascending: false });
-
-      if (tasksError) throw tasksError;
-      
-      // Count tasks completed today directly from completed_tasks
-      const todayTasksCount = tasksData?.length || 0;
-      setDailyCount(todayTasksCount);
-      
-      // Also fetch from completion_stats as a backup/secondary count
-      const { data: dailyData, error: dailyError } = await supabase
-        .from('completion_stats')
-        .select('daily_count')
-        .eq('user_id', userId)
-        .eq('date', todayString)
-        .maybeSingle();
-
-      if (dailyError) {
-        // If completion_stats query fails, we already have the count from completed_tasks
-        console.warn('Could not fetch from completion_stats:', dailyError);
+      // Fetch workspace section titles for filtering (if workspace is set)
+      let workspaceSectionTitles: string[] | null = null;
+      if (activeWorkspaceId) {
+        const { data } = await supabase
+          .from('sections')
+          .select('title')
+          .eq('workspace_id', activeWorkspaceId);
+        workspaceSectionTitles = data ? data.map(s => s.title) : null;
       }
 
-      // Fetch total count (sum of all daily_count)
-      const { data: totalData, error: totalError } = await supabase
-        .from('completion_stats')
-        .select('daily_count')
+      // Daily count from completed_tasks, filtered by workspace
+      let dailyQuery = supabase
+        .from('completed_tasks')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .gte('completed_at', startOfTodayUTC)
+        .lt('completed_at', startOfTomorrowUTC);
+      if (workspaceSectionTitles) dailyQuery = dailyQuery.in('section_title', workspaceSectionTitles);
+      const { count: dailyCount, error: dailyError } = await dailyQuery;
+      if (dailyError) throw dailyError;
+      setDailyCount(dailyCount ?? 0);
+
+      // Total count from completed_tasks, filtered by workspace
+      let totalQuery = supabase
+        .from('completed_tasks')
+        .select('id', { count: 'exact', head: true })
         .eq('user_id', userId);
-
+      if (workspaceSectionTitles) totalQuery = totalQuery.in('section_title', workspaceSectionTitles);
+      const { count: totalCount, error: totalError } = await totalQuery;
       if (totalError) throw totalError;
-
-      const total = totalData?.reduce((sum, record) => sum + record.daily_count, 0) || 0;
-      setTotalCount(total);
+      setTotalCount(totalCount ?? 0);
     } catch (error) {
       console.error('Error loading completion data:', error);
     } finally {
