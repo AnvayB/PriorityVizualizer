@@ -2381,7 +2381,7 @@ const Index = () => {
             </DialogContent>
           </Dialog>
 
-          {user && <CompletionCounter userId={user.id} refreshTrigger={completionRefresh} />}
+          {user && <CompletionCounter userId={user.id} refreshTrigger={completionRefresh} activeWorkspaceId={activeWorkspaceId} />}
         </div>
 
         {/* Announcement Dialog */}

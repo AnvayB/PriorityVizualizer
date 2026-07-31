@@ -590,6 +590,9 @@ const MobileView: React.FC<MobileViewProps> = ({
                                 {sub.title}
                               </span>
                               <span className="text-xs font-normal normal-case tracking-normal text-muted-foreground">({sub.tasks.length})</span>
+                              {sub.tasks.some(t => t.high_priority) && (
+                                <AlertTriangle className="w-3 h-3 text-destructive shrink-0" />
+                              )}
                             </button>
                             {/* Tasks */}
                             {!subCollapsed && (sub.tasks.length === 0 ? (
