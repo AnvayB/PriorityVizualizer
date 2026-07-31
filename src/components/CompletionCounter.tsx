@@ -20,7 +20,7 @@ const CompletionCounter: React.FC<CompletionCounterProps> = ({ userId, refreshTr
 
   useEffect(() => {
     loadCompletionData();
-  }, [userId, refreshTrigger]);
+  }, [userId, refreshTrigger, activeWorkspaceId]);
 
   const loadCompletionData = async () => {
     try {
