@@ -591,7 +591,7 @@ const MobileView: React.FC<MobileViewProps> = ({
                               </span>
                               <span className="text-xs font-normal normal-case tracking-normal text-muted-foreground">({sub.tasks.length})</span>
                               {sub.tasks.some(t => t.high_priority) && (
-                                <span className="ml-0.5 text-[10px] font-semibold text-orange-400 leading-none">★</span>
+                                <AlertTriangle className="w-3 h-3 text-destructive shrink-0" />
                               )}
                             </button>
                             {/* Tasks */}
