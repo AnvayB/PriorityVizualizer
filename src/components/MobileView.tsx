@@ -590,6 +590,9 @@ const MobileView: React.FC<MobileViewProps> = ({
                                 {sub.title}
                               </span>
                               <span className="text-xs font-normal normal-case tracking-normal text-muted-foreground">({sub.tasks.length})</span>
+                              {sub.tasks.some(t => t.high_priority) && (
+                                <span className="ml-0.5 text-[10px] font-semibold text-orange-400 leading-none">★</span>
+                              )}
                             </button>
                             {/* Tasks */}
                             {!subCollapsed && (sub.tasks.length === 0 ? (
