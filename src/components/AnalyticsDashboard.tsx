@@ -24,6 +24,7 @@ interface AnalyticsDashboardProps {
   userId: string;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
+  activeWorkspaceId?: string | null;
 }
 
 interface DailyStats {
@@ -61,7 +62,7 @@ function buildPageNumbers(current: number, total: number): (number | '...')[] {
   return pages;
 }
 
-const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen, onOpenChange }) => {
+const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen, onOpenChange, activeWorkspaceId }) => {
   const [activeTab, setActiveTab] = useState<'completion' | 'effort'>('completion');
   
   // Completion analytics state
@@ -231,9 +232,20 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
     return { current: currentStreak, longest: longestStreak };
   };
 
+  const getWorkspaceSectionTitles = async (): Promise<string[] | null> => {
+    if (!activeWorkspaceId) return null;
+    const { data } = await supabase
+      .from('sections')
+      .select('title')
+      .eq('workspace_id', activeWorkspaceId);
+    return data ? data.map(s => s.title) : null;
+  };
+
   const loadAnalyticsData = async () => {
     try {
       setIsLoading(true);
+
+      const workspaceSectionTitles = await getWorkspaceSectionTitles();
 
       // Get date range (last 60 days for chart display)
       const now = new Date();
@@ -241,30 +253,36 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
       const sixtyDaysAgo = subDays(pstNow, 60);
       const startDateUTC = fromZonedTime(startOfDay(sixtyDaysAgo), PST_TZ).toISOString();
 
-      // Fetch all completed tasks for last 30 days (for charts)
-      const { data: tasksData, error: tasksError } = await supabase
+      // Fetch all completed tasks for last 60 days (for charts)
+      let chartQuery = supabase
         .from('completed_tasks')
         .select('*')
         .eq('user_id', userId)
         .gte('completed_at', startDateUTC)
         .order('completed_at', { ascending: true });
+      if (workspaceSectionTitles) chartQuery = chartQuery.in('section_title', workspaceSectionTitles);
+      const { data: tasksData, error: tasksError } = await chartQuery;
 
       if (tasksError) throw tasksError;
 
       // Fetch ALL completed tasks for streak calculation
-      const { data: allTasksData, error: allTasksError } = await supabase
+      let streakQuery = supabase
         .from('completed_tasks')
         .select('completed_at')
         .eq('user_id', userId)
         .order('completed_at', { ascending: true });
+      if (workspaceSectionTitles) streakQuery = streakQuery.in('section_title', workspaceSectionTitles);
+      const { data: allTasksData, error: allTasksError } = await streakQuery;
 
       if (allTasksError) throw allTasksError;
 
-      // Fetch section colors from Supabase
-      const { data: sectionsData, error: sectionsError } = await supabase
+      // Fetch section colors from Supabase (scoped to active workspace)
+      let sectionsQuery = supabase
         .from('sections')
         .select('title, color')
         .eq('user_id', userId);
+      if (activeWorkspaceId) sectionsQuery = sectionsQuery.eq('workspace_id', activeWorkspaceId);
+      const { data: sectionsData, error: sectionsError } = await sectionsQuery;
 
       if (sectionsError) {
         console.warn('Could not fetch section colors:', sectionsError);
@@ -901,19 +919,24 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId, isOpen,
     const from = (page - 1) * TASKS_PER_PAGE;
     const to = from + TASKS_PER_PAGE - 1;
 
-    const [{ data, count, error }, { data: sectionsData }] = await Promise.all([
-      supabase
-        .from('completed_tasks')
-        .select('id, task_title, section_title, subsection_title, completed_at', { count: 'exact' })
-        .eq('user_id', userId)
-        .gte('completed_at', startDateUTC)
-        .order('completed_at', { ascending: false })
-        .range(from, to),
-      supabase
-        .from('sections')
-        .select('title, color')
-        .eq('user_id', userId),
-    ]);
+    const workspaceSectionTitles = await getWorkspaceSectionTitles();
+
+    let tasksQuery = supabase
+      .from('completed_tasks')
+      .select('id, task_title, section_title, subsection_title, completed_at', { count: 'exact' })
+      .eq('user_id', userId)
+      .gte('completed_at', startDateUTC)
+      .order('completed_at', { ascending: false })
+      .range(from, to);
+    if (workspaceSectionTitles) tasksQuery = tasksQuery.in('section_title', workspaceSectionTitles);
+
+    let sectionsQuery = supabase
+      .from('sections')
+      .select('title, color')
+      .eq('user_id', userId);
+    if (activeWorkspaceId) sectionsQuery = sectionsQuery.eq('workspace_id', activeWorkspaceId);
+
+    const [{ data, count, error }, { data: sectionsData }] = await Promise.all([tasksQuery, sectionsQuery]);
 
     if (!error) {
       setTasksData(data ?? []);

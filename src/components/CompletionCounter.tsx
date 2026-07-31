@@ -9,9 +9,10 @@ import AnalyticsDashboard from './AnalyticsDashboard';
 interface CompletionCounterProps {
   userId: string;
   refreshTrigger?: number;
+  activeWorkspaceId?: string | null;
 }
 
-const CompletionCounter: React.FC<CompletionCounterProps> = ({ userId, refreshTrigger = 0 }) => {
+const CompletionCounter: React.FC<CompletionCounterProps> = ({ userId, refreshTrigger = 0, activeWorkspaceId }) => {
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
   const [dailyCount, setDailyCount] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
@@ -131,10 +132,11 @@ const CompletionCounter: React.FC<CompletionCounterProps> = ({ userId, refreshTr
           </div>
         </CardContent>
       </Card>
-      <AnalyticsDashboard 
-        userId={userId} 
-        isOpen={isAnalyticsOpen} 
-        onOpenChange={setIsAnalyticsOpen} 
+      <AnalyticsDashboard
+        userId={userId}
+        isOpen={isAnalyticsOpen}
+        onOpenChange={setIsAnalyticsOpen}
+        activeWorkspaceId={activeWorkspaceId}
       />
     </>
   );
