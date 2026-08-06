@@ -157,13 +157,18 @@ Extraction rules (apply before organising):
 Organisation rules:
 1. Group tasks under logical sections (e.g., "Work", "School", "Personal").
 2a. ${existingList}
-    Only set matchedExistingId if the spoken section name is clearly the SAME section (near-identical name or obvious alias like "work" → "Work"). Do NOT match based on general topic similarity — if the user says a new section name, treat it as new.
-2b. SUBSECTION MATCHING (critical — follow exactly):
-    - For each subsection inside a matched existing section, compare the tasks' topic to the existing subsections listed above.
-    - If a good semantic match exists, set matchedExistingSubsectionId to EXACTLY that subsection's subsectionId as shown in the list. Copy it verbatim — do NOT invent, guess, or paraphrase an ID.
-    - NEVER set matchedExistingSubsectionId to a value not present in the subsectionId list above.
-    - If the intended subsection title exactly matches an existing subsection's title (case-insensitive), you MUST use matchedExistingSubsectionId — never create a duplicate name.
-    - Only omit matchedExistingSubsectionId when NO existing subsection is a reasonable semantic fit AND no existing subsection has the same name.
+
+MATCHING ORDER — follow this lookup order before creating anything new:
+    STEP 1 — SUBSECTION-FIRST LOOKUP: Before doing anything else, scan every subsection name across ALL sections in the list above. If the user explicitly names a subsection (e.g. "the Forge project", "the Buy list", "my Work tasks") and that name closely matches an existing subsection title (fuzzy/semantic), assign the tasks to THAT subsection's parent section using matchedExistingId for the section and matchedExistingSubsectionId for the subsection. Example: user says "add to the Forge project" → find subsection "Forge" under section "Projects" → output section "Projects" with matchedExistingId = Projects sectionId, subsection "Forge" with matchedExistingSubsectionId = Forge subsectionId.
+    STEP 2 — SECTION-LEVEL LOOKUP: If no subsection match was found in Step 1, check if the user's topic matches an existing section name (near-identical name or obvious alias like "work" → "Work"). If matched, set matchedExistingId for that section.
+    STEP 3 — CREATE NEW: Only create a new section when neither Step 1 nor Step 2 found a match.
+
+    ID rules: Set matchedExistingId / matchedExistingSubsectionId to EXACTLY the id strings shown in the list above. Copy verbatim — never invent or paraphrase an id. Never set an id to a value not present in the list.
+
+2b. SUBSECTION MATCHING within a matched section:
+    - After Step 1/2 above, for any remaining unmatched subsections inside a matched section, semantically compare the tasks' topic to existing subsections in that section.
+    - If a good semantic match exists, set matchedExistingSubsectionId. If the title exactly matches (case-insensitive), you MUST use matchedExistingSubsectionId — never create a duplicate.
+    - Only omit matchedExistingSubsectionId when no existing subsection is a reasonable fit.
 2c. SUBSECTION NAMING — prefer specific categories over generic verbs:
     - Name subsections after the meaningful topic, place, or category (e.g. "Costco", "Home", "Doctor", "Travel") rather than generic action words like "Buy", "Do", "Get", or "Remember".
     - The action is already implied by the task being in a list. The subsection name should answer "what kind?" or "where?", not "what to do?".
