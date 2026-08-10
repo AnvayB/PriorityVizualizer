@@ -229,12 +229,20 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
 
       const rawSections: ParsedSection[] = data.sections ?? [];
       const enriched = rawSections.map((ps) => {
-        const existingSection = ps.matchedExistingId
+        // Validate section ID from GPT — if hallucinated, fall back to exact title match.
+        const sectionById = ps.matchedExistingId
           ? sections.find((s) => s.id === ps.matchedExistingId)
           : undefined;
+        const sectionByTitle = !sectionById
+          ? sections.find((s) => s.title.toLowerCase() === ps.title.toLowerCase())
+          : undefined;
+        const existingSection = sectionById ?? sectionByTitle;
+        const validatedSectionId = existingSection?.id; // undefined if truly no match
+
         const existingSubs = existingSection?.subsections ?? [];
         return {
           ...ps,
+          matchedExistingId: validatedSectionId, // overwrite with validated ID (or clear if invalid)
           subsections: (ps.subsections ?? []).map((sub) => {
             const gptMatchId = (sub as ParsedSubsection & { matchedExistingSubsectionId?: string })
               .matchedExistingSubsectionId;
