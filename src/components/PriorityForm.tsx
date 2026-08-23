@@ -126,7 +126,7 @@ const PriorityForm: React.FC<PriorityFormProps> = ({
 
   const pillClass = (active: boolean, disabled = false) =>
     cn(
-      'flex-1 px-3 py-1.5 rounded-md text-sm transition-colors text-center whitespace-nowrap',
+      'flex-1 min-w-0 px-3 py-1.5 rounded-md text-sm transition-colors text-center truncate',
       active
         ? 'bg-background text-foreground font-semibold shadow-sm'
         : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
