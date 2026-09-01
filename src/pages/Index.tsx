@@ -26,6 +26,7 @@ import { PieChart as PieChartIcon, Target, Calendar, Save, Upload, ChevronDown, 
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { storeLocalBackup, detectDataLoss, downloadAutoBackup } from '@/utils/dataProtection';
+import { isEffectivelyHighPriority } from '@/utils/taskPriority';
 import { toZonedTime } from 'date-fns-tz';
 import { format } from 'date-fns';
 
@@ -2105,7 +2106,7 @@ const Index = () => {
                                     >
                                       Today
                                     </Badge>
-                                    {task.high_priority && (
+                                    {isEffectivelyHighPriority(task) && (
                                       <Badge variant="destructive" className="text-xs">
                                         High Priority
                                       </Badge>
@@ -2203,7 +2204,7 @@ const Index = () => {
                                       >
                                         {daysOverdue === 1 ? '1 day overdue' : `${daysOverdue} days overdue`}
                                       </Badge>
-                                      {task.high_priority && (
+                                      {isEffectivelyHighPriority(task) && (
                                         <Badge variant="destructive" className="text-xs">
                                           High Priority
                                         </Badge>
@@ -2258,7 +2259,7 @@ const Index = () => {
                                       >
                                         {daysOverdue === 1 ? '1 day overdue' : `${daysOverdue} days overdue`}
                                       </Badge>
-                                      {task.high_priority && (
+                                      {isEffectivelyHighPriority(task) && (
                                         <Badge variant="destructive" className="text-xs">
                                           High Priority
                                         </Badge>
@@ -2357,7 +2358,7 @@ const Index = () => {
                                     >
                                       {overdue ? 'Overdue' : daysUntil === 0 ? 'Today' : daysUntil === 1 ? 'Tomorrow' : `${daysUntil} days`}
                                     </Badge>
-                                    {task.high_priority && (
+                                    {isEffectivelyHighPriority(task) && (
                                       <Badge variant="destructive" className="text-xs">
                                         High Priority
                                       </Badge>

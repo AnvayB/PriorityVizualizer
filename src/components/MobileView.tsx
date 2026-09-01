@@ -14,6 +14,7 @@ import VoiceInputModal from '@/components/VoiceInputModal';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { isEffectivelyHighPriority } from '@/utils/taskPriority';
 import {
   AlertTriangle,
   Calendar,
@@ -289,7 +290,7 @@ function TaskRow({ task, showPath = false, userId, onComplete, onEdit, onDelete,
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className="text-sm font-medium text-foreground truncate">{task.title}</span>
-            {task.high_priority && (
+            {isEffectivelyHighPriority(task) && (
               <AlertTriangle className="w-3 h-3 text-red-500 shrink-0" />
             )}
           </div>
@@ -590,7 +591,7 @@ const MobileView: React.FC<MobileViewProps> = ({
                                 {sub.title}
                               </span>
                               <span className="text-xs font-normal normal-case tracking-normal text-muted-foreground">({sub.tasks.length})</span>
-                              {sub.tasks.some(t => t.high_priority) && (
+                              {sub.tasks.some(t => isEffectivelyHighPriority(t)) && (
                                 <AlertTriangle className="w-3 h-3 text-destructive shrink-0" />
                               )}
                             </button>

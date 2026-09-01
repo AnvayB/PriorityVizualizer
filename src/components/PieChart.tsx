@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Section, Subsection, Task, ChartSlice } from '@/types/priorities';
+import { isEffectivelyHighPriority } from '@/utils/taskPriority';
 
 interface PieChartProps {
   sections: Section[];
@@ -257,7 +258,7 @@ const PieChart: React.FC<PieChartProps> = ({ sections, onHover, onSliceClick, sh
   const getIsHighPriority = (slice: ChartSlice) => {
     if (slice.level === 'section') return slice.section.high_priority || false;
     if (slice.level === 'subsection') return slice.subsection?.high_priority || false;
-    if (slice.level === 'task') return slice.task?.high_priority || false;
+    if (slice.level === 'task') return slice.task ? isEffectivelyHighPriority(slice.task) : false;
     return false;
   };
 
