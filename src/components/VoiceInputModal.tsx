@@ -16,6 +16,7 @@ import { supabase } from '@/integrations/supabase/client';
 import {
   Mic,
   MicOff,
+  Type,
   Loader2,
   Check,
   X,
@@ -48,7 +49,7 @@ interface ParsedSection {
   subsections: ParsedSubsection[];
 }
 
-type Stage = 'idle' | 'recording' | 'transcribing' | 'parsing' | 'preview' | 'adding' | 'done';
+type Stage = 'idle' | 'textInput' | 'recording' | 'transcribing' | 'parsing' | 'preview' | 'adding' | 'done';
 
 interface VoiceInputModalProps {
   sections: Section[];
@@ -105,6 +106,7 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
   const [stage, setStage] = useState<Stage>('idle');
   const [elapsed, setElapsed] = useState(0);
   const [transcript, setTranscript] = useState('');
+  const [typedPrompt, setTypedPrompt] = useState('');
   const [parsedSections, setParsedSections] = useState<ParsedSection[]>([]);
   const [transcriptExpanded, setTranscriptExpanded] = useState(false);
   const [editableTranscript, setEditableTranscript] = useState('');
@@ -264,6 +266,13 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
     }
   }, [sections]);
 
+  const submitTypedPrompt = useCallback(() => {
+    if (!typedPrompt.trim()) return;
+    setTranscript(typedPrompt);
+    setEditableTranscript(typedPrompt);
+    parseTranscriptText(typedPrompt);
+  }, [typedPrompt, parseTranscriptText]);
+
   // ── Editing preview ──────────────────────────────────────────────────────
 
   const removeTask = (sIdx: number, subIdx: number, tIdx: number) => {
@@ -369,6 +378,7 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
     setStage('idle');
     setElapsed(0);
     setTranscript('');
+    setTypedPrompt('');
     setEditableTranscript('');
     setParsedSections([]);
     setTranscriptExpanded(false);
@@ -391,37 +401,68 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
   // ── Render ───────────────────────────────────────────────────────────────
 
   const totalTasks = countItems(parsedSections);
+  const isTextMode = stage === 'textInput';
+  const isSharedStage = stage === 'parsing' || stage === 'preview' || stage === 'adding' || stage === 'done';
+  const openForTalk = () => { setStage('idle'); setOpen(true); };
+  const openForType = () => { setStage('textInput'); setOpen(true); };
 
   return (
     <>
-      {/* Trigger button */}
+      {/* Trigger buttons */}
       {compact ? (
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-7 px-2 gap-1.5 text-xs text-muted-foreground hover:text-foreground border-gray-400 dark:border-border"
-          onClick={() => { setOpen(true); }}
-        >
-          <Mic className="w-3.5 h-3.5" />
-          Talk to add
-        </Button>
+        <div className="flex gap-1.5">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 px-2 gap-1.5 text-xs text-muted-foreground hover:text-foreground border-gray-400 dark:border-border"
+            onClick={openForTalk}
+          >
+            <Mic className="w-3.5 h-3.5" />
+            Talk
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 px-2 gap-1.5 text-xs text-muted-foreground hover:text-foreground border-gray-400 dark:border-border"
+            onClick={openForType}
+          >
+            <Type className="w-3.5 h-3.5" />
+            Type
+          </Button>
+        </div>
       ) : (
-        <Button
-          variant="outline"
-          className="w-full border-dashed border-gray-400 dark:border-border text-muted-foreground hover:text-foreground gap-2"
-          onClick={() => { setOpen(true); }}
-        >
-          <Mic className="w-4 h-4" />
-          Talk to add
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            className="flex-1 border-dashed border-gray-400 dark:border-border text-muted-foreground hover:text-foreground gap-2"
+            onClick={openForTalk}
+          >
+            <Mic className="w-4 h-4" />
+            Talk
+          </Button>
+          <Button
+            variant="outline"
+            className="flex-1 border-dashed border-gray-400 dark:border-border text-muted-foreground hover:text-foreground gap-2"
+            onClick={openForType}
+          >
+            <Type className="w-4 h-4" />
+            Type
+          </Button>
+        </div>
       )}
 
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogContent className="w-[calc(100%-2rem)] max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Mic className="w-4 h-4 text-primary" />
-              Talk to add tasks
+              {isSharedStage ? (
+                <Check className="w-4 h-4 text-primary" />
+              ) : isTextMode ? (
+                <Type className="w-4 h-4 text-primary" />
+              ) : (
+                <Mic className="w-4 h-4 text-primary" />
+              )}
+              {isSharedStage ? 'Add tasks' : isTextMode ? 'Type to add tasks' : 'Talk to add tasks'}
             </DialogTitle>
           </DialogHeader>
 
@@ -438,6 +479,39 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
               <Button onClick={startRecording} size="lg" className="gap-2 bg-gradient-primary hover:opacity-90">
                 <Mic className="w-5 h-5" />
                 Start recording
+              </Button>
+            </div>
+          )}
+
+          {/* ── TEXT INPUT ── */}
+          {stage === 'textInput' && (
+            <div className="flex flex-col gap-3 py-2">
+              {error && <p className="text-sm text-destructive text-center">{error}</p>}
+              <p className="text-sm text-muted-foreground">
+                Describe your week, goals, or upcoming tasks. I'll organise them into
+                sections, subsections, and tasks automatically.
+              </p>
+              <textarea
+                autoFocus
+                value={typedPrompt}
+                onChange={(e) => setTypedPrompt(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    submitTypedPrompt();
+                  }
+                }}
+                placeholder={'Add the following tasks under Gaming\nclean desks\nreorganize desks\nsetup computer\n...'}
+                className="w-full min-h-[160px] text-sm text-foreground bg-muted/30 border border-border/50 rounded-md p-3 resize-none outline-none leading-relaxed focus:border-primary/50"
+              />
+              <p className="text-xs text-muted-foreground">Press Enter to submit, Shift+Enter for a new line.</p>
+              <Button
+                onClick={submitTypedPrompt}
+                className="gap-2 bg-gradient-primary hover:opacity-90 self-end"
+                disabled={!typedPrompt.trim()}
+              >
+                <Check className="w-4 h-4" />
+                Organise tasks
               </Button>
             </div>
           )}
