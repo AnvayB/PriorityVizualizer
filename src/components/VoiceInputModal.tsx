@@ -452,7 +452,10 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
       )}
 
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent className="w-[calc(100%-2rem)] max-w-lg">
+        <DialogContent
+          className="w-[calc(100%-2rem)] max-w-lg max-h-[85vh] overflow-y-auto"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+        >
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {isSharedStage ? (
@@ -492,7 +495,6 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
                 sections, subsections, and tasks automatically.
               </p>
               <textarea
-                autoFocus
                 value={typedPrompt}
                 onChange={(e) => setTypedPrompt(e.target.value)}
                 placeholder={'Add the following tasks under Gaming\nclean desks\nreorganize desks\nsetup computer\n...'}
