@@ -452,7 +452,10 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
       )}
 
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent className="w-[calc(100%-2rem)] max-w-lg">
+        <DialogContent
+          className="w-[calc(100%-2rem)] max-w-lg max-h-[85vh] overflow-y-auto"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+        >
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {isSharedStage ? (
@@ -492,7 +495,6 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
                 sections, subsections, and tasks automatically.
               </p>
               <textarea
-                autoFocus
                 value={typedPrompt}
                 onChange={(e) => setTypedPrompt(e.target.value)}
                 onKeyDown={(e) => {
@@ -504,7 +506,7 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
                 placeholder={'Add the following tasks under Chores\nvacuum living room\ndo laundry\nwash dishes\n...'}
                 className="w-full min-h-[160px] text-sm text-foreground bg-muted/30 border border-border/50 rounded-md p-3 resize-none outline-none leading-relaxed focus:border-primary/50"
               />
-              <p className="text-xs text-muted-foreground">Press Enter to submit, Shift+Enter for a new line.</p>
+              <p className="text-xs text-muted-foreground">Press Enter for a new line. Click "Organise tasks" to submit.</p>
               <Button
                 onClick={submitTypedPrompt}
                 className="gap-2 bg-gradient-primary hover:opacity-90 self-end"
