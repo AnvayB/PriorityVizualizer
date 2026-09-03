@@ -497,12 +497,6 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
               <textarea
                 value={typedPrompt}
                 onChange={(e) => setTypedPrompt(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    submitTypedPrompt();
-                  }
-                }}
                 placeholder={'Add the following tasks under Chores\nvacuum living room\ndo laundry\nwash dishes\n...'}
                 className="w-full min-h-[160px] text-sm text-foreground bg-muted/30 border border-border/50 rounded-md p-3 resize-none outline-none leading-relaxed focus:border-primary/50"
               />
