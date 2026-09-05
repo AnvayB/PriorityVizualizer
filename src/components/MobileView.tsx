@@ -702,7 +702,7 @@ function StatusPill({ label, count, active, color, icon, onClick }: StatusPillPr
     <button
       onClick={onClick}
       className={cn(
-        'flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-full border text-sm font-medium whitespace-nowrap transition-all',
+        'flex-1 min-w-0 flex items-center justify-center gap-1.5 px-2 py-2 rounded-full border text-sm font-medium truncate transition-all',
         active ? c.active : cn('bg-card/50', c.base)
       )}
     >

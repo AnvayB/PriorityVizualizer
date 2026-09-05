@@ -122,9 +122,10 @@ const Auth = () => {
     setLoading(false);
 
     if (error) {
+      console.error('Guest login failed:', error);
       toast({
         title: "Guest login failed",
-        description: "Guest account may not be set up. Please create a regular account.",
+        description: `${error.message} Please create a regular account.`,
         variant: "destructive",
       });
     } else {
@@ -262,7 +263,7 @@ const Auth = () => {
                       <Input
                         id="signup-password"
                         type="password"
-                        placeholder="Create a password (min 6 characters)"
+                        placeholder="Min 6 characters"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         className="pl-10"

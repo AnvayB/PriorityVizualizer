@@ -157,8 +157,8 @@ const PriorityForm: React.FC<PriorityFormProps> = ({
                   mode === 'section' && 'bg-background shadow-sm'
                 )}
               >
-                <SelectValue>
-                  {selectedSection ? selectedSection.title : mode === 'section' ? '+ New Section' : 'Section'}
+                <SelectValue placeholder={mode === 'section' ? '+ New Section' : 'Section'}>
+                  {selectedSection?.title}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -198,8 +198,8 @@ const PriorityForm: React.FC<PriorityFormProps> = ({
                   mode === 'subsection' && 'bg-background shadow-sm'
                 )}
               >
-                <SelectValue>
-                  {selectedSubsection ? selectedSubsection.title : 'Subsection'}
+                <SelectValue placeholder="Subsection">
+                  {selectedSubsection?.title}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
