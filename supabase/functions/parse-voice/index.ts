@@ -1,9 +1,66 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+const GUEST_EMAIL = "guest@example.com";
+const DAILY_LIMIT = 10;
+
+/**
+ * Logs one use of `feature` for the calling user and, only for the shared guest
+ * account, enforces a daily cap. Every account's usage is recorded regardless,
+ * so LLM spend can be audited per account later.
+ */
+async function checkAndRecordUsage(
+  req: Request,
+  feature: "talk" | "type",
+): Promise<{ allowed: boolean; error?: string }> {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader) return { allowed: true }; // no session to attribute usage to; let it through
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+  const callerClient = createClient(supabaseUrl, anonKey, {
+    global: { headers: { Authorization: authHeader } },
+  });
+  const { data: { user } } = await callerClient.auth.getUser();
+  if (!user) return { allowed: true };
+
+  const admin = createClient(supabaseUrl, serviceRoleKey);
+  const today = new Date().toISOString().split("T")[0];
+
+  const { data: existing } = await admin
+    .from("ai_feature_usage")
+    .select("count")
+    .eq("user_id", user.id)
+    .eq("feature", feature)
+    .eq("usage_date", today)
+    .maybeSingle();
+
+  const currentCount = existing?.count ?? 0;
+  const isGuest = user.email === GUEST_EMAIL;
+
+  if (isGuest && currentCount >= DAILY_LIMIT) {
+    return {
+      allowed: false,
+      error: `The guest account's daily ${feature} limit (${DAILY_LIMIT}) has been reached. Please try again tomorrow, or create a free account.`,
+    };
+  }
+
+  await admin
+    .from("ai_feature_usage")
+    .upsert(
+      { user_id: user.id, feature, usage_date: today, count: currentCount + 1, updated_at: new Date().toISOString() },
+      { onConflict: "user_id,feature,usage_date" },
+    );
+
+  return { allowed: true };
+}
 
 interface ParsedTask {
   title: string;
@@ -47,6 +104,20 @@ Deno.serve(async (req) => {
     const form = await req.formData();
     const mode = (form.get("mode") as string | null) ?? "both";
     const today = (form.get("today") as string | null) ?? new Date().toISOString().split("T")[0];
+    const feature = form.get("feature") as "talk" | "type" | null;
+
+    // Only the entry call for each feature (transcribe for Talk, parse-only for Type)
+    // sends `feature`, so a single Talk action isn't double-counted across its
+    // transcribe + parse steps.
+    if (feature) {
+      const usage = await checkAndRecordUsage(req, feature);
+      if (!usage.allowed) {
+        return new Response(JSON.stringify({ error: usage.error }), {
+          status: 429,
+          headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+        });
+      }
+    }
 
     // ── TRANSCRIBE MODE ────────────────────────────────────────────────────────
     if (mode === "transcribe") {

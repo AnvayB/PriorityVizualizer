@@ -64,7 +64,11 @@ interface VoiceInputModalProps {
   ) => Promise<void>;
   /** Render a compact inline trigger instead of the full-width dashed button */
   compact?: boolean;
+  /** The shared guest account has a daily cap on Talk/Type; other accounts are unlimited */
+  isGuest?: boolean;
 }
+
+const DAILY_LIMIT = 10;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -101,6 +105,7 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
   onAddSubsection,
   onAddTask,
   compact = false,
+  isGuest = false,
 }) => {
   const [open, setOpen] = useState(false);
   const [stage, setStage] = useState<Stage>('idle');
@@ -112,6 +117,25 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
   const [editableTranscript, setEditableTranscript] = useState('');
   const [addingProgress, setAddingProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [talkRemaining, setTalkRemaining] = useState<number | null>(null);
+  const [typeRemaining, setTypeRemaining] = useState<number | null>(null);
+
+  // Guest account is daily-capped; fetch today's usage so the buttons can show
+  // "N left" and disable at 0. Other accounts are unlimited, so skip this entirely.
+  useEffect(() => {
+    if (!isGuest) return;
+    const today = new Date().toISOString().split('T')[0];
+    supabase
+      .from('ai_feature_usage')
+      .select('feature, count')
+      .eq('usage_date', today)
+      .then(({ data }) => {
+        const talkCount = data?.find((d) => d.feature === 'talk')?.count ?? 0;
+        const typeCount = data?.find((d) => d.feature === 'type')?.count ?? 0;
+        setTalkRemaining(Math.max(0, DAILY_LIMIT - talkCount));
+        setTypeRemaining(Math.max(0, DAILY_LIMIT - typeCount));
+      });
+  }, [isGuest]);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -168,6 +192,7 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
       const ext = mimeType.includes('ogg') ? 'ogg' : 'webm';
       form.append('audio', blob, `recording.${ext}`);
       form.append('mode', 'transcribe');
+      form.append('feature', 'talk');
 
       const { data, error: fnError } = await supabase.functions.invoke('parse-voice', {
         body: form,
@@ -184,6 +209,8 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
       }
       if (data?.error) throw new Error(data.error);
 
+      if (isGuest) setTalkRemaining((r) => (r === null ? r : Math.max(0, r - 1)));
+
       const t = data.transcript ?? '';
       setTranscript(t);
       setEditableTranscript(t);
@@ -193,15 +220,16 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
       setStage('idle');
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isGuest, parseTranscriptText]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const parseTranscriptText = useCallback(async (text: string) => {
+  const parseTranscriptText = useCallback(async (text: string, feature?: 'type') => {
     setStage('parsing');
     setError(null);
     try {
       const form = new FormData();
       form.append('mode', 'parse');
       form.append('transcript', text);
+      if (feature) form.append('feature', feature);
       form.append(
         'existingSections',
         JSON.stringify(
@@ -228,6 +256,10 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
         throw new Error(msg);
       }
       if (data?.error) throw new Error(data.error);
+
+      if (feature === 'type' && isGuest) {
+        setTypeRemaining((r) => (r === null ? r : Math.max(0, r - 1)));
+      }
 
       const rawSections: ParsedSection[] = data.sections ?? [];
       const enriched = rawSections.map((ps) => {
@@ -264,13 +296,13 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
       setStage('preview');
     }
-  }, [sections]);
+  }, [sections, isGuest]);
 
   const submitTypedPrompt = useCallback(() => {
     if (!typedPrompt.trim()) return;
     setTranscript(typedPrompt);
     setEditableTranscript(typedPrompt);
-    parseTranscriptText(typedPrompt);
+    parseTranscriptText(typedPrompt, 'type');
   }, [typedPrompt, parseTranscriptText]);
 
   // ── Editing preview ──────────────────────────────────────────────────────
@@ -405,6 +437,10 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
   const isSharedStage = stage === 'parsing' || stage === 'preview' || stage === 'adding' || stage === 'done';
   const openForTalk = () => { setStage('idle'); setOpen(true); };
   const openForType = () => { setStage('textInput'); setOpen(true); };
+  const talkDisabled = isGuest && talkRemaining === 0;
+  const typeDisabled = isGuest && typeRemaining === 0;
+  const talkTitle = talkDisabled ? "Guest daily Talk limit reached — try again tomorrow" : undefined;
+  const typeTitle = typeDisabled ? "Guest daily Type limit reached — try again tomorrow" : undefined;
 
   return (
     <>
@@ -416,18 +452,22 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
             size="sm"
             className="h-7 px-2 gap-1.5 text-xs text-muted-foreground hover:text-foreground border-gray-400 dark:border-border"
             onClick={openForTalk}
+            disabled={talkDisabled}
+            title={talkTitle}
           >
             <Mic className="w-3.5 h-3.5" />
-            Talk
+            Talk{isGuest && talkRemaining !== null ? ` (${talkRemaining})` : ''}
           </Button>
           <Button
             variant="outline"
             size="sm"
             className="h-7 px-2 gap-1.5 text-xs text-muted-foreground hover:text-foreground border-gray-400 dark:border-border"
             onClick={openForType}
+            disabled={typeDisabled}
+            title={typeTitle}
           >
             <Type className="w-3.5 h-3.5" />
-            Type
+            Type{isGuest && typeRemaining !== null ? ` (${typeRemaining})` : ''}
           </Button>
         </div>
       ) : (
@@ -436,17 +476,21 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
             variant="outline"
             className="flex-1 border-dashed border-gray-400 dark:border-border text-muted-foreground hover:text-foreground gap-2"
             onClick={openForTalk}
+            disabled={talkDisabled}
+            title={talkTitle}
           >
             <Mic className="w-4 h-4" />
-            Talk
+            Talk{isGuest && talkRemaining !== null ? ` (${talkRemaining} left today)` : ''}
           </Button>
           <Button
             variant="outline"
             className="flex-1 border-dashed border-gray-400 dark:border-border text-muted-foreground hover:text-foreground gap-2"
             onClick={openForType}
+            disabled={typeDisabled}
+            title={typeTitle}
           >
             <Type className="w-4 h-4" />
-            Type
+            Type{isGuest && typeRemaining !== null ? ` (${typeRemaining} left today)` : ''}
           </Button>
         </div>
       )}

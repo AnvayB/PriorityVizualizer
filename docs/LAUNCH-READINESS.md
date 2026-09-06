@@ -15,14 +15,6 @@ Findings from a Product Hunt readiness pass on the Quick Add, mobile task list, 
   Everything fixed this session was verified in headless Chromium at fixed viewport sizes, not a real device. iOS Safari in particular handles the keyboard and viewport resize differently.
   Areas: iOS Safari, Android Chrome
 
-- [ ] **No desktop-width pass yet**
-  This audit only covered the mobile view (`MobileView.tsx`). The desktop layout — the pie chart panel, hover info, wide-screen dialogs — hasn't been looked at.
-  Files: `src/pages/Index.tsx`, `src/components/HoverInfo.tsx`, `src/components/PieChart.tsx`
-
-- [ ] **Several dialogs were never opened this pass**
-  Task edit, workspace add/rename/delete, onboarding, announcements, and purpose-mode settings all use the same dialog primitive that had the overflow bug — worth a quick look now that it's fixed at the source.
-  Files: `TaskEditDialog` (in `MobileView.tsx`), `src/components/WorkspaceTabs.tsx`, `src/components/OnboardingModal.tsx`, `src/components/PurposeModeSettings.tsx`
-
 - [ ] **Voice recording flow is untested**
   Microphone capture, transcription, and the `parse-voice` edge function all need a real browser with mic access and a live backend — neither was available from this sandbox.
   Files: `src/components/VoiceInputModal.tsx`, `supabase/functions/parse-voice`
@@ -32,6 +24,18 @@ Findings from a Product Hunt readiness pass on the Quick Add, mobile task list, 
   Files: `src/pages/Auth.tsx`
 
 ## Fixed this session (for reference)
+
+- [x] **Desktop-width pass: header email overflow**
+  A desktop-width audit found the header's `user.email` span (unlike its mobile counterpart) had no `truncate`/`min-w-0`, so a long email could push the announcement/purpose/tutorial/theme/sign-out buttons off-screen. Fixed to match the mobile pattern. `PieChart.tsx` and `HoverInfo.tsx`'s breadcrumb row were also audited and found already safe.
+  `src/pages/Index.tsx`
+
+- [x] **Hover info card: long titles overflowed the card**
+  Section/subsection/task titles in the pie-chart hover card had no `min-w-0`/`truncate`, so a long title could spill past the card and push the level badge or close button off-edge/out of reach. Now truncates with an ellipsis, consistent with the rest of the app.
+  `src/components/HoverInfo.tsx`
+
+- [x] **Dialog spot-check: workspace Add/Rename dialogs missing viewport gutter**
+  Unlike every other dialog in the app, these two only set `max-w-sm` with no `w-[calc(100%-2rem)]` gutter, so on phones under 384px wide they sat flush against both screen edges; their Input+Button row also had no `min-w-0`, so a long typed workspace name could overflow the dialog. Fixed to match the pattern used elsewhere. `TaskEditDialog`, `OnboardingModal`, and `PurposeModeSettings` were also spot-checked and found already correct.
+  `src/components/WorkspaceTabs.tsx`
 
 - [x] **Quick Add breadcrumb ran off the screen**
   Section/Subsection pills used `flex-1` with no minimum width, so a long title couldn't shrink and pushed the row past the edge.

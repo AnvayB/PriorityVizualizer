@@ -303,12 +303,12 @@ const HoverInfo: React.FC<HoverInfoProps> = ({
     >
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg text-primary">
+          <CardTitle className="text-lg text-primary min-w-0 truncate">
             {slice.level === 'section' && slice.section.title}
             {slice.level === 'subsection' && slice.subsection?.title}
             {slice.level === 'task' && slice.task?.title}
           </CardTitle>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <Badge 
               variant={slice.level === 'section' ? 'default' : slice.level === 'subsection' ? 'secondary' : 'outline'}
               className="capitalize"
@@ -492,9 +492,9 @@ const HoverInfo: React.FC<HoverInfoProps> = ({
                   Color
                 </Button>
               </DialogTrigger>
-              <DialogContent className="w-[calc(100%-2rem)] max-w-lg">
+              <DialogContent className="w-[calc(100%-2rem)] max-w-xs">
                 <DialogHeader>
-                  <DialogTitle>Choose Section Color</DialogTitle>
+                  <DialogTitle className="pr-6">Choose Section Color</DialogTitle>
                 </DialogHeader>
                 <div className="grid grid-cols-4 gap-3 p-4">
                   {colors.map((color) => (

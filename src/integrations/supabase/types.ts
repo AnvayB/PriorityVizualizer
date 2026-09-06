@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_feature_usage: {
+        Row: {
+          count: number
+          feature: string
+          updated_at: string
+          usage_date: string
+          user_id: string
+        }
+        Insert: {
+          count?: number
+          feature: string
+          updated_at?: string
+          usage_date?: string
+          user_id: string
+        }
+        Update: {
+          count?: number
+          feature?: string
+          updated_at?: string
+          usage_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       announcements: {
         Row: {
           created_at: string
