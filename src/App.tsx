@@ -8,6 +8,7 @@ import { User, Session } from "@supabase/supabase-js";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
 import Landing from "./pages/Landing";
 import NotFound from "./pages/NotFound";
 import Dev from "./pages/Dev";
@@ -63,6 +64,7 @@ function App() {
                 path="/auth"
                 element={!user ? <Auth /> : <Navigate to="/" replace />}
               />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/dev" element={<Dev />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

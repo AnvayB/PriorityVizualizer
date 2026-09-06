@@ -157,7 +157,7 @@ const PriorityForm: React.FC<PriorityFormProps> = ({
                   mode === 'section' && 'bg-background shadow-sm'
                 )}
               >
-                <SelectValue placeholder={mode === 'section' ? '+ New Section' : 'Section'}>
+                <SelectValue placeholder="Section">
                   {selectedSection?.title}
                 </SelectValue>
               </SelectTrigger>

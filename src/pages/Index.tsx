@@ -1950,9 +1950,9 @@ const Index = () => {
 
               <div className="flex items-center gap-2">
                 {user && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-0">
                     <User className="w-4 h-4" />
-                    <span>{user.email}</span>
+                    <span className="truncate">{user.email}</span>
                   </div>
                 )}
                 <div className="flex gap-2">
@@ -2503,6 +2503,7 @@ const Index = () => {
                     onAddSection={handleAddSection}
                     onAddSubsection={handleAddSubsection}
                     onAddTask={handleAddTask}
+                    isGuest={isGuestUser()}
                   />
                 ) : undefined
               }

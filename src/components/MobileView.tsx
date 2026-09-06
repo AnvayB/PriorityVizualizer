@@ -521,6 +521,7 @@ const MobileView: React.FC<MobileViewProps> = ({
             onAddSection={onAddSection}
             onAddSubsection={onAddSubsection}
             onAddTask={onAddTask}
+            isGuest={user.email === 'guest@example.com'}
           />
         )}
         <Button

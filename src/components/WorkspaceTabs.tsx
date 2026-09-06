@@ -125,7 +125,7 @@ const WorkspaceTabs: React.FC<WorkspaceTabsProps> = ({
 
       {/* Add workspace */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="w-[calc(100%-2rem)] max-w-sm">
           <DialogHeader>
             <DialogTitle>New Workspace</DialogTitle>
           </DialogHeader>
@@ -136,6 +136,7 @@ const WorkspaceTabs: React.FC<WorkspaceTabsProps> = ({
               placeholder="Workspace name"
               onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
               autoFocus
+              className="flex-1 min-w-0"
             />
             <Button onClick={handleAdd} disabled={!addName.trim()}>Create</Button>
           </div>
@@ -144,7 +145,7 @@ const WorkspaceTabs: React.FC<WorkspaceTabsProps> = ({
 
       {/* Rename workspace */}
       <Dialog open={renameOpen} onOpenChange={setRenameOpen}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="w-[calc(100%-2rem)] max-w-sm">
           <DialogHeader>
             <DialogTitle>Rename Workspace</DialogTitle>
           </DialogHeader>
@@ -155,6 +156,7 @@ const WorkspaceTabs: React.FC<WorkspaceTabsProps> = ({
               placeholder="Workspace name"
               onKeyDown={(e) => e.key === 'Enter' && handleRename()}
               autoFocus
+              className="flex-1 min-w-0"
             />
             <Button onClick={handleRename} disabled={!renameName.trim()}>Save</Button>
           </div>
