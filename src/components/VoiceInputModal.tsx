@@ -184,44 +184,6 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
 
   // ── Processing ───────────────────────────────────────────────────────────
 
-  const processAudio = useCallback(async (blob: Blob, mimeType: string) => {
-    setStage('transcribing');
-    setError(null);
-    try {
-      const form = new FormData();
-      const ext = mimeType.includes('ogg') ? 'ogg' : 'webm';
-      form.append('audio', blob, `recording.${ext}`);
-      form.append('mode', 'transcribe');
-      form.append('feature', 'talk');
-
-      const { data, error: fnError } = await supabase.functions.invoke('parse-voice', {
-        body: form,
-      });
-
-      if (fnError) {
-        let msg = fnError.message;
-        try {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const body = await (fnError as any).context?.json?.();
-          if (body?.error) msg = body.error;
-        } catch { /* ignore */ }
-        throw new Error(msg);
-      }
-      if (data?.error) throw new Error(data.error);
-
-      if (isGuest) setTalkRemaining((r) => (r === null ? r : Math.max(0, r - 1)));
-
-      const t = data.transcript ?? '';
-      setTranscript(t);
-      setEditableTranscript(t);
-      // Auto-parse immediately — no manual Parse step
-      await parseTranscriptText(t);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
-      setStage('idle');
-    }
-  }, [isGuest, parseTranscriptText]); // eslint-disable-line react-hooks/exhaustive-deps
-
   const parseTranscriptText = useCallback(async (text: string, feature?: 'type') => {
     setStage('parsing');
     setError(null);
@@ -297,6 +259,44 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({
       setStage('preview');
     }
   }, [sections, isGuest]);
+
+  const processAudio = useCallback(async (blob: Blob, mimeType: string) => {
+    setStage('transcribing');
+    setError(null);
+    try {
+      const form = new FormData();
+      const ext = mimeType.includes('ogg') ? 'ogg' : 'webm';
+      form.append('audio', blob, `recording.${ext}`);
+      form.append('mode', 'transcribe');
+      form.append('feature', 'talk');
+
+      const { data, error: fnError } = await supabase.functions.invoke('parse-voice', {
+        body: form,
+      });
+
+      if (fnError) {
+        let msg = fnError.message;
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const body = await (fnError as any).context?.json?.();
+          if (body?.error) msg = body.error;
+        } catch { /* ignore */ }
+        throw new Error(msg);
+      }
+      if (data?.error) throw new Error(data.error);
+
+      if (isGuest) setTalkRemaining((r) => (r === null ? r : Math.max(0, r - 1)));
+
+      const t = data.transcript ?? '';
+      setTranscript(t);
+      setEditableTranscript(t);
+      // Auto-parse immediately — no manual Parse step
+      await parseTranscriptText(t);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+      setStage('idle');
+    }
+  }, [isGuest, parseTranscriptText]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const submitTypedPrompt = useCallback(() => {
     if (!typedPrompt.trim()) return;
