@@ -19,6 +19,10 @@ Findings from a Product Hunt readiness pass on the Quick Add, mobile task list, 
   Microphone capture, transcription, and the `parse-voice` edge function all need a real browser with mic access and a live backend — neither was available from this sandbox.
   Files: `src/components/VoiceInputModal.tsx`, `supabase/functions/parse-voice`
 
+- [ ] **Confirm the subsection-matching prompt fix actually holds**
+  Reported: "haircut appointment" correctly matched section "Reminders" but got misfiled into subsection "Medical" — the model matched on "it's an appointment" (task shape) instead of topic (grooming vs. health). Tightened the STEP 2b prompt instructions with an explicit rule against structural-only matches and this exact example, but this is a probabilistic model behavior change — untested against the live OpenAI API from this sandbox (no network access), so needs a few real Talk/Type runs to confirm it actually generalizes past this one example.
+  Files: `supabase/functions/parse-voice/index.ts`
+
 - [ ] **Google sign-in is untested**
   Same story — needs live network access to Supabase and a real OAuth round-trip.
   Files: `src/pages/Auth.tsx`
