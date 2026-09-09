@@ -238,8 +238,10 @@ MATCHING ORDER — follow this lookup order before creating anything new:
 
 2b. SUBSECTION MATCHING within a matched section:
     - After Step 1/2 above, for any remaining unmatched subsections inside a matched section, semantically compare the tasks' topic to existing subsections in that section.
-    - If a good semantic match exists, set matchedExistingSubsectionId. If the title exactly matches (case-insensitive), you MUST use matchedExistingSubsectionId — never create a duplicate.
-    - Only omit matchedExistingSubsectionId when no existing subsection is a reasonable fit.
+    - Match on real-world topic/domain, never on task structure. Two tasks are NOT a match just because both are "an appointment", "a call", "a purchase", "a deadline", etc. — that describes the shape of the task, not what it's about. Match because they belong to the same kind of thing: health, home, finance, grooming, travel, and so on.
+      Example: a haircut is personal care/grooming — it is NOT "Medical", even though both happen to involve scheduling an appointment. Don't let a shared word like "appointment" stand in for an actual topic match.
+    - If the title exactly matches (case-insensitive), you MUST use matchedExistingSubsectionId — never create a duplicate.
+    - If no existing subsection actually shares the task's topic, create a new subsection instead of filing it under the closest-sounding one. A topically wrong subsection is worse than a new one — only match when the fit is real.
 2c. SUBSECTION NAMING — prefer specific categories over generic verbs:
     - Name subsections after the meaningful topic, place, or category (e.g. "Costco", "Home", "Doctor", "Travel") rather than generic action words like "Buy", "Do", "Get", or "Remember".
     - The action is already implied by the task being in a list. The subsection name should answer "what kind?" or "where?", not "what to do?".
